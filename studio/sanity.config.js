@@ -12,9 +12,11 @@ const title =
 
 if (!projectId) {
   throw new Error(
-    '未设置 SANITY_STUDIO_PROJECT_ID。本地：在 studio 目录复制 .env.example 为 .env 并填写；' +
-      'Vercel：打开「Studio」对应项目 → Settings → Environment Variables，添加 SANITY_STUDIO_PROJECT_ID（及可选 SANITY_STUDIO_DATASET），' +
-      '勾选 Production 后重新 Deploy。',
+    '未注入 SANITY_STUDIO_PROJECT_ID。Studio 构建只会把「SANITY_STUDIO_」前缀的变量打进页面；' +
+      '请勿只配 SANITY_PROJECT_ID / VITE_SANITY_PROJECT_ID（前台用的名对 Studio 无效）。' +
+      '本地：studio/.env 里写 SANITY_STUDIO_PROJECT_ID=你的项目 id；' +
+      'Vercel：Studio 独立项目 → Settings → Environment Variables → 新增 Name 必须完全一致：SANITY_STUDIO_PROJECT_ID，' +
+      'Environments 勾选 Production，保存后对该项目 Redeploy（可勾选 Clear build cache）。',
   );
 }
 
