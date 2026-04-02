@@ -9,6 +9,7 @@
     "build:studio": "npm run build --prefix studio",
     "lint:website": "npm run lint --prefix website",
     "validate:studio": "npm run validate --prefix studio",
+    "seed:studio": "npm run seed:defaults --prefix studio",
     "verify:read": "node website/scripts/verify-sanity-read.mjs"
   }
 }

@@ -1,5 +1,5 @@
 {
-  "name": "hongchao-export-studio-template",
+  "name": "huanqiu-export-studio-template",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -8,7 +8,11 @@
     "start": "sanity start",
     "build": "sanity build",
     "deploy": "sanity deploy",
-    "validate": "sanity schema validate"
+    "validate": "sanity schema validate",
+    "seed:defaults": "node ./scripts/seed-from-frontend-defaults.mjs"
+  },
+  "devDependencies": {
+    "@sanity/client": "^7.20.0"
   },
   "dependencies": {
     "@sanity/icons": "^3.5.0",

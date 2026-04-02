@@ -8,7 +8,7 @@ import React from 'react';
 export function StudioBrandLogo() {
   const logoUrl = typeof process !== 'undefined' ? process.env.SANITY_STUDIO_LOGO_URL : '';
   const brand =
-    (typeof process !== 'undefined' && process.env.SANITY_STUDIO_BRAND_SHORT) || 'Template';
+    (typeof process !== 'undefined' && process.env.SANITY_STUDIO_BRAND_SHORT) || 'Huanqiu';
 
   if (logoUrl) {
     return (

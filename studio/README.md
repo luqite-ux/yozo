@@ -1,4 +1,4 @@
-# Hongchao · 外贸企业官网后台（Sanity Studio）
+# Huanqiu · 外贸企业官网后台（Sanity Studio）
 
 标准 schema + 自定义 Structure，便于复用到新客户站点。
 
@@ -18,6 +18,16 @@ npm run validate
 ```
 
 或在仓库根目录：`npm run validate:studio`。
+
+## 导入前台默认文案（可选）
+
+将 `website/src/App.jsx` 在「无 CMS 数据」时使用的兜底文案写入 **站点设置** 与 **首页** 单例（`_id`: `siteSettings`、`homePage`）。需在 `studio/.env` 或 `website/.env.local` 中配置 **`SANITY_API_WRITE_TOKEN`**（与询盘写入同一 Token）。
+
+```bash
+npm run seed:defaults
+```
+
+写入后请在 Studio 内 **Publish** 对应文档，前台即可从 Sanity 读取。
 
 ## 部署
 

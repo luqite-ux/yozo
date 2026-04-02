@@ -36,7 +36,7 @@ export function BrandLogo() {
 
       />
 
-      <span style={{ color: '#101112', fontSize: 15 }}>Hongchao</span>
+      <span style={{ color: '#101112', fontSize: 15 }}>Huanqiu</span>
 
     </div>
 

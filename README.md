@@ -1,4 +1,4 @@
-# Hongchao · 外贸企业官网标准模板（Monorepo）
+# Huanqiu · 外贸企业官网标准模板（Monorepo）
 
 双项目结构：**前台 `website`（Vite + React）** + **`studio`（Sanity Studio）**。内容与询盘均走 **Sanity**；已移除本地 JSON CMS、Express `server` 与内嵌 `/admin`。
 
