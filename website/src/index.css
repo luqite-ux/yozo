@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+/* 页面入场与悬浮面板：替代未安装的 tailwindcss-animate 的 animate-in / fade-in */
+@keyframes yozo-page-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes yozo-panel-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.yozo-animate-page-in {
+  animation: yozo-page-in 0.65s ease-out both;
+}
+
+.yozo-animate-panel-up {
+  animation: yozo-panel-up 0.35s ease-out both;
+}

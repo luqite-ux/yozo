@@ -1,0 +1,202 @@
+import { defineField, defineType } from 'sanity';
+
+export default defineType({
+  name: 'siteSettings',
+  title: '站点设置',
+  type: 'document',
+  groups: [
+    { name: 'brand', title: '品牌与语言' },
+    { name: 'contact', title: '联系方式' },
+    { name: 'nav', title: '导航与 CTA' },
+    { name: 'footer', title: '页脚' },
+    { name: 'seo', title: 'SEO' },
+    { name: 'tabs', title: '筛选 Tab' },
+  ],
+  fields: [
+    defineField({
+      name: 'title',
+      title: '网站名称',
+      type: 'string',
+      group: 'brand',
+      validation: (r) => r.required(),
+    }),
+    defineField({
+      name: 'tagline',
+      title: '网站副标题 / 简介',
+      type: 'string',
+      group: 'brand',
+    }),
+    defineField({
+      name: 'description',
+      title: '站点长描述',
+      type: 'text',
+      rows: 3,
+      group: 'brand',
+    }),
+    defineField({
+      name: 'localeDefault',
+      title: '默认语言（预留）',
+      type: 'string',
+      description: '如 zh-CN、en，后续多语言可与此对齐',
+      initialValue: 'zh-CN',
+      group: 'brand',
+    }),
+    defineField({
+      name: 'logo',
+      title: 'Logo',
+      type: 'image',
+      options: { hotspot: true },
+      group: 'brand',
+    }),
+    defineField({
+      name: 'favicon',
+      title: 'Favicon',
+      type: 'image',
+      options: { hotspot: true },
+      group: 'brand',
+    }),
+    defineField({ name: 'contactPhone', title: '联系电话', type: 'string', group: 'contact' }),
+    defineField({
+      name: 'contactWhatsapp',
+      title: 'WhatsApp',
+      type: 'string',
+      description: '展示用完整号码或链接',
+      group: 'contact',
+    }),
+    defineField({ name: 'contactEmail', title: '邮箱', type: 'string', group: 'contact' }),
+    defineField({ name: 'address', title: '地址', type: 'text', rows: 3, group: 'contact' }),
+    defineField({
+      name: 'socialLinks',
+      title: '社媒链接',
+      type: 'array',
+      group: 'footer',
+      of: [
+        {
+          type: 'object',
+          name: 'socialLink',
+          fields: [
+            defineField({
+              name: 'platform',
+              title: '平台',
+              type: 'string',
+              description: '如 LinkedIn、Facebook、YouTube',
+            }),
+            defineField({
+              name: 'url',
+              title: 'URL',
+              type: 'url',
+              validation: (r) => r.required(),
+            }),
+          ],
+          preview: {
+            select: { platform: 'platform', url: 'url' },
+            prepare({ platform, url }) {
+              return { title: platform || '链接', subtitle: url };
+            },
+          },
+        },
+      ],
+    }),
+    defineField({
+      name: 'headerCta',
+      title: '页头 CTA',
+      type: 'object',
+      group: 'nav',
+      fields: [
+        defineField({ name: 'label', title: '按钮文案', type: 'string' }),
+        defineField({ name: 'href', title: '链接', type: 'string' }),
+      ],
+    }),
+    defineField({
+      name: 'mainNavigation',
+      title: '主导航（预留）',
+      type: 'array',
+      group: 'nav',
+      of: [
+        {
+          type: 'object',
+          name: 'navItem',
+          fields: [
+            defineField({ name: 'label', title: '名称', type: 'string', validation: (r) => r.required() }),
+            defineField({
+              name: 'href',
+              title: '路径或 URL',
+              type: 'string',
+              validation: (r) => r.required(),
+            }),
+            defineField({ name: 'openInNewTab', title: '新窗口打开', type: 'boolean', initialValue: false }),
+          ],
+          preview: {
+            select: { t: 'label', u: 'href' },
+            prepare({ t, u }) {
+              return { title: t, subtitle: u };
+            },
+          },
+        },
+      ],
+    }),
+    defineField({
+      name: 'footerTagline',
+      title: '页脚一句话',
+      type: 'string',
+      group: 'footer',
+    }),
+    defineField({
+      name: 'footerCopyright',
+      title: '页脚版权',
+      type: 'string',
+      description: '例：© 2026 Company. All rights reserved.',
+      group: 'footer',
+    }),
+    defineField({
+      name: 'footerNote',
+      title: '页脚补充说明',
+      type: 'text',
+      rows: 3,
+      group: 'footer',
+    }),
+    defineField({
+      name: 'defaultSeo',
+      title: '全站默认 SEO',
+      type: 'seo',
+      group: 'seo',
+    }),
+    defineField({
+      name: 'seoTitle',
+      title: 'SEO 标题（兼容旧数据；新站优先填「全站默认 SEO」）',
+      type: 'string',
+      group: 'seo',
+    }),
+    defineField({
+      name: 'seoDescription',
+      title: 'SEO 描述（兼容旧数据）',
+      type: 'text',
+      rows: 3,
+      group: 'seo',
+    }),
+    defineField({
+      name: 'seoImage',
+      title: '分享图（兼容旧字段）',
+      type: 'image',
+      options: { hotspot: true },
+      group: 'seo',
+    }),
+    defineField({
+      name: 'productCategoriesLabels',
+      title: '产品筛选 Tab（可选手动排序，留空则从分类文档生成）',
+      type: 'array',
+      group: 'tabs',
+      of: [{ type: 'string' }],
+    }),
+    defineField({
+      name: 'articleCategoriesLabels',
+      title: '资讯筛选 Tab（可选）',
+      type: 'array',
+      group: 'tabs',
+      of: [{ type: 'string' }],
+    }),
+  ],
+  preview: {
+    prepare: () => ({ title: '站点设置' }),
+  },
+});

@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+**/dist/
+
+# Environment & secrets（示例文件保留）
+.env
+.env.local
+.env.*.local
+!.env.example
+!**/.env.example
+
+# Sanity Studio 本地缓存与构建
+studio/.sanity/
+studio/dist/
+
+# Vercel
+.vercel/
+
+# Logs & OS
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Debug / local
+*.local
+
+# 历史导出的 UI 文本备份（体积大、非源码）
+website/*UI*.txt

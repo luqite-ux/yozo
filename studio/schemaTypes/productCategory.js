@@ -1,0 +1,89 @@
+import { defineField, defineType } from 'sanity';
+
+export default defineType({
+  name: 'productCategory',
+  title: '产品分类',
+  type: 'document',
+  groups: [
+    { name: 'main', title: '基础' },
+    { name: 'seo', title: 'SEO' },
+  ],
+  fields: [
+    defineField({
+      name: 'title',
+      title: '名称',
+      type: 'string',
+      group: 'main',
+      validation: (r) => r.required(),
+    }),
+    defineField({
+      name: 'slug',
+      title: 'Slug',
+      type: 'slug',
+      group: 'main',
+      options: { source: 'title', maxLength: 96 },
+      validation: (r) => r.required(),
+    }),
+    defineField({
+      name: 'summary',
+      title: '简介',
+      type: 'text',
+      rows: 3,
+      group: 'main',
+    }),
+    defineField({
+      name: 'coverImage',
+      title: '封面图',
+      type: 'image',
+      options: { hotspot: true },
+      group: 'main',
+    }),
+    defineField({
+      name: 'parent',
+      title: '上级分类',
+      type: 'reference',
+      to: [{ type: 'productCategory' }],
+      group: 'main',
+    }),
+    defineField({
+      name: 'sortOrder',
+      title: '排序（越小越前）',
+      type: 'number',
+      initialValue: 0,
+      group: 'main',
+    }),
+    defineField({
+      name: 'isVisible',
+      title: '是否在前台展示',
+      type: 'boolean',
+      initialValue: true,
+      group: 'main',
+    }),
+    defineField({
+      name: 'isPublished',
+      title: '是否发布到前台（配合已发布文档）',
+      type: 'boolean',
+      initialValue: true,
+      description: '草稿不会出现在 CDN；此项用于已发布但需临时下线的场景',
+      group: 'main',
+    }),
+    defineField({
+      name: 'locale',
+      title: '语言（预留）',
+      type: 'string',
+      group: 'main',
+    }),
+    defineField({
+      name: 'seo',
+      title: 'SEO',
+      type: 'seo',
+      group: 'seo',
+    }),
+  ],
+  preview: {
+    select: { title: 'title', parent: 'parent.title' },
+    prepare({ title, parent }) {
+      return { title: parent ? `${title}（${parent}）` : title };
+    },
+  },
+});
