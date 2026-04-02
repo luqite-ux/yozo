@@ -14,7 +14,7 @@
  */
 import { createClient } from '@sanity/client';
 import { readFileSync, existsSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getSeedDocuments } from '../seed/content.js';
 
@@ -62,6 +62,7 @@ const dataset =
   'production';
 const token =
   env.SANITY_API_WRITE_TOKEN?.trim() ||
+  env.SANITY_WRITE_TOKEN?.trim() ||
   env.SANITY_AUTH_TOKEN?.trim() ||
   env.SANITY_TOKEN?.trim() ||
   '';
@@ -73,11 +74,21 @@ if (!projectId) {
   process.exit(1);
 }
 if (!token) {
+  const websiteEnvLocal = resolve(websiteRoot, '.env.local');
+  const studioEnvLocal = resolve(studioRoot, '.env.local');
   console.error(
     [
-      '缺少写 Token，无法通过 API 写入。请任选其一：',
-      '  1) 在 website/.env.local 中添加 SANITY_API_WRITE_TOKEN=（与询盘共用，见 website/.env.example），再运行 npm run seed:defaults',
-      '  2) 不配置 Token：在 studio 目录执行 sanity login 后，用 NDJSON 导入（见 studio/seed/README.txt）',
+      '缺少写 Token，无法通过 API 写入。',
+      '',
+      '方式 1（推荐）：在下列任一文件中增加一行（与询盘共用同一 Token，勿加 VITE_ 前缀）：',
+      `  SANITY_API_WRITE_TOKEN=sk...`,
+      `  - ${websiteEnvLocal}`,
+      `  - ${studioEnvLocal}`,
+      '  Token 在 https://www.sanity.io/manage → 你的项目 → API → Tokens 创建（需具备写文档权限，如 Editor role）。',
+      '',
+      '方式 2：不配置 Token，在 studio 目录执行 npx sanity login 后：',
+      '  npx sanity dataset import ./seed/initial-content.ndjson production --replace',
+      '  （dataset 名按实际修改；说明见 seed/README.txt）',
     ].join('\n'),
   );
   process.exit(1);
