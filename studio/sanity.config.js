@@ -5,8 +5,18 @@ import { schemaTypes } from './schemaTypes/index.js';
 import { deskStructure } from './deskStructure.js';
 import { StudioBrandLogo } from './components/StudioBrandLogo.jsx';
 
-const projectId = process.env.SANITY_STUDIO_PROJECT_ID?.trim() || '';
-const dataset = process.env.SANITY_STUDIO_DATASET?.trim() || 'production';
+/** 与 Vercel / .env 导入一致：去掉 BOM、首尾空白与成对引号（避免批量导入把引号写进值里） */
+function studioEnv(name, fallback = '') {
+  const raw = process.env[name];
+  if (raw == null || raw === '') return fallback;
+  return String(raw)
+    .replace(/^\uFEFF/, '')
+    .replace(/^[\s"'`]+|[\s"'`]+$/g, '')
+    .trim();
+}
+
+const projectId = studioEnv('SANITY_STUDIO_PROJECT_ID');
+const dataset = studioEnv('SANITY_STUDIO_DATASET', 'production');
 const title =
   process.env.SANITY_STUDIO_BRAND_TITLE || 'Hongchao · 外贸企业官网后台模板';
 
@@ -15,8 +25,8 @@ if (!projectId) {
     '未注入 SANITY_STUDIO_PROJECT_ID。Studio 构建只会把「SANITY_STUDIO_」前缀的变量打进页面；' +
       '请勿只配 SANITY_PROJECT_ID / VITE_SANITY_PROJECT_ID（前台用的名对 Studio 无效）。' +
       '本地：studio/.env 里写 SANITY_STUDIO_PROJECT_ID=你的项目 id；' +
-      'Vercel：Studio 独立项目 → Settings → Environment Variables → 新增 Name 必须完全一致：SANITY_STUDIO_PROJECT_ID，' +
-      'Environments 勾选 Production，保存后对该项目 Redeploy（可勾选 Clear build cache）。',
+      'Vercel：变量必须加在「部署 studio 子域名」的那个项目上；保存后务必对该项目做一次 Production Redeploy（可 Clear build cache），' +
+      '否则线上仍是「加变量之前」打出来的旧包。若从 .env 批量导入，请点开变量核对值未带多余引号。',
   );
 }
 
