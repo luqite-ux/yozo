@@ -22,12 +22,14 @@ export const deskStructure = (S) =>
     .title('网站内容')
     .items([
       S.listItem()
+        .id('itemHomePage')
         .title('首页')
         .icon(HomeIcon)
         .schemaType('homePage')
         .child(S.document().schemaType('homePage').documentId('homePage').title('首页')),
 
       S.listItem()
+        .id('itemSiteSettings')
         .title('站点设置')
         .icon(CogIcon)
         .schemaType('siteSettings')
@@ -36,6 +38,7 @@ export const deskStructure = (S) =>
         ),
 
       S.listItem()
+        .id('itemProductCategories')
         .title('产品分类')
         .icon(TagsIcon)
         .child(
@@ -45,6 +48,7 @@ export const deskStructure = (S) =>
         ),
 
       S.listItem()
+        .id('itemProducts')
         .title('产品')
         .icon(ArchiveIcon)
         .child(
@@ -52,6 +56,7 @@ export const deskStructure = (S) =>
         ),
 
       S.listItem()
+        .id('itemCaseStudies')
         .title('案例')
         .icon(CaseIcon)
         .child(
@@ -61,6 +66,7 @@ export const deskStructure = (S) =>
         ),
 
       S.listItem()
+        .id('itemPosts')
         .title('新闻 / 文章')
         .icon(ComposeIcon)
         .child(
@@ -68,6 +74,7 @@ export const deskStructure = (S) =>
         ),
 
       S.listItem()
+        .id('itemFaqs')
         .title('FAQ')
         .icon(HelpCircleIcon)
         .child(
@@ -75,11 +82,13 @@ export const deskStructure = (S) =>
         ),
 
       S.listItem()
+        .id('itemSimplePages')
         .title('通用页面')
         .icon(DocumentTextIcon)
         .child(S.documentTypeList('simplePage').title('通用页面')),
 
       S.listItem()
+        .id('itemInquiries')
         .title('询盘')
         .icon(CommentIcon)
         .child(
@@ -91,6 +100,7 @@ export const deskStructure = (S) =>
       S.divider(),
 
       S.listItem()
+        .id('itemMiscGroup')
         .title('其他')
         .icon(DocumentsIcon)
         .child(
@@ -99,9 +109,11 @@ export const deskStructure = (S) =>
             .title('其他')
             .items([
               S.listItem()
+                .id('itemDocPages')
                 .title('文档页')
                 .child(S.documentTypeList('docPage').title('文档页')),
               S.listItem()
+                .id('itemVideos')
                 .title('视频')
                 .child(S.documentTypeList('video').title('视频')),
             ]),
