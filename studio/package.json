@@ -9,7 +9,8 @@
     "build": "sanity build",
     "deploy": "sanity deploy",
     "validate": "sanity schema validate",
-    "seed:defaults": "node ./scripts/seed-from-frontend-defaults.mjs"
+    "seed:defaults": "node ./scripts/seed-from-frontend-defaults.mjs",
+    "seed:build-ndjson": "node ./scripts/build-seed-ndjson.mjs"
   },
   "devDependencies": {
     "@sanity/client": "^7.20.0"

@@ -19,15 +19,12 @@ npm run validate
 
 或在仓库根目录：`npm run validate:studio`。
 
-## 导入前台默认文案（可选）
+## 导入前台默认文案（必选一次，否则后台多为空）
 
-将 `website/src/App.jsx` 在「无 CMS 数据」时使用的兜底文案写入 **站点设置** 与 **首页** 单例（`_id`: `siteSettings`、`homePage`）。需在 `studio/.env` 或 `website/.env.local` 中配置 **`SANITY_API_WRITE_TOKEN`**（与询盘写入同一 Token）。
+将 `website/src/App.jsx` 在「无 CMS 数据」时的兜底文案写入 **站点设置**、**首页**（`_id`: `siteSettings`、`homePage`）。**不会自动填充**，需任选其一：
 
-```bash
-npm run seed:defaults
-```
-
-写入后请在 Studio 内 **Publish** 对应文档，前台即可从 Sanity 读取。
+1. **API 写入**：在 **`website/.env.local`** 配置 **`SANITY_API_WRITE_TOKEN`**（与询盘相同），然后在 `studio` 目录执行 `npm run seed:defaults`，再回到 Studio **刷新**即可。
+2. **NDJSON 导入**：`sanity login` 后执行 `sanity dataset import ./seed/initial-content.ndjson production --replace`（数据集名按实际修改）。详见 `seed/README.txt`。
 
 ## 部署
 
