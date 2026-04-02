@@ -17,6 +17,8 @@ import {
  */
 export const deskStructure = (S) =>
   S.list()
+    // 中文 title 无法可靠生成 id，必须手写 id，否则报错：`id` is required for lists
+    .id('deskRoot')
     .title('网站内容')
     .items([
       S.listItem()
@@ -93,6 +95,7 @@ export const deskStructure = (S) =>
         .icon(DocumentsIcon)
         .child(
           S.list()
+            .id('deskMisc')
             .title('其他')
             .items([
               S.listItem()
