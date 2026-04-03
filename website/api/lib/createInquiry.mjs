@@ -4,13 +4,21 @@ import { createClient } from '@sanity/client';
  * 服务端写入询盘（需 SANITY_API_WRITE_TOKEN，切勿暴露到浏览器）
  */
 export async function createInquiryDocument(body) {
-  const projectId = process.env.SANITY_PROJECT_ID;
-  const dataset = process.env.SANITY_DATASET || 'production';
-  const token = process.env.SANITY_API_WRITE_TOKEN;
-  const apiVersion = process.env.SANITY_API_VERSION || '2024-01-01';
+  const projectId =
+    process.env.SANITY_PROJECT_ID?.trim() || process.env.VITE_SANITY_PROJECT_ID?.trim() || '';
+  const dataset =
+    process.env.SANITY_DATASET?.trim() || process.env.VITE_SANITY_DATASET?.trim() || 'production';
+  const token =
+    process.env.SANITY_API_WRITE_TOKEN?.trim() ||
+    process.env.SANITY_AUTH_TOKEN?.trim() ||
+    process.env.SANITY_WRITE_TOKEN?.trim() ||
+    '';
+  const apiVersion = process.env.SANITY_API_VERSION?.trim() || '2024-01-01';
 
   if (!projectId || !token) {
-    const err = new Error('Server misconfigured: missing SANITY_PROJECT_ID or SANITY_API_WRITE_TOKEN');
+    const err = new Error(
+      'Server misconfigured: missing SANITY_PROJECT_ID (or VITE_SANITY_PROJECT_ID) or SANITY_API_WRITE_TOKEN',
+    );
     err.statusCode = 500;
     throw err;
   }
@@ -42,7 +50,8 @@ export async function createInquiryDocument(body) {
     isRead: false,
     submittedAt: new Date().toISOString(),
   };
-  if (sourceProductId) {
+  // 仅传递真实 Sanity 文档 _id，避免旧站数字 id 导致 reference 校验失败
+  if (sourceProductId && !/^\d+$/.test(sourceProductId)) {
     patch.sourceProduct = { _type: 'reference', _ref: sourceProductId };
   }
 

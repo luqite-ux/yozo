@@ -14,6 +14,7 @@ export function CmsProvider({ children }) {
   const [productCategories, setProductCategories] = useState([]);
   const [articleCategories, setArticleCategories] = useState([]);
   const [siteSettings, setSiteSettings] = useState(null);
+  const [aboutPage, setAboutPage] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -33,6 +34,7 @@ export function CmsProvider({ children }) {
       setProductCategories(payload.productCategories);
       setArticleCategories(payload.articleCategories);
       setSiteSettings(payload.siteSettings);
+      setAboutPage(payload.aboutPage);
     } catch (e) {
       setError(e.message || String(e));
     } finally {
@@ -56,6 +58,7 @@ export function CmsProvider({ children }) {
       productCategories,
       articleCategories,
       siteSettings,
+      aboutPage,
       reload: load,
     }),
     [
@@ -69,6 +72,7 @@ export function CmsProvider({ children }) {
       productCategories,
       articleCategories,
       siteSettings,
+      aboutPage,
       load,
     ],
   );

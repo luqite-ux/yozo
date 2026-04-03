@@ -114,6 +114,26 @@ export const homePageQuery = `*[_type == "homePage"][0]{
 }`;
 
 /** @type {string} */
+export const aboutPageQuery = `*[_type == "aboutPage" && _id == "aboutPage"][0]{
+  ...,
+  "labImageResolved": coalesce(labImageUrl, labImage.asset->url),
+  portfolioBrands[]{
+    _key,
+    name,
+    subtitle,
+    description,
+    imageUrl,
+    "imageAssetUrl": image.asset->url
+  },
+  certifications[]{
+    _key,
+    title,
+    subtitle,
+    icon
+  }
+}`;
+
+/** @type {string} */
 export const productCategoriesQuery = `*[_type == "productCategory" && ${categoryVisible}] | order(coalesce(sortOrder, 0) asc, title asc) {
   ...,
   "slug": slug.current,

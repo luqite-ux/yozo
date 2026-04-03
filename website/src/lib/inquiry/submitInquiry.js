@@ -10,7 +10,7 @@ function humanizeInquiryError(status, rawMessage) {
   if (status === 405) return '请求方法不正确';
   if (status >= 500) {
     if (/SANITY_API_WRITE_TOKEN|SANITY_PROJECT_ID|misconfigured/i.test(msg)) {
-      return '询盘服务未配置或暂时不可用，请稍后再试或联系管理员。';
+      return '询盘服务未配置或暂时不可用（部署环境需配置 SANITY_API_WRITE_TOKEN 与 SANITY_PROJECT_ID）。请稍后再试或联系管理员。';
     }
     return msg || '服务器错误，请稍后再试';
   }

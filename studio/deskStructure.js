@@ -9,6 +9,7 @@ import {
   DocumentTextIcon,
   CommentIcon,
   CaseIcon,
+  EarthGlobeIcon,
 } from '@sanity/icons';
 
 /**
@@ -27,6 +28,15 @@ export const deskStructure = (S) =>
         .icon(HomeIcon)
         .schemaType('homePage')
         .child(S.document().schemaType('homePage').documentId('homePage').title('首页')),
+
+      S.listItem()
+        .id('itemAboutPage')
+        .title('品牌探索页')
+        .icon(EarthGlobeIcon)
+        .schemaType('aboutPage')
+        .child(
+          S.document().schemaType('aboutPage').documentId('aboutPage').title('品牌探索页'),
+        ),
 
       S.listItem()
         .id('itemSiteSettings')

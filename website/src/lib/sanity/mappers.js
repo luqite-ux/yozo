@@ -418,3 +418,128 @@ export function mergeHomePageIntoSiteSettings(mappedBase, homeRaw) {
 
   return m;
 }
+
+/** 国内部分网络环境无法加载 Unsplash；默认图改为 dummyimage + Sanity 上传 */
+const DUMMY = (w, h, t) =>
+  `https://dummyimage.com/${w}x${h}/e5e7eb/374151.png&text=${encodeURIComponent(t)}`;
+
+/**
+ * /about 品牌探索页：与历史 App.jsx 硬编码一致的默认数据（无 aboutPage 文档时使用）
+ */
+export function getDefaultAboutPage() {
+  return {
+    heroEyebrow: 'About YOZO',
+    heroTitle: '从卓越制造，\n到伟大的品牌孵化器。',
+    heroSubtitle:
+      '汕头市贞丽芙生物科技有限公司。我们不仅是隐于幕后的顶级代工执行者，更是多个知名美妆品牌背后的商业起盘者与核心科研大脑。',
+    labImageUrl: DUMMY(2000, 1125, 'YOZO Lab'),
+    labOverlayTitle: 'We engineer\nmarket leaders.',
+    labOverlaySubtitle: '不止于造物，更赋能商业成功',
+    manifestoQuote: '“一个优秀的代工厂，必须先懂得如何运营一个成功的品牌。”',
+    manifestoBody:
+      '依托十余年沉淀的研发壁垒与敏捷供应链，YOZO 突破了传统 OEM 仅停留在“代工加工”的局限。我们打通了从「前瞻性品类企划」、「核心独家配方研发」到「全案品牌落地」的完整闭环 (OBM)。这种深入骨髓的品牌运营基因，让我们在服务 B 端客户时，能够提供远超行业标准的战略级赋能。',
+    portfolioEyebrow: 'Our Brand Portfolio',
+    portfolioTitle: '多元化的自有品牌矩阵',
+    portfolioIntro:
+      '实战出真知。我们成功孵化并运营了以下细分赛道的标杆品牌，这是我们产品力与市场洞察力的最佳证明。',
+    portfolioBrands: [
+      {
+        id: 'yozo',
+        name: 'YOZO',
+        subtitle: '院线级高端抗衰标杆',
+        desc: '专研前沿生物科技与抗老成分的先锋品牌。将实验室级别的精纯抗衰分子转化为看得见的卓效年轻体验。',
+        img: DUMMY(800, 600, 'YOZO'),
+      },
+      {
+        id: 'yozo-all',
+        name: 'YOZO ALL IN ONE',
+        subtitle: '极简多效精简护肤',
+        desc: '为现代快节奏都市人群打造。倡导以一抵多的极简护肤哲学，在精简步骤的同时不妥协深层修护功效。',
+        img: DUMMY(800, 600, 'AIO'),
+      },
+      {
+        id: 'ohines',
+        name: 'OHINES',
+        subtitle: '敏感肌微生态修护',
+        desc: '专注受损屏障修护与敏感肌精研护理。以纯净植物精粹复配神经酰胺，重建肌肤健康微生态网络。',
+        img: DUMMY(800, 600, 'OHINES'),
+      },
+      {
+        id: 'vivimiyu',
+        name: 'VIVIMIYU',
+        subtitle: '新锐东方色彩美学',
+        desc: '融合现代色彩工艺与轻养肤理念的彩妆品牌。重新定义亚洲肌肤的底妆质感与高定色彩表达。',
+        img: DUMMY(800, 600, 'VIVIMIYU'),
+      },
+      {
+        id: 'janeage',
+        name: 'JaneAge',
+        subtitle: '熟龄肌分阶抗老专家',
+        desc: '针对 35+ 熟龄肌肤痛点量身定制。提供从紧致轮廓到密集抗皱的结构化、全周期抗老解决方案。',
+        img: DUMMY(800, 600, 'JaneAge'),
+      },
+    ],
+    portfolioCtaLabel: '探索我们的 OBM 贴牌全案服务',
+    portfolioCtaHref: '/services',
+    certSectionTitle: '全球化合规准入实力',
+    certSectionSubtitle: 'Strict Global Quality Control & Certifications',
+    certifications: [
+      { icon: 'shield', title: 'ISO 22716', subtitle: '国际化妆品优良制造规范' },
+      { icon: 'award', title: 'GMPC Certified', subtitle: '10万级净化无尘车间认证' },
+      { icon: 'globe', title: 'FDA Compliant', subtitle: '符合北美市场高标准准入' },
+      { icon: 'activity', title: 'SGS Tested', subtitle: '瑞士权威机构理化与安全检测' },
+    ],
+  };
+}
+
+/**
+ * Sanity aboutPage → 前台 About 区块
+ * @param {Record<string, unknown>|null} raw
+ */
+export function mapAboutPageFromSanity(raw) {
+  const d = getDefaultAboutPage();
+  if (!raw) return d;
+
+  const pickImg = (b, i) =>
+    coalescePlain(b.imageUrl, b.imageAssetUrl) || d.portfolioBrands[i]?.img || DUMMY(800, 600, 'Brand');
+
+  const portfolioBrands =
+    Array.isArray(raw.portfolioBrands) && raw.portfolioBrands.length > 0
+      ? raw.portfolioBrands.map((b, i) => ({
+          id: coalescePlain(b._key, `brand-${i}`),
+          name: coalescePlain(b.name) || '—',
+          subtitle: coalescePlain(b.subtitle),
+          desc: coalescePlain(b.description),
+          img: pickImg(b, i),
+        }))
+      : d.portfolioBrands;
+
+  const certifications =
+    Array.isArray(raw.certifications) && raw.certifications.length > 0
+      ? raw.certifications.map((c) => ({
+          icon: coalescePlain(c.icon, 'shield'),
+          title: coalescePlain(c.title),
+          subtitle: coalescePlain(c.subtitle),
+        }))
+      : d.certifications;
+
+  return {
+    heroEyebrow: coalescePlain(raw.heroEyebrow, d.heroEyebrow),
+    heroTitle: coalescePlain(raw.heroTitle, d.heroTitle),
+    heroSubtitle: coalescePlain(raw.heroSubtitle, d.heroSubtitle),
+    labImageUrl: coalescePlain(raw.labImageResolved, raw.labImageUrl, d.labImageUrl),
+    labOverlayTitle: coalescePlain(raw.labOverlayTitle, d.labOverlayTitle),
+    labOverlaySubtitle: coalescePlain(raw.labOverlaySubtitle, d.labOverlaySubtitle),
+    manifestoQuote: coalescePlain(raw.manifestoQuote, d.manifestoQuote),
+    manifestoBody: coalescePlain(raw.manifestoBody, d.manifestoBody),
+    portfolioEyebrow: coalescePlain(raw.portfolioEyebrow, d.portfolioEyebrow),
+    portfolioTitle: coalescePlain(raw.portfolioTitle, d.portfolioTitle),
+    portfolioIntro: coalescePlain(raw.portfolioIntro, d.portfolioIntro),
+    portfolioBrands,
+    portfolioCtaLabel: coalescePlain(raw.portfolioCtaLabel, d.portfolioCtaLabel),
+    portfolioCtaHref: coalescePlain(raw.portfolioCtaHref, d.portfolioCtaHref),
+    certSectionTitle: coalescePlain(raw.certSectionTitle, d.certSectionTitle),
+    certSectionSubtitle: coalescePlain(raw.certSectionSubtitle, d.certSectionSubtitle),
+    certifications,
+  };
+}

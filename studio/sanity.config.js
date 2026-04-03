@@ -19,7 +19,7 @@ function studioEnv(name, fallback = '') {
 const projectId =
   studioEnv('SANITY_STUDIO_PROJECT_ID') || String(STUDIO_PROJECT_ID_FALLBACK || '').trim();
 const dataset = studioEnv('SANITY_STUDIO_DATASET', 'production');
-const title = process.env.SANITY_STUDIO_BRAND_TITLE || 'Huanqiu · 外贸企业官网后台模板';
+const title = process.env.SANITY_STUDIO_BRAND_TITLE || 'YOZO企业官网后台';
 
 if (!projectId) {
   throw new Error(

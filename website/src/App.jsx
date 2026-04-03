@@ -8,6 +8,7 @@ import {
   Calendar, Clock, ChevronRight, Hexagon
 } from 'lucide-react';
 import { useCms } from './cms/CmsContext.jsx';
+import { getDefaultAboutPage } from './lib/sanity/index.js';
 import { submitInquiry } from './lib/inquiry/submitInquiry.js';
 
 // 数据全部由 Sanity 提供（CmsContext）；询盘经 /api/inquiries 服务端写入 Sanity
@@ -633,101 +634,119 @@ const HomePage = () => {
   );
 };
 
-// --- About Us 品牌探索 (深度优化版) ---
+function aboutCertIcon(icon) {
+  switch (icon) {
+    case 'award':
+      return Award;
+    case 'globe':
+      return Globe2;
+    case 'activity':
+      return Activity;
+    case 'shield':
+    default:
+      return ShieldCheck;
+  }
+}
+
+// --- About Us 品牌探索（Sanity aboutPage，缺省见 getDefaultAboutPage）---
 const AboutPage = () => {
   const navigate = useNavigate();
-  const INTERNAL_BRANDS = [
-    { 
-      id: 'yozo', 
-      name: 'YOZO', 
-      subtitle: '院线级高端抗衰标杆', 
-      desc: '专研前沿生物科技与抗老成分的先锋品牌。将实验室级别的精纯抗衰分子转化为看得见的卓效年轻体验。',
-      img: 'https://images.unsplash.com/photo-1629198688000-71f23e745b6e?auto=format&fit=crop&q=80&w=800'
-    },
-    { 
-      id: 'yozo-all', 
-      name: 'YOZO ALL IN ONE', 
-      subtitle: '极简多效精简护肤', 
-      desc: '为现代快节奏都市人群打造。倡导以一抵多的极简护肤哲学，在精简步骤的同时不妥协深层修护功效。',
-      img: 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?auto=format&fit=crop&q=80&w=800'
-    },
-    { 
-      id: 'ohines', 
-      name: 'OHINES', 
-      subtitle: '敏感肌微生态修护', 
-      desc: '专注受损屏障修护与敏感肌精研护理。以纯净植物精粹复配神经酰胺，重建肌肤健康微生态网络。',
-      img: 'https://images.unsplash.com/photo-1596755389378-c11ece1f184b?auto=format&fit=crop&q=80&w=800'
-    },
-    { 
-      id: 'vivimiyu', 
-      name: 'VIVIMIYU', 
-      subtitle: '新锐东方色彩美学', 
-      desc: '融合现代色彩工艺与轻养肤理念的彩妆品牌。重新定义亚洲肌肤的底妆质感与高定色彩表达。',
-      img: 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&q=80&w=800'
-    },
-    { 
-      id: 'janeage', 
-      name: 'JaneAge', 
-      subtitle: '熟龄肌分阶抗老专家', 
-      desc: '针对 35+ 熟龄肌肤痛点量身定制。提供从紧致轮廓到密集抗皱的结构化、全周期抗老解决方案。',
-      img: 'https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?auto=format&fit=crop&q=80&w=800'
-    }
-  ];
+  const { aboutPage, loading, error, reload } = useCms();
+  const a = aboutPage ?? getDefaultAboutPage();
+
+  if (loading && !aboutPage) {
+    return <CmsLoadingScreen />;
+  }
+  if (error) {
+    return (
+      <div className="pt-40 pb-32 text-center text-[14px] text-gray-500 font-light">
+        <p>{error}</p>
+        <button type="button" onClick={() => reload()} className="mt-6 text-[#111111] underline">
+          重试
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="yozo-animate-page-in bg-white">
-      {/* 1. Hero 视觉区 */}
       <div className="pt-40 pb-24 container mx-auto px-6 md:px-12 text-center">
         <div className="inline-flex items-center gap-3 mb-8">
-          <span className="h-px w-8 bg-gray-200"></span><span className="text-[11px] font-bold tracking-[0.3em] uppercase text-gray-400">About YOZO</span><span className="h-px w-8 bg-gray-200"></span>
+          <span className="h-px w-8 bg-gray-200"></span>
+          <span className="text-[11px] font-bold tracking-[0.3em] uppercase text-gray-400">{a.heroEyebrow}</span>
+          <span className="h-px w-8 bg-gray-200"></span>
         </div>
         <h1 className="text-5xl md:text-7xl font-light tracking-tight mb-8 leading-[1.15] text-[#111111]">
-          从卓越制造，<br className="hidden md:block"/>到伟大的品牌孵化器。
+          {String(a.heroTitle || '')
+            .split('\n')
+            .map((line, i, arr) => (
+              <span key={i}>
+                {line}
+                {i < arr.length - 1 ? <br className="hidden md:block" /> : null}
+              </span>
+            ))}
         </h1>
-        <p className="text-gray-500 font-light max-w-2xl mx-auto text-lg leading-relaxed">
-          汕头市贞丽芙生物科技有限公司。我们不仅是隐于幕后的顶级代工执行者，更是多个知名美妆品牌背后的商业起盘者与核心科研大脑。
+        <p className="text-gray-500 font-light max-w-2xl mx-auto text-lg leading-relaxed whitespace-pre-line">
+          {a.heroSubtitle}
         </p>
       </div>
 
       <div className="relative h-[60vh] min-h-[500px] w-full overflow-hidden mb-24">
-         <img src="https://images.unsplash.com/photo-1581093458791-9f3c3900df4b?auto=format&fit=crop&q=80&w=2000" alt="实验室与孵化" className="w-full h-full object-cover filter grayscale-[20%]" />
-         <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center p-6 text-center">
-           <h2 className="text-white text-3xl md:text-5xl font-light tracking-widest uppercase mb-4 leading-snug">"We engineer<br/>market leaders."</h2>
-           <p className="text-white/80 font-light tracking-widest text-[13px] uppercase">不止于造物，更赋能商业成功</p>
-         </div>
+        <img
+          src={a.labImageUrl}
+          alt=""
+          className="w-full h-full object-cover filter grayscale-[20%]"
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+        />
+        <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center p-6 text-center">
+          <h2 className="text-white text-3xl md:text-5xl font-light tracking-widest uppercase mb-4 leading-snug">
+            {String(a.labOverlayTitle || '')
+              .split('\n')
+              .map((line, i, arr) => (
+                <span key={i}>
+                  {line}
+                  {i < arr.length - 1 ? <br /> : null}
+                </span>
+              ))}
+          </h2>
+          <p className="text-white/80 font-light tracking-widest text-[13px] uppercase">{a.labOverlaySubtitle}</p>
+        </div>
       </div>
 
-      {/* 2. 品牌宣言与愿景 */}
       <section className="py-16 md:py-24 bg-white">
         <div className="container mx-auto px-6 md:px-12 max-w-4xl text-center">
-           <h3 className="text-2xl md:text-3xl font-light text-[#111111] mb-8 leading-relaxed">
-             “一个优秀的代工厂，必须先懂得如何运营一个成功的品牌。”
-           </h3>
-           <p className="text-gray-500 font-light leading-loose text-[15px]">
-             依托十余年沉淀的研发壁垒与敏捷供应链，YOZO 突破了传统 OEM 仅停留在“代工加工”的局限。我们打通了从「前瞻性品类企划」、「核心独家配方研发」到「全案品牌落地」的完整闭环 (OBM)。这种深入骨髓的品牌运营基因，让我们在服务 B 端客户时，能够提供远超行业标准的战略级赋能。
-           </p>
+          <h3 className="text-2xl md:text-3xl font-light text-[#111111] mb-8 leading-relaxed whitespace-pre-line">
+            {a.manifestoQuote}
+          </h3>
+          <p className="text-gray-500 font-light leading-loose text-[15px] whitespace-pre-line">{a.manifestoBody}</p>
         </div>
       </section>
 
-      {/* 3. 自有/合作孵化品牌矩阵 (Brand Portfolio) - 核心新增 */}
       <section className="py-24 bg-[#FAFAFA] border-y border-gray-100">
         <div className="container mx-auto px-6 md:px-12">
           <div className="text-center mb-20">
-            <div className="text-[11px] tracking-[0.3em] text-gray-400 uppercase mb-4 font-bold">Our Brand Portfolio</div>
-            <h2 className="text-3xl md:text-4xl font-light tracking-tight mb-6 text-[#111111]">多元化的自有品牌矩阵</h2>
-            <p className="text-gray-500 font-light max-w-2xl mx-auto text-[15px]">
-              实战出真知。我们成功孵化并运营了以下细分赛道的标杆品牌，这是我们产品力与市场洞察力的最佳证明。
+            <div className="text-[11px] tracking-[0.3em] text-gray-400 uppercase mb-4 font-bold">{a.portfolioEyebrow}</div>
+            <h2 className="text-3xl md:text-4xl font-light tracking-tight mb-6 text-[#111111]">{a.portfolioTitle}</h2>
+            <p className="text-gray-500 font-light max-w-2xl mx-auto text-[15px] whitespace-pre-line">
+              {a.portfolioIntro}
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {INTERNAL_BRANDS.map((brand) => (
-              <div 
-                key={brand.id} 
+            {a.portfolioBrands.map((brand) => (
+              <div
+                key={brand.id}
                 className="group bg-white rounded-[24px] overflow-hidden border border-gray-100/50 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] transition-all duration-500"
               >
                 <div className="relative aspect-[4/3] overflow-hidden bg-gray-50">
-                  <img src={brand.img} alt={brand.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                  <img
+                    src={brand.img}
+                    alt={brand.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-60"></div>
                   <div className="absolute bottom-6 left-6 text-white">
                     <div className="text-2xl font-bold tracking-widest uppercase mb-1">{brand.name}</div>
@@ -735,58 +754,52 @@ const AboutPage = () => {
                 </div>
                 <div className="p-8">
                   <h4 className="text-[14px] font-medium text-[#111111] mb-3 flex items-center gap-2">
-                    <Hexagon size={14} className="text-gray-300"/> {brand.subtitle}
+                    <Hexagon size={14} className="text-gray-300" /> {brand.subtitle}
                   </h4>
-                  <p className="text-[13px] text-gray-500 font-light leading-relaxed">
-                    {brand.desc}
-                  </p>
+                  <p className="text-[13px] text-gray-500 font-light leading-relaxed whitespace-pre-line">{brand.desc}</p>
                 </div>
               </div>
             ))}
           </div>
-          
+
           <div className="mt-16 text-center">
-             <button onClick={() => navigate('/services')} className="group inline-flex items-center gap-2 text-[13px] font-medium tracking-[0.1em] text-gray-500 hover:text-[#111111] transition-colors border-b border-transparent hover:border-[#111111] pb-1">
-               探索我们的 OBM 贴牌全案服务 <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
-             </button>
+            <button
+              type="button"
+              onClick={() => followHref(navigate, a.portfolioCtaHref || '/services')}
+              className="group inline-flex items-center gap-2 text-[13px] font-medium tracking-[0.1em] text-gray-500 hover:text-[#111111] transition-colors border-b border-transparent hover:border-[#111111] pb-1"
+            >
+              {a.portfolioCtaLabel}{' '}
+              <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
+            </button>
           </div>
         </div>
       </section>
 
-      {/* 4. 国际权威合规认证 (重塑背书) */}
       <section className="py-24 bg-white">
         <div className="container mx-auto px-6 md:px-12 text-center">
           <div className="mb-16">
-             <h3 className="text-3xl font-light mb-4 text-[#111111]">全球化合规准入实力</h3>
-             <p className="text-gray-400 font-light text-[13px] tracking-widest uppercase">Strict Global Quality Control & Certifications</p>
+            <h3 className="text-3xl font-light mb-4 text-[#111111]">{a.certSectionTitle}</h3>
+            <p className="text-gray-400 font-light text-[13px] tracking-widest uppercase">{a.certSectionSubtitle}</p>
           </div>
-          
+
           <div className="flex flex-wrap justify-center items-center gap-12 md:gap-24 text-gray-800 max-w-5xl mx-auto">
-            <div className="flex flex-col items-center gap-4 opacity-50 hover:opacity-100 transition-opacity duration-300">
-               <ShieldCheck size={36} strokeWidth={1} />
-               <span className="text-lg font-bold tracking-widest">ISO 22716</span>
-               <span className="text-[11px] text-gray-400 font-light">国际化妆品优良制造规范</span>
-            </div>
-            <div className="flex flex-col items-center gap-4 opacity-50 hover:opacity-100 transition-opacity duration-300">
-               <Award size={36} strokeWidth={1} />
-               <span className="text-lg font-bold tracking-widest">GMPC Certified</span>
-               <span className="text-[11px] text-gray-400 font-light">10万级净化无尘车间认证</span>
-            </div>
-            <div className="flex flex-col items-center gap-4 opacity-50 hover:opacity-100 transition-opacity duration-300">
-               <Globe2 size={36} strokeWidth={1} />
-               <span className="text-lg font-bold tracking-widest">FDA Compliant</span>
-               <span className="text-[11px] text-gray-400 font-light">符合北美市场高标准准入</span>
-            </div>
-            <div className="flex flex-col items-center gap-4 opacity-50 hover:opacity-100 transition-opacity duration-300">
-               <Activity size={36} strokeWidth={1} />
-               <span className="text-lg font-bold tracking-widest">SGS Tested</span>
-               <span className="text-[11px] text-gray-400 font-light">瑞士权威机构理化与安全检测</span>
-            </div>
+            {a.certifications.map((c, idx) => {
+              const IconComp = aboutCertIcon(c.icon);
+              return (
+                <div
+                  key={`${c.title}-${idx}`}
+                  className="flex flex-col items-center gap-4 opacity-50 hover:opacity-100 transition-opacity duration-300"
+                >
+                  <IconComp size={36} strokeWidth={1} />
+                  <span className="text-lg font-bold tracking-widest">{c.title}</span>
+                  <span className="text-[11px] text-gray-400 font-light">{c.subtitle}</span>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* 5. 底部 CTA */}
       <SharedContactCTA source="about" />
     </div>
   );

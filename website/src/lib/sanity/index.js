@@ -2,6 +2,7 @@ export { getSanityClient, isSanityConfigured, resetSanityClientForTests } from '
 export {
   siteSettingsQuery,
   homePageQuery,
+  aboutPageQuery,
   productCategoriesQuery,
   productsQuery,
   faqsQuery,
@@ -28,5 +29,7 @@ export {
   mapSanitySimplePage,
   mapSiteSettingsForHome,
   mergeHomePageIntoSiteSettings,
+  mapAboutPageFromSanity,
+  getDefaultAboutPage,
   sanityRefToLegacyId,
 } from './mappers.js';
