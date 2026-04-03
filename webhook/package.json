@@ -1,0 +1,17 @@
+{
+  "name": "jubin-translation-webhook",
+  "version": "1.0.0",
+  "description": "Sanity webhook handler: auto-translate product fields ZH→EN/ES via MyMemory API",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "@sanity/client": "^7.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

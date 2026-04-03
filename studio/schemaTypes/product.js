@@ -7,6 +7,7 @@ export default defineType({
   groups: [
     { name: 'main', title: '基础' },
     { name: 'content', title: '详情' },
+    { name: 'translations', title: '翻译（自动）' },
     { name: 'meta', title: '展示设置' },
     { name: 'seo', title: 'SEO' },
   ],
@@ -114,6 +115,29 @@ export default defineType({
       group: 'content',
     }),
     defineField({ name: 'oemDesc', title: 'OEM/定制说明', type: 'text', rows: 4, group: 'content' }),
+
+    // ── 自动翻译字段（由 Webhook 写入，勿手动编辑）──────────────────
+    defineField({ name: 'name_en', title: 'Name (EN)', type: 'string', group: 'translations', readOnly: true,
+      description: '由翻译 Webhook 自动填充，请勿手动编辑' }),
+    defineField({ name: 'name_es', title: 'Name (ES)', type: 'string', group: 'translations', readOnly: true }),
+    defineField({ name: 'excerpt_en', title: 'Excerpt (EN)', type: 'text', rows: 3, group: 'translations', readOnly: true }),
+    defineField({ name: 'excerpt_es', title: 'Excerpt (ES)', type: 'text', rows: 3, group: 'translations', readOnly: true }),
+    defineField({ name: 'description_en', title: 'Description (EN)', type: 'text', rows: 4, group: 'translations', readOnly: true }),
+    defineField({ name: 'description_es', title: 'Description (ES)', type: 'text', rows: 4, group: 'translations', readOnly: true }),
+    defineField({ name: 'applicationScenarios_en', title: 'Application Scenarios (EN)', type: 'text', rows: 4, group: 'translations', readOnly: true }),
+    defineField({ name: 'applicationScenarios_es', title: 'Application Scenarios (ES)', type: 'text', rows: 4, group: 'translations', readOnly: true }),
+    defineField({ name: 'packaging_en', title: 'Packaging (EN)', type: 'string', group: 'translations', readOnly: true }),
+    defineField({ name: 'packaging_es', title: 'Packaging (ES)', type: 'string', group: 'translations', readOnly: true }),
+    defineField({ name: 'skinType_en', title: 'Skin Type (EN)', type: 'string', group: 'translations', readOnly: true }),
+    defineField({ name: 'skinType_es', title: 'Skin Type (ES)', type: 'string', group: 'translations', readOnly: true }),
+    defineField({ name: 'oemDesc_en', title: 'OEM Desc (EN)', type: 'text', rows: 4, group: 'translations', readOnly: true }),
+    defineField({ name: 'oemDesc_es', title: 'OEM Desc (ES)', type: 'text', rows: 4, group: 'translations', readOnly: true }),
+    defineField({ name: 'efficacy_en', title: 'Efficacy (EN)', type: 'array', of: [{ type: 'string' }], group: 'translations', readOnly: true }),
+    defineField({ name: 'efficacy_es', title: 'Efficacy (ES)', type: 'array', of: [{ type: 'string' }], group: 'translations', readOnly: true }),
+    // 内容哈希，用于防止翻译 Webhook 循环触发
+    defineField({ name: 'translationSourceHash', title: '翻译源哈希', type: 'string', group: 'translations', readOnly: true,
+      hidden: true }),
+
     defineField({
       name: 'sortOrder',
       title: '排序',
