@@ -1,5 +1,20 @@
 @import "tailwindcss";
 
+/* 避免大屏定宽/绝对定位元素在小屏撑出横向滚动条 */
+html {
+  overflow-x: clip;
+}
+
+body {
+  overflow-x: clip;
+  margin: 0;
+  min-width: 0;
+}
+
+#root {
+  min-width: 0;
+}
+
 /* 页面入场与悬浮面板：替代未安装的 tailwindcss-animate 的 animate-in / fade-in */
 @keyframes yozo-page-in {
   from {

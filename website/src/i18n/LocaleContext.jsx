@@ -53,6 +53,11 @@ export function LocaleProvider({ children, defaultLocale }) {
     }
   }, [locale]);
 
+  useEffect(() => {
+    document.documentElement.lang =
+      locale === 'zh' ? 'zh-CN' : locale === 'es' ? 'es' : 'en';
+  }, [locale]);
+
   const setLocale = useCallback((next) => {
     setLocaleState(normalizeLocale(next));
   }, []);

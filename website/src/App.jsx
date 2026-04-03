@@ -8,6 +8,7 @@ import {
   Calendar, Clock, ChevronRight, Hexagon
 } from 'lucide-react';
 import { useCms } from './cms/CmsContext.jsx';
+import { useLocale } from './i18n/LocaleContext.jsx';
 import { getDefaultAboutPage } from './lib/sanity/index.js';
 import { submitInquiry } from './lib/inquiry/submitInquiry.js';
 
@@ -144,13 +145,17 @@ const SharedContactCTA = ({ source = 'cta', sourceProductId }) => {
     <section id="contact-cta" className="py-24 md:py-32 bg-white">
       <div className="container mx-auto px-6 md:px-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 border border-gray-100 rounded-[24px] bg-white overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-          <div className="p-12 md:p-16 flex flex-col justify-between relative overflow-hidden bg-[#FAFAFA]">
+          <div className="p-6 sm:p-10 md:p-12 lg:p-16 flex flex-col justify-between relative overflow-hidden bg-[#FAFAFA]">
             <div className="relative z-10">
               <div className="inline-flex items-center gap-2 mb-6">
                 <div className="w-2 h-2 rounded-full bg-[#111111]"></div>
                 <span className="text-[11px] tracking-[0.2em] text-gray-500 uppercase font-medium">Let's Build Together</span>
               </div>
-              <h2 className="text-4xl md:text-5xl font-light tracking-tight mb-6 leading-[1.15] text-[#111111]">提交您的诉求，<br/>索取免费打样。</h2>
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-light tracking-tight mb-6 leading-[1.15] text-[#111111]">
+                提交您的诉求，
+                <br className="hidden sm:block" />
+                索取免费打样。
+              </h2>
               <p className="text-gray-500 font-light leading-relaxed mb-12 text-[15px]">
                 专业的业务与产品经理团队 24 小时待命。即刻获取最新的美妆行业趋势、打样方案 (Fast Sampling) 及专属的高级定制报价。
               </p>
@@ -170,7 +175,7 @@ const SharedContactCTA = ({ source = 'cta', sourceProductId }) => {
               </div>
             </div>
           </div>
-          <div className="bg-white p-12 md:p-16 text-[#111111] flex flex-col justify-center">
+          <div className="bg-white p-6 sm:p-10 md:p-12 lg:p-16 text-[#111111] flex flex-col justify-center">
             <h3 className="text-2xl font-light mb-10">意向需求表</h3>
             <form className="space-y-8" onSubmit={submit}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -269,7 +274,7 @@ const HomePage = () => {
   if (loading) return <CmsLoadingScreen />;
   if (error) {
     return (
-      <div className="pt-40 pb-32 text-center text-[14px] text-gray-500 font-light">
+      <div className="pt-28 md:pt-36 lg:pt-40 pb-32 text-center text-[14px] text-gray-500 font-light">
         <p>{error}</p>
         <button type="button" onClick={() => reload()} className="mt-6 text-[#111111] underline">
           重试
@@ -282,7 +287,7 @@ const HomePage = () => {
     <div className="yozo-animate-page-in">
       
       {/* 1. 首屏模块 */}
-      <section className="relative h-screen min-h-[750px] flex items-center justify-center overflow-hidden bg-[#FAFAFA]">
+      <section className="relative min-h-[max(100dvh,520px)] sm:min-h-[max(100dvh,600px)] md:min-h-[max(100dvh,680px)] flex items-center justify-center overflow-hidden bg-[#FAFAFA] py-16 sm:py-20 md:py-0">
         <div className="absolute inset-0 z-0">
           {siteSettings?.heroBackgroundVideoUrl ? (
             <video
@@ -294,17 +299,26 @@ const HomePage = () => {
               playsInline
             />
           ) : (
-            <img src={siteSettings?.heroImageUrl || 'https://images.unsplash.com/photo-1617897903246-719242758050?auto=format&fit=crop&q=80&w=2000'} alt="" className="w-full h-full object-cover scale-105 animate-[pulse_30s_ease-in-out_infinite] opacity-60 filter grayscale-[10%]" />
+            <img
+              src={siteSettings?.heroImageUrl || 'https://images.unsplash.com/photo-1617897903246-719242758050?auto=format&fit=crop&q=80&w=2000'}
+              alt=""
+              className="w-full h-full object-cover scale-105 animate-[pulse_30s_ease-in-out_infinite] opacity-60 filter grayscale-[10%]"
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src =
+                  'https://dummyimage.com/2000x1125/e5e7eb/374151.png&text=YOZO';
+              }}
+            />
           )}
           <div className="absolute inset-0 bg-gradient-to-b from-[#111111]/60 via-[#111111]/30 to-[#FAFAFA]"></div>
         </div>
         
-        <div className="container mx-auto px-6 relative z-10 text-center text-white mt-20">
-          <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-xl border border-white/30 px-5 py-2 rounded-full text-[11px] tracking-widest uppercase mb-8 text-white">
-            <ShieldCheck size={14}/>{' '}
-            {siteSettings?.trustBadge || 'ISO 22716 & GMPC Certified'}
+        <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center text-white mt-12 sm:mt-16 md:mt-20 max-w-[100vw]">
+          <div className="inline-flex flex-wrap items-center justify-center gap-2 bg-white/20 backdrop-blur-xl border border-white/30 px-4 sm:px-5 py-2 rounded-full text-[10px] sm:text-[11px] tracking-widest uppercase mb-6 sm:mb-8 text-white max-w-[95vw]">
+            <ShieldCheck size={14} className="shrink-0" />
+            <span className="text-center leading-snug">{siteSettings?.trustBadge || 'ISO 22716 & GMPC Certified'}</span>
           </div>
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-light tracking-tight mb-6 leading-[1.15] max-w-5xl mx-auto drop-shadow-sm">
+          <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-light tracking-tight mb-6 leading-[1.15] max-w-5xl mx-auto drop-shadow-sm px-1">
             {(siteSettings?.heroTitle || '以前沿生物科技，\n赋能顶尖美妆品牌。')
               .split('\n')
               .map((line, i, arr) => (
@@ -314,7 +328,7 @@ const HomePage = () => {
                 </span>
               ))}
           </h1>
-          <p className="text-base md:text-xl font-light text-white/90 max-w-2xl mx-auto mb-10 leading-relaxed">
+          <p className="text-sm sm:text-base md:text-xl font-light text-white/90 max-w-2xl mx-auto mb-8 sm:mb-10 leading-relaxed px-1">
             {siteSettings?.heroSubtitle ? (
               siteSettings.heroSubtitle.split('\n').map((line, i, arr) => (
                 <span key={i}>
@@ -330,7 +344,7 @@ const HomePage = () => {
               </>
             )}
           </p>
-          <div className="flex flex-col sm:flex-row justify-center gap-4">
+          <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 w-full max-w-md sm:max-w-none mx-auto px-1">
             <button
               type="button"
               onClick={() =>
@@ -375,56 +389,56 @@ const HomePage = () => {
       </section>
 
       {/* 3. 数据与优势指标 */}
-      <section className="bg-white py-20">
-        <div className="container mx-auto px-6 md:px-12 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-6xl">
-          <div className="bg-[#FAFAFA] rounded-2xl p-8 text-center hover:-translate-y-1 transition-transform duration-300">
-            <div className="text-4xl md:text-5xl font-light mb-2 text-[#111111]">15+</div><div className="text-[12px] text-gray-500 font-medium">年深耕高端代工</div>
+      <section className="bg-white py-12 md:py-20">
+        <div className="container mx-auto px-4 md:px-12 grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 max-w-6xl">
+          <div className="bg-[#FAFAFA] rounded-xl md:rounded-2xl p-5 md:p-8 text-center hover:-translate-y-1 transition-transform duration-300">
+            <div className="text-3xl md:text-5xl font-light mb-1 md:mb-2 text-[#111111]">15+</div><div className="text-[11px] md:text-[12px] text-gray-500 font-medium">年深耕高端代工</div>
           </div>
-          <div className="bg-[#FAFAFA] rounded-2xl p-8 text-center hover:-translate-y-1 transition-transform duration-300">
-            <div className="text-4xl md:text-5xl font-light mb-2 text-[#111111]">10k+</div><div className="text-[12px] text-gray-500 font-medium">成熟配方档案库</div>
+          <div className="bg-[#FAFAFA] rounded-xl md:rounded-2xl p-5 md:p-8 text-center hover:-translate-y-1 transition-transform duration-300">
+            <div className="text-3xl md:text-5xl font-light mb-1 md:mb-2 text-[#111111]">10k+</div><div className="text-[11px] md:text-[12px] text-gray-500 font-medium">成熟配方档案库</div>
           </div>
-          <div className="bg-[#FAFAFA] rounded-2xl p-8 text-center hover:-translate-y-1 transition-transform duration-300">
-            <div className="text-4xl md:text-5xl font-light mb-2 text-[#111111]">10w</div><div className="text-[12px] text-gray-500 font-medium">GMPC 无尘车间</div>
+          <div className="bg-[#FAFAFA] rounded-xl md:rounded-2xl p-5 md:p-8 text-center hover:-translate-y-1 transition-transform duration-300">
+            <div className="text-3xl md:text-5xl font-light mb-1 md:mb-2 text-[#111111]">10w</div><div className="text-[11px] md:text-[12px] text-gray-500 font-medium">GMPC 无尘车间</div>
           </div>
-          <div className="bg-[#FAFAFA] rounded-2xl p-8 text-center hover:-translate-y-1 transition-transform duration-300">
-            <div className="text-4xl md:text-5xl font-light mb-2 text-[#111111]">1M+</div><div className="text-[12px] text-gray-500 font-medium">日均峰值产能 (支)</div>
+          <div className="bg-[#FAFAFA] rounded-xl md:rounded-2xl p-5 md:p-8 text-center hover:-translate-y-1 transition-transform duration-300">
+            <div className="text-3xl md:text-5xl font-light mb-1 md:mb-2 text-[#111111]">1M+</div><div className="text-[11px] md:text-[12px] text-gray-500 font-medium">日均峰值产能 (支)</div>
           </div>
         </div>
       </section>
 
       {/* 4. OEM/ODM 模式总览 */}
-      <section className="py-24 md:py-32 bg-[#FAFAFA]">
+      <section className="py-16 md:py-24 lg:py-32 bg-[#FAFAFA]">
         <div className="container mx-auto px-6 md:px-12">
           <div className="text-center mb-16 md:mb-20">
             <div className="text-[11px] tracking-[0.2em] text-gray-400 uppercase mb-4 font-bold">Service Models</div>
             <h2 className="text-3xl md:text-4xl font-light tracking-tight mb-6 text-[#111111]">全链路代工解决方案</h2>
             <p className="text-gray-500 font-light max-w-2xl mx-auto text-[15px]">为全球跨国品牌、新锐国货以及跨界创作者提供高匹配度的柔性化制造与孵化服务。</p>
           </div>
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            <div className="bg-white border border-gray-100/50 p-10 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-500 group cursor-pointer rounded-[24px]" onClick={() => navigate('/services')}>
-              <Settings size={32} className="mb-6 text-gray-400 group-hover:text-[#111111] transition-colors" strokeWidth={1.5} />
+          <div className="grid md:grid-cols-3 gap-5 md:gap-8 max-w-6xl mx-auto">
+            <div className="bg-white border border-gray-100/50 p-6 md:p-10 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-500 group cursor-pointer rounded-[20px] md:rounded-[24px]" onClick={() => navigate('/services')}>
+              <Settings size={28} className="mb-4 md:mb-6 text-gray-400 group-hover:text-[#111111] transition-colors" strokeWidth={1.5} />
               <div className="text-[11px] font-bold tracking-widest text-[#1A1A1A] mb-2 uppercase">Original Equipment Mfg</div>
-              <h3 className="text-2xl font-light mb-4">OEM 敏捷制造</h3>
-              <p className="text-[14px] text-gray-500 font-light leading-relaxed">您提供核心配方，我们依托 10 万级 GMPC 自动化车间进行精准复刻与规模化量产，保障极速响应与成本优势。</p>
+              <h3 className="text-xl md:text-2xl font-light mb-3 md:mb-4">OEM 敏捷制造</h3>
+              <p className="text-[13px] md:text-[14px] text-gray-500 font-light leading-relaxed">您提供核心配方，我们依托 10 万级 GMPC 自动化车间进行精准复刻与规模化量产，保障极速响应与成本优势。</p>
             </div>
-            <div className="bg-[#1A1A1A] text-white p-10 shadow-[0_10px_40px_rgb(0,0,0,0.1)] transform md:-translate-y-4 cursor-pointer rounded-[24px]" onClick={() => navigate('/services')}>
-              <Beaker size={32} className="mb-6 text-gray-300" strokeWidth={1.5} />
+            <div className="bg-[#1A1A1A] text-white p-6 md:p-10 shadow-[0_10px_40px_rgb(0,0,0,0.1)] transform md:-translate-y-4 cursor-pointer rounded-[20px] md:rounded-[24px]" onClick={() => navigate('/services')}>
+              <Beaker size={28} className="mb-4 md:mb-6 text-gray-300" strokeWidth={1.5} />
               <div className="text-[11px] font-bold tracking-widest text-gray-400 mb-2 uppercase">Original Design Mfg</div>
-              <h3 className="text-2xl font-light mb-4">ODM 深度定制</h3>
-              <p className="text-[14px] text-gray-400 font-light leading-relaxed">联合生物实验室提供从专属配方研发、全套临床评估到包材甄选的端到端服务，打造绝对产品护城河。</p>
+              <h3 className="text-xl md:text-2xl font-light mb-3 md:mb-4">ODM 深度定制</h3>
+              <p className="text-[13px] md:text-[14px] text-gray-400 font-light leading-relaxed">联合生物实验室提供从专属配方研发、全套临床评估到包材甄选的端到端服务，打造绝对产品护城河。</p>
             </div>
-            <div className="bg-white border border-gray-100/50 p-10 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-500 group cursor-pointer rounded-[24px]" onClick={() => navigate('/services')}>
-              <Box size={32} className="mb-6 text-gray-400 group-hover:text-[#111111] transition-colors" strokeWidth={1.5} />
+            <div className="bg-white border border-gray-100/50 p-6 md:p-10 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-500 group cursor-pointer rounded-[20px] md:rounded-[24px]" onClick={() => navigate('/services')}>
+              <Box size={28} className="mb-4 md:mb-6 text-gray-400 group-hover:text-[#111111] transition-colors" strokeWidth={1.5} />
               <div className="text-[11px] font-bold tracking-widest text-[#1A1A1A] mb-2 uppercase">Private Label / OBM</div>
-              <h3 className="text-2xl font-light mb-4">贴牌与全案</h3>
-              <p className="text-[14px] text-gray-500 font-light leading-relaxed">海量验证过的成熟配方库，极低门槛启动 (Low MOQ)。提供商标注册、视觉包装与药监合规代办的保姆级孵化。</p>
+              <h3 className="text-xl md:text-2xl font-light mb-3 md:mb-4">贴牌与全案</h3>
+              <p className="text-[13px] md:text-[14px] text-gray-500 font-light leading-relaxed">海量验证过的成熟配方库，极低门槛启动 (Low MOQ)。提供商标注册、视觉包装与药监合规代办的保姆级孵化。</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* 5. 厂房与研发实力 */}
-      <section className="py-24 md:py-32 bg-white">
+      <section className="py-16 md:py-24 lg:py-32 bg-white">
         <div className="container mx-auto px-6 md:px-12">
           <div className="text-center mb-20">
             <div className="text-[11px] tracking-[0.2em] text-gray-400 uppercase mb-4 font-bold">Core Competence</div>
@@ -487,7 +501,7 @@ const HomePage = () => {
       </section>
 
       {/* 6. 四大核心商业优势 */}
-      <section className="py-24 bg-[#FAFAFA]">
+      <section className="py-14 md:py-24 bg-[#FAFAFA]">
         <div className="container mx-auto px-6 md:px-12">
           <div className="text-center mb-16">
             <div className="text-[11px] tracking-[0.2em] text-gray-400 uppercase mb-4 font-bold">Why Choose Us</div>
@@ -495,17 +509,17 @@ const HomePage = () => {
             <p className="text-gray-500 font-light text-[15px] max-w-2xl mx-auto">不仅提供卓越的制造产能，更为您构筑坚实的商业后盾。</p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 max-w-6xl mx-auto">
             {[
-              { icon: <Target size={28} strokeWidth={1.5}/>, title: "灵活起订 (Low MOQ)", desc: "打破代工高门槛。成熟配方支持小批量快返测试，缓解新锐品牌的资金压力。" },
-              { icon: <Zap size={28} strokeWidth={1.5}/>, title: "极速打样 (Fast Sampling)", desc: "依托成熟数据库与敏捷研发团队，常规需求最快 3 天精准出样，抢占市场先机。" },
-              { icon: <Lock size={28} strokeWidth={1.5}/>, title: "配方保密 (IP Protection)", desc: "签署严格保密协议 (NDA)。定制配方知识产权归属品牌方，保障商业机密。" },
-              { icon: <Activity size={28} strokeWidth={1.5}/>, title: "极致性价比 (Cost Efficiency)", desc: "源头工厂直供，从包材集采到全自动化灌装，将成本优势最大化让利于您。" }
+              { icon: <Target size={24} strokeWidth={1.5}/>, title: "灵活起订 (Low MOQ)", desc: "打破代工高门槛。成熟配方支持小批量快返测试，缓解新锐品牌的资金压力。" },
+              { icon: <Zap size={24} strokeWidth={1.5}/>, title: "极速打样 (Fast Sampling)", desc: "依托成熟数据库与敏捷研发团队，常规需求最快 3 天精准出样，抢占市场先机。" },
+              { icon: <Lock size={24} strokeWidth={1.5}/>, title: "配方保密 (IP Protection)", desc: "签署严格保密协议 (NDA)。定制配方知识产权归属品牌方，保障商业机密。" },
+              { icon: <Activity size={24} strokeWidth={1.5}/>, title: "极致性价比 (Cost Efficiency)", desc: "源头工厂直供，从包材集采到全自动化灌装，将成本优势最大化让利于您。" }
             ].map((item, idx) => (
-              <div key={idx} className="bg-white p-8 border border-gray-100/50 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1 transition-all duration-300 rounded-[20px]">
-                <div className="text-[#111111] mb-5">{item.icon}</div>
-                <h4 className="text-[16px] font-medium mb-2">{item.title}</h4>
-                <p className="text-[13px] text-gray-500 font-light leading-relaxed">{item.desc}</p>
+              <div key={idx} className="bg-white p-5 md:p-8 border border-gray-100/50 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1 transition-all duration-300 rounded-[16px] md:rounded-[20px]">
+                <div className="text-[#111111] mb-4">{item.icon}</div>
+                <h4 className="text-[14px] md:text-[16px] font-medium mb-2">{item.title}</h4>
+                <p className="text-[12px] md:text-[13px] text-gray-500 font-light leading-relaxed">{item.desc}</p>
               </div>
             ))}
           </div>
@@ -557,9 +571,9 @@ const HomePage = () => {
       </div>
 
       {/* 8. 精选热门配方 */}
-      <section className="py-24 bg-white">
-        <div className="container mx-auto px-6 md:px-12">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
+      <section className="py-14 md:py-24 bg-white">
+        <div className="container mx-auto px-4 md:px-12">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 md:mb-16 gap-4 md:gap-6">
             <div>
               <div className="text-[11px] tracking-[0.2em] text-gray-400 uppercase mb-4 font-bold">Featured Formulas</div>
               <h2 className="text-3xl md:text-4xl font-light tracking-tight">热销配方与质地档案</h2>
@@ -568,15 +582,18 @@ const HomePage = () => {
               浏览产品中心 <ArrowUpRight size={16} className="transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"/>
             </button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
             {featuredProducts.map(product => (
-              <div key={product.id} className="group cursor-pointer bg-[#FAFAFA] border border-gray-100/50 rounded-[20px] hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1 transition-all duration-500" onClick={() => navigate(productDetailPath(product))}>
-                <div className="relative aspect-[4/5] overflow-hidden bg-gray-50 mb-3 rounded-t-[20px]">
-                  <img src={product.img} alt={``} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+              <div key={product.id} className="group cursor-pointer bg-[#FAFAFA] border border-gray-100/50 rounded-[16px] md:rounded-[20px] hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1 transition-all duration-500" onClick={() => navigate(productDetailPath(product))}>
+                <div className="relative aspect-square sm:aspect-[4/5] overflow-hidden bg-gray-100 mb-2 md:mb-3 rounded-t-[16px] md:rounded-t-[20px]">
+                  {product.img
+                    ? <img src={product.img} alt={``} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                    : <div className="w-full h-full flex items-center justify-center text-gray-300 text-[11px] tracking-widest uppercase">No Image</div>
+                  }
                 </div>
-                <div className="p-5 pt-2">
-                  <div className="text-[10px] tracking-widest text-gray-400 uppercase mb-1.5">{product.category}</div>
-                  <h3 className="text-[15px] font-medium group-hover:text-[#1A1A1A] transition-colors line-clamp-1 text-[#333]">{product.name}</h3>
+                <div className="p-3 md:p-5 pt-1 md:pt-2">
+                  <div className="text-[9px] md:text-[10px] tracking-widest text-gray-400 uppercase mb-1">{product.category}</div>
+                  <h3 className="text-[13px] md:text-[15px] font-medium group-hover:text-[#1A1A1A] transition-colors line-clamp-2 text-[#333]">{product.name}</h3>
                 </div>
               </div>
             ))}
@@ -683,7 +700,7 @@ const AboutPage = () => {
   }
   if (error) {
     return (
-      <div className="pt-40 pb-32 text-center text-[14px] text-gray-500 font-light">
+      <div className="pt-28 md:pt-36 lg:pt-40 pb-32 text-center text-[14px] text-gray-500 font-light">
         <p>{error}</p>
         <button type="button" onClick={() => reload()} className="mt-6 text-[#111111] underline">
           重试
@@ -694,13 +711,13 @@ const AboutPage = () => {
 
   return (
     <div className="yozo-animate-page-in bg-white">
-      <div className="pt-40 pb-24 container mx-auto px-6 md:px-12 text-center">
+      <div className="pt-28 md:pt-36 lg:pt-40 pb-24 container mx-auto px-6 md:px-12 text-center">
         <div className="inline-flex items-center gap-3 mb-8">
           <span className="h-px w-8 bg-gray-200"></span>
           <span className="text-[11px] font-bold tracking-[0.3em] uppercase text-gray-400">{a.heroEyebrow}</span>
           <span className="h-px w-8 bg-gray-200"></span>
         </div>
-        <h1 className="text-5xl md:text-7xl font-light tracking-tight mb-8 leading-[1.15] text-[#111111]">
+        <h1 className="text-3xl sm:text-5xl md:text-7xl font-light tracking-tight mb-6 sm:mb-8 leading-[1.15] text-[#111111] px-1">
           {String(a.heroTitle || '')
             .split('\n')
             .map((line, i, arr) => (
@@ -710,12 +727,12 @@ const AboutPage = () => {
               </span>
             ))}
         </h1>
-        <p className="text-gray-500 font-light max-w-2xl mx-auto text-lg leading-relaxed whitespace-pre-line">
+        <p className="text-gray-500 font-light max-w-2xl mx-auto text-base sm:text-lg leading-relaxed whitespace-pre-line px-1">
           {a.heroSubtitle}
         </p>
       </div>
 
-      <div className="relative h-[60vh] min-h-[500px] w-full overflow-hidden mb-24">
+      <div className="relative h-[min(52dvh,380px)] sm:h-[min(56dvh,440px)] md:h-[60vh] md:min-h-[460px] w-full overflow-hidden mb-16 md:mb-24">
         <img
           src={a.labImageUrl}
           alt=""
@@ -723,8 +740,8 @@ const AboutPage = () => {
           loading="lazy"
           referrerPolicy="no-referrer-when-downgrade"
         />
-        <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center p-6 text-center">
-          <h2 className="text-white text-3xl md:text-5xl font-light tracking-widest uppercase mb-4 leading-snug">
+        <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center p-4 sm:p-6 text-center">
+          <h2 className="text-white text-xl sm:text-3xl md:text-5xl font-light tracking-widest uppercase mb-3 sm:mb-4 leading-snug max-w-[90vw]">
             {String(a.labOverlayTitle || '')
               .split('\n')
               .map((line, i, arr) => (
@@ -833,7 +850,7 @@ const AboutPage = () => {
 const ServicesPage = () => {
   const navigate = useNavigate();
   return (
-    <div className="yozo-animate-page-in pt-40 bg-white min-h-screen">
+    <div className="yozo-animate-page-in pt-28 md:pt-36 lg:pt-40 bg-white min-h-screen">
       {/* Hero Section */}
       <div className="container mx-auto px-6 md:px-12 text-center mb-24 md:mb-32">
         <div className="inline-flex items-center gap-3 mb-6">
@@ -841,8 +858,12 @@ const ServicesPage = () => {
           <span className="text-[11px] font-bold tracking-[0.2em] text-gray-400 uppercase">Global Cosmetic Manufacturing</span>
           <span className="h-px w-8 bg-gray-200"></span>
         </div>
-        <h1 className="text-5xl md:text-6xl lg:text-7xl font-light tracking-tight mb-8 leading-[1.1]">从卓越概念，<br/>到全球热销单品。</h1>
-        <p className="text-gray-500 font-light max-w-2xl mx-auto text-lg leading-relaxed mb-10">
+        <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-light tracking-tight mb-6 sm:mb-8 leading-[1.1] px-1">
+          从卓越概念，
+          <br className="hidden sm:block" />
+          到全球热销单品。
+        </h1>
+        <p className="text-gray-500 font-light max-w-2xl mx-auto text-[15px] sm:text-lg leading-relaxed mb-8 sm:mb-10 px-1">
           依托符合国际 GMPC 及 ISO 22716 标准的智慧工厂，<br className="hidden md:block"/>YOZO 提供贯穿产品生命周期的端到端制造解决方案。赋能品牌高效出海，构筑核心产品护城河。
         </p>
         <button onClick={() => navigate('/contact')} className="inline-flex items-center gap-2 bg-[#1A1A1A] text-white px-8 py-3.5 text-[14px] font-medium tracking-wide transition-all duration-300 rounded-full hover:bg-black hover:shadow-lg">
@@ -988,7 +1009,7 @@ const ProductsPage = () => {
   if (loading) return <CmsLoadingScreen />;
   if (error) {
     return (
-      <div className="pt-40 pb-32 text-center text-[14px] text-gray-500 font-light">
+      <div className="pt-28 md:pt-36 lg:pt-40 pb-32 text-center text-[14px] text-gray-500 font-light">
         <p>{error}</p>
         <button type="button" onClick={() => reload()} className="mt-6 text-[#111111] underline">
           重试
@@ -1000,7 +1021,7 @@ const ProductsPage = () => {
   const hasMore = visibleCount < filteredProducts.length;
 
   return (
-    <div className="yozo-animate-page-in pt-40 pb-32 bg-[#FAFAFA] min-h-screen">
+    <div className="yozo-animate-page-in pt-28 md:pt-36 lg:pt-40 pb-32 bg-[#FAFAFA] min-h-screen">
       <div className="container mx-auto px-6 md:px-12">
         <div className="text-center mb-20">
           <div className="inline-flex items-center gap-3 mb-6">
@@ -1013,9 +1034,9 @@ const ProductsPage = () => {
         </div>
 
         {/* 筛选器 */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-12 bg-white p-5 border border-gray-100 rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.02)]">
-          <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto flex-1">
-            <Filter size={16} className="text-gray-300 mr-2 hidden lg:block" />
+        <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 sm:gap-6 mb-12 bg-white p-4 sm:p-5 border border-gray-100 rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.02)] min-w-0">
+          <div className="flex flex-nowrap md:flex-wrap items-center gap-2.5 w-full min-w-0 lg:w-auto flex-1 overflow-x-auto md:overflow-visible pb-1 md:pb-0 [-webkit-overflow-scrolling:touch]">
+            <Filter size={16} className="text-gray-300 mr-2 hidden lg:block shrink-0" />
             {productCategories.map((cat) => (
               <button 
                 key={cat} onClick={() => { setActiveCategory(cat); setVisibleCount(8); }}
@@ -1089,7 +1110,7 @@ const ProductDetailPage = () => {
   if (loading || !products.length) return <CmsLoadingScreen />;
   if (error) {
     return (
-      <div className="pt-40 pb-32 text-center text-[14px] text-gray-500 font-light">
+      <div className="pt-28 md:pt-36 lg:pt-40 pb-32 text-center text-[14px] text-gray-500 font-light">
         <p>{error}</p>
         <button type="button" onClick={() => reload()} className="mt-6 text-[#111111] underline">
           重试
@@ -1111,26 +1132,26 @@ const ProductDetailPage = () => {
     <div className="yozo-animate-page-in bg-white min-h-screen">
       
       {/* 1. 首屏：核心产品信息区 (Hero Section) */}
-      <section className="pt-40 pb-20 bg-[#FAFAFA] border-b border-gray-100">
+      <section className="pt-28 md:pt-36 lg:pt-40 pb-20 bg-[#FAFAFA] border-b border-gray-100">
         <div className="container mx-auto px-6 md:px-12">
           <button onClick={() => navigate('/products')} className="group text-[12px] font-medium tracking-[0.1em] text-gray-400 hover:text-[#111111] mb-12 flex items-center gap-2 transition-colors uppercase">
              <ArrowRight size={14} className="rotate-180 transition-transform group-hover:-translate-x-1" /> 返回配方档案库
           </button>
           
-          <article itemScope itemType="https://schema.org/Product" className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24">
+          <article itemScope itemType="https://schema.org/Product" className="grid grid-cols-1 lg:grid-cols-12 gap-10 sm:gap-12 lg:gap-24">
             
             {/* 左侧：产品视觉图 */}
-            <div className="lg:col-span-5 relative">
-              <div className="bg-white aspect-[4/5] rounded-[24px] overflow-hidden border border-gray-100/80 p-6 flex items-center justify-center shadow-[0_20px_40px_-15px_rgba(0,0,0,0.03)] sticky top-32">
+            <div className="lg:col-span-5 relative min-w-0">
+              <div className="bg-white aspect-[4/5] max-h-[min(70vh,520px)] lg:max-h-none rounded-[20px] sm:rounded-[24px] overflow-hidden border border-gray-100/80 p-4 sm:p-6 flex items-center justify-center shadow-[0_20px_40px_-15px_rgba(0,0,0,0.03)] relative lg:sticky lg:top-28 xl:top-32">
                 <img src={product.img} alt={product.name} itemProp="image" className="w-full h-full object-cover rounded-[12px] hover:scale-105 transition-transform duration-1000" />
-                <div className="absolute top-10 left-10 bg-white/90 backdrop-blur text-[#111111] px-4 py-1.5 rounded-full text-[11px] font-bold tracking-widest uppercase shadow-sm">
+                <div className="absolute top-4 left-4 sm:top-10 sm:left-10 bg-white/90 backdrop-blur text-[#111111] px-3 sm:px-4 py-1.5 rounded-full text-[10px] sm:text-[11px] font-bold tracking-widest uppercase shadow-sm">
                   Ready to Label
                 </div>
               </div>
             </div>
             
             {/* 右侧：产品参数与转化核心 */}
-            <div className="lg:col-span-7 flex flex-col justify-center py-6">
+            <div className="lg:col-span-7 flex flex-col justify-center py-4 lg:py-6 min-w-0">
               <div className="flex items-center gap-3 mb-6">
                 <span className="text-[11px] font-bold tracking-[0.2em] text-[#111111] uppercase bg-gray-200/50 px-3 py-1 rounded-full">{product.category}</span>
                 <span className="text-[11px] text-gray-400 tracking-widest uppercase flex items-center gap-1"><ShieldCheck size={12}/> Mature Formula</span>
@@ -1164,7 +1185,7 @@ const ProductDetailPage = () => {
                 </div>
               ) : null}
 
-              <div className="grid grid-cols-2 gap-x-8 gap-y-6 mb-12 border-y border-gray-200/60 py-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 sm:gap-x-8 gap-y-6 mb-12 border-y border-gray-200/60 py-8">
                 <div>
                   <div className="text-[10px] text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2"><Settings size={12}/> 建议起订量 (MOQ)</div>
                   <div className="text-[15px] font-medium text-[#111111]">5,000 支起 (支持试单)</div>
@@ -1183,11 +1204,11 @@ const ProductDetailPage = () => {
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-4">
-                <button onClick={() => navigate('/contact')} className="group bg-[#1A1A1A] text-white py-4 px-10 text-[13px] font-medium tracking-[0.1em] hover:bg-black transition-all duration-300 flex justify-center items-center gap-3 rounded-full shadow-[0_8px_20px_rgba(0,0,0,0.1)]">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
+                <button onClick={() => navigate('/contact')} className="group bg-[#1A1A1A] text-white py-3.5 sm:py-4 px-8 sm:px-10 text-[13px] font-medium tracking-[0.1em] hover:bg-black transition-all duration-300 flex justify-center items-center gap-3 rounded-full shadow-[0_8px_20px_rgba(0,0,0,0.1)] w-full sm:w-auto">
                   索取配方样板 <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
                 </button>
-                <button onClick={() => navigate('/contact')} className="group border border-gray-200 bg-white text-[#111111] py-4 px-10 text-[13px] font-medium tracking-[0.1em] hover:border-gray-400 transition-colors flex justify-center items-center gap-3 rounded-full">
+                <button onClick={() => navigate('/contact')} className="group border border-gray-200 bg-white text-[#111111] py-3.5 sm:py-4 px-8 sm:px-10 text-[13px] font-medium tracking-[0.1em] hover:border-gray-400 transition-colors flex justify-center items-center gap-3 rounded-full w-full sm:w-auto">
                   获取专属报价
                 </button>
               </div>
@@ -1351,7 +1372,7 @@ const FaqPage = () => {
   if (loading) return <CmsLoadingScreen />;
   if (error) {
     return (
-      <div className="pt-40 pb-32 text-center text-[14px] text-gray-500 font-light">
+      <div className="pt-28 md:pt-36 lg:pt-40 pb-32 text-center text-[14px] text-gray-500 font-light">
         <p>{error}</p>
         <button type="button" onClick={() => reload()} className="mt-6 text-[#111111] underline">
           重试
@@ -1361,7 +1382,7 @@ const FaqPage = () => {
   }
 
   return (
-    <div className="yozo-animate-page-in pt-40 bg-[#FAFAFA] min-h-screen">
+    <div className="yozo-animate-page-in pt-28 md:pt-36 lg:pt-40 bg-[#FAFAFA] min-h-screen">
       <div className="container mx-auto px-6 md:px-12 max-w-4xl pb-32">
         <div className="text-center mb-20">
           <div className="inline-flex items-center gap-3 mb-6">
@@ -1392,7 +1413,7 @@ const FaqPage = () => {
 
 // --- 联系我们 ---
 const ContactPage = () => (
-  <div className="yozo-animate-page-in pt-40 bg-[#FAFAFA] min-h-screen">
+  <div className="yozo-animate-page-in pt-28 md:pt-36 lg:pt-40 bg-[#FAFAFA] min-h-screen">
     <div className="container mx-auto px-6 md:px-12 text-center mb-16">
       <div className="inline-flex items-center gap-3 mb-6">
         <span className="h-px w-8 bg-gray-300"></span><span className="text-[11px] font-bold tracking-[0.3em] uppercase text-gray-400">Global Network</span><span className="h-px w-8 bg-gray-300"></span>
@@ -1410,7 +1431,7 @@ const ContactPage = () => (
            <div className="absolute inset-0 bg-gradient-to-b from-[#111111]/30 via-transparent to-[#111111]/90"></div>
         </div>
 
-        <div className="relative z-10 p-10 md:p-16 lg:p-20">
+        <div className="relative z-10 p-6 sm:p-10 md:p-16 lg:p-20">
            <div className="text-center mb-16">
              <h2 className="text-3xl md:text-4xl font-light text-white mb-6 tracking-tight">业务版图辐射全球</h2>
              <p className="text-white/60 font-light text-[15px] max-w-2xl mx-auto leading-relaxed">
@@ -1537,7 +1558,7 @@ const NewsPage = () => {
   if (loading) return <CmsLoadingScreen />;
   if (error) {
     return (
-      <div className="pt-40 pb-32 text-center text-[14px] text-gray-500 font-light">
+      <div className="pt-28 md:pt-36 lg:pt-40 pb-32 text-center text-[14px] text-gray-500 font-light">
         <p>{error}</p>
         <button type="button" onClick={() => reload()} className="mt-6 text-[#111111] underline">
           重试
@@ -1547,7 +1568,7 @@ const NewsPage = () => {
   }
 
   return (
-    <div className="yozo-animate-page-in pt-40 pb-32 bg-[#FAFAFA] min-h-screen">
+    <div className="yozo-animate-page-in pt-28 md:pt-36 lg:pt-40 pb-32 bg-[#FAFAFA] min-h-screen">
       <div className="container mx-auto px-6 md:px-12">
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-3 mb-6">
@@ -1591,9 +1612,9 @@ const NewsPage = () => {
         )}
 
         {/* 筛选与搜索 */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-12 bg-white p-5 border border-gray-100 rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.02)]">
-          <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto flex-1">
-            <Filter size={16} className="text-gray-300 mr-2 hidden lg:block" />
+        <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 sm:gap-6 mb-12 bg-white p-4 sm:p-5 border border-gray-100 rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.02)] min-w-0">
+          <div className="flex flex-nowrap md:flex-wrap items-center gap-2.5 w-full min-w-0 lg:w-auto flex-1 overflow-x-auto md:overflow-visible pb-1 md:pb-0 [-webkit-overflow-scrolling:touch]">
+            <Filter size={16} className="text-gray-300 mr-2 hidden lg:block shrink-0" />
             {articleCategories.map((cat) => (
               <button 
                 key={cat} onClick={() => { setActiveCategory(cat); setVisibleCount(6); }}
@@ -1676,7 +1697,7 @@ const NewsDetailPage = () => {
   if (loading || !articles.length) return <CmsLoadingScreen />;
   if (error) {
     return (
-      <div className="pt-40 pb-32 text-center text-[14px] text-gray-500 font-light">
+      <div className="pt-28 md:pt-36 lg:pt-40 pb-32 text-center text-[14px] text-gray-500 font-light">
         <p>{error}</p>
         <button type="button" onClick={() => reload()} className="mt-6 text-[#111111] underline">
           重试
@@ -1691,7 +1712,7 @@ const NewsDetailPage = () => {
     <div className="yozo-animate-page-in bg-white min-h-screen">
       
       {/* 头部区 */}
-      <header className="relative pt-40 pb-20 md:pb-32 bg-[#FAFAFA] border-b border-gray-100">
+      <header className="relative pt-28 md:pt-36 lg:pt-40 pb-20 md:pb-32 bg-[#FAFAFA] border-b border-gray-100">
         <div className="container mx-auto px-6 md:px-12 max-w-4xl">
           <button onClick={() => navigate('/news')} className="group text-[12px] font-medium tracking-[0.1em] text-gray-400 hover:text-[#111111] mb-12 flex items-center gap-2 transition-colors uppercase">
             <ArrowRight size={14} className="rotate-180 transition-transform group-hover:-translate-x-1" /> Back to News
@@ -1825,7 +1846,7 @@ const CaseStudyDetailPage = () => {
   if (loading) return <CmsLoadingScreen />;
   if (error) {
     return (
-      <div className="pt-40 pb-32 text-center text-[14px] text-gray-500 font-light">
+      <div className="pt-28 md:pt-36 lg:pt-40 pb-32 text-center text-[14px] text-gray-500 font-light">
         <p>{error}</p>
         <button type="button" onClick={() => reload()} className="mt-6 text-[#111111] underline">
           重试
@@ -1835,7 +1856,7 @@ const CaseStudyDetailPage = () => {
   }
   if (!study) {
     return (
-      <div className="pt-40 pb-32 text-center text-[14px] text-gray-500 font-light">
+      <div className="pt-28 md:pt-36 lg:pt-40 pb-32 text-center text-[14px] text-gray-500 font-light">
         <p>未找到该案例</p>
         <button type="button" onClick={() => navigate('/')} className="mt-6 text-[#111111] underline">
           返回首页
@@ -1845,7 +1866,7 @@ const CaseStudyDetailPage = () => {
   }
 
   return (
-    <div className="yozo-animate-page-in pt-40 pb-24 bg-white min-h-screen">
+    <div className="yozo-animate-page-in pt-28 md:pt-36 lg:pt-40 pb-24 bg-white min-h-screen">
       <div className="container mx-auto px-6 md:px-12 max-w-4xl">
         <button
           type="button"
@@ -1882,7 +1903,7 @@ const SimplePageView = () => {
   if (loading) return <CmsLoadingScreen />;
   if (error) {
     return (
-      <div className="pt-40 pb-32 text-center text-[14px] text-gray-500 font-light">
+      <div className="pt-28 md:pt-36 lg:pt-40 pb-32 text-center text-[14px] text-gray-500 font-light">
         <p>{error}</p>
         <button type="button" onClick={() => reload()} className="mt-6 text-[#111111] underline">
           重试
@@ -1892,7 +1913,7 @@ const SimplePageView = () => {
   }
   if (!page) {
     return (
-      <div className="pt-40 pb-32 text-center text-[14px] text-gray-500 font-light">
+      <div className="pt-28 md:pt-36 lg:pt-40 pb-32 text-center text-[14px] text-gray-500 font-light">
         <p>未找到页面</p>
         <button type="button" onClick={() => navigate('/')} className="mt-6 text-[#111111] underline">
           返回首页
@@ -1902,7 +1923,7 @@ const SimplePageView = () => {
   }
 
   return (
-    <div className="yozo-animate-page-in pt-40 pb-24 bg-[#FAFAFA] min-h-screen">
+    <div className="yozo-animate-page-in pt-28 md:pt-36 lg:pt-40 pb-24 bg-[#FAFAFA] min-h-screen">
       {page.banner?.bgUrl ? (
         <div
           className="h-[240px] md:h-[320px] bg-cover bg-center relative mb-12"
@@ -1936,6 +1957,46 @@ const SimplePageView = () => {
 // ==========================================
 // 主应用渲染 (Main App & Layout)
 // ==========================================
+
+function LanguageSwitcher({ navOnLight }) {
+  const { locale, setLocale } = useLocale();
+  const opts = [
+    { id: 'zh', label: '中文' },
+    { id: 'en', label: 'EN' },
+    { id: 'es', label: 'ES' },
+  ];
+  return (
+    <div
+      role="group"
+      aria-label="切换语言"
+      className={`inline-flex shrink-0 items-center rounded-full border p-0.5 gap-0.5 ${
+        navOnLight ? 'border-gray-200/80 bg-white/70' : 'border-white/30 bg-black/25'
+      }`}
+    >
+      {opts.map((o) => {
+        const active = locale === o.id;
+        return (
+          <button
+            key={o.id}
+            type="button"
+            onClick={() => setLocale(o.id)}
+            className={`text-[11px] font-medium tracking-wide px-2.5 py-1 rounded-full transition-colors ${
+              active
+                ? navOnLight
+                  ? 'bg-[#111111] text-white'
+                  : 'bg-white text-[#111111]'
+                : navOnLight
+                  ? 'text-gray-600 hover:text-[#111111]'
+                  : 'text-white/80 hover:text-white'
+            }`}
+          >
+            {o.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 function SiteShell() {
   const navigate = useNavigate();
@@ -1983,7 +2044,7 @@ function SiteShell() {
   const headerCta = siteSettings?.headerCta;
 
   return (
-    <div className="min-h-screen bg-[#FDFDFD] font-sans text-[#222222] selection:bg-gray-200 relative">
+    <div className="min-h-screen min-w-0 bg-[#FDFDFD] font-sans text-[#222222] selection:bg-gray-200 relative overflow-x-clip">
       
       {/* 现代化高端导航栏 */}
       <nav className={`fixed w-full z-50 transition-all duration-700 ${
@@ -1993,7 +2054,7 @@ function SiteShell() {
       }`}>
         <div className="max-w-[1400px] mx-auto px-6 md:px-12 flex justify-between items-center relative">
           
-          <div className={`text-2xl font-bold tracking-[0.15em] uppercase cursor-pointer transition-colors duration-500 ${navOnLight ? 'text-[#111111]' : 'text-white'}`} onClick={() => navigate('/')}>
+          <div className={`text-xl sm:text-2xl font-bold tracking-[0.12em] sm:tracking-[0.15em] uppercase cursor-pointer transition-colors duration-500 shrink-0 ${navOnLight ? 'text-[#111111]' : 'text-white'}`} onClick={() => navigate('/')}>
             {siteBrandTitle ? (
               <span>{siteBrandTitle}</span>
             ) : (
@@ -2003,7 +2064,7 @@ function SiteShell() {
             )}
           </div>
           
-          <div className={`hidden lg:flex absolute left-1/2 -translate-x-1/2 items-center gap-8 transition-colors duration-500 ${navOnLight ? 'text-gray-500' : 'text-white/80'}`}>
+          <div className={`hidden xl:flex absolute left-1/2 -translate-x-1/2 items-center gap-5 2xl:gap-8 transition-colors duration-500 ${navOnLight ? 'text-gray-500' : 'text-white/80'}`}>
             {navItems.map((item) => {
               const isActive = navItemActive(location.pathname, item);
               return (
@@ -2013,7 +2074,7 @@ function SiteShell() {
                   onClick={() => followHref(navigate, item.path, item.newTab)}
                   className="group relative flex flex-col items-center gap-1.5"
                 >
-                  <span className={`text-[13px] tracking-wide transition-colors duration-300 ${
+                  <span className={`text-[12px] 2xl:text-[13px] tracking-wide transition-colors duration-300 ${
                     isActive 
                       ? (navOnLight ? 'text-[#111111] font-medium' : 'text-white font-medium')
                       : (navOnLight ? 'hover:text-[#111111]' : 'hover:text-white')
@@ -2030,7 +2091,8 @@ function SiteShell() {
             })}
           </div>
 
-          <div className="hidden lg:flex items-center gap-6">
+          <div className="hidden xl:flex items-center gap-3 2xl:gap-4 shrink-0">
+            <LanguageSwitcher navOnLight={navOnLight} />
             <button
               type="button"
               onClick={() =>
@@ -2038,7 +2100,7 @@ function SiteShell() {
                   ? followHref(navigate, headerCta.href)
                   : navigate('/contact')
               }
-              className={`px-7 py-2.5 text-[12px] tracking-[0.1em] font-medium transition-all duration-500 border rounded-full ${
+              className={`px-5 2xl:px-7 py-2.5 text-[11px] 2xl:text-[12px] tracking-[0.1em] font-medium transition-all duration-500 border rounded-full whitespace-nowrap ${
               navOnLight
                 ? 'bg-transparent border-gray-300 text-[#111111] hover:bg-[#1A1A1A] hover:text-white hover:border-[#1A1A1A]' 
                 : 'bg-white border-white text-[#111111] hover:bg-transparent hover:text-white'
@@ -2048,13 +2110,13 @@ function SiteShell() {
             </button>
           </div>
 
-          <button className={`lg:hidden transition-colors duration-500 ${navOnLight ? 'text-[#111111]' : 'text-white'}`} onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+          <button type="button" className={`xl:hidden transition-colors duration-500 ${navOnLight ? 'text-[#111111]' : 'text-white'}`} onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
             {mobileMenuOpen ? <X size={28} strokeWidth={1.5} /> : <Menu size={28} strokeWidth={1.5} />}
           </button>
         </div>
 
         {mobileMenuOpen && (
-          <div className="lg:hidden absolute top-full left-0 w-full bg-white shadow-2xl border-t border-gray-100 py-6 flex flex-col">
+          <div className="xl:hidden absolute top-full left-0 w-full max-h-[min(80dvh,calc(100vh-4rem))] overflow-y-auto overscroll-contain bg-white shadow-2xl border-t border-gray-100 py-6 flex flex-col">
              {navItems.map((item) => (
                <button
                  key={`${item.path}-${item.label}`}
@@ -2068,6 +2130,9 @@ function SiteShell() {
                  {item.label}
                </button>
              ))}
+             <div className="px-6 pt-6 pb-2 flex justify-center">
+               <LanguageSwitcher navOnLight={true} />
+             </div>
           </div>
         )}
       </nav>
@@ -2183,23 +2248,23 @@ function SiteShell() {
            </div>
            
            {/* 版权声明区 */}
-           <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-6 text-[13px] font-light text-white/50">
+           <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 md:gap-6 text-[12px] sm:text-[13px] font-light text-white/50 px-1">
               <div className="text-center md:text-left order-2 md:order-1 tracking-wide">
                 {siteSettings?.footerCopyright ||
                   `© ${new Date().getFullYear()} 汕头市贞丽芙生物科技有限公司 (YOZO). All rights reserved.`}
               </div>
-              <div className="flex gap-8 order-1 md:order-2">
-                <button className="hover:text-white transition-colors">隐私政策 (Privacy Policy)</button>
-                <button className="hover:text-white transition-colors">服务条款 (Terms of Service)</button>
+              <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 order-1 md:order-2">
+                <button type="button" className="hover:text-white transition-colors whitespace-nowrap">隐私政策 (Privacy Policy)</button>
+                <button type="button" className="hover:text-white transition-colors whitespace-nowrap">服务条款 (Terms of Service)</button>
               </div>
            </div>
         </div>
       </footer>
 
       {/* 全局右下角悬浮表单 */}
-      <div className="fixed bottom-8 right-8 z-50 flex flex-col items-end">
+      <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 md:bottom-8 md:right-8 z-50 flex flex-col items-end max-w-[calc(100vw-1.5rem)]">
         {floatingFormOpen && (
-          <div className="bg-white shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)] border border-gray-100 rounded-2xl p-8 mb-4 w-[320px] md:w-[380px] yozo-animate-panel-up">
+          <div className="bg-white shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)] border border-gray-100 rounded-2xl p-5 sm:p-8 mb-3 sm:mb-4 w-[min(22rem,calc(100vw-2rem))] sm:w-[min(24rem,calc(100vw-2.5rem))] md:w-[380px] yozo-animate-panel-up">
             <div className="flex justify-between items-center mb-8">
               <h4 className="text-[15px] font-medium text-[#111111] tracking-wide">发送询盘请求</h4>
               <button onClick={() => setFloatingFormOpen(false)} className="text-gray-400 hover:text-[#111111] transition-colors"><X size={18} strokeWidth={1.5}/></button>
