@@ -16,6 +16,8 @@ export const siteSettingsQuery = `*[_type == "siteSettings"][0]{
   "shareImageUrl": coalesce(defaultSeo.ogImage.asset->url, seoImage.asset->url),
   "logoUrl": logo.asset->url,
   "faviconUrl": favicon.asset->url,
+  "coreCompetenceLabImageUrl": coreCompetenceLabImage.asset->url,
+  "coreCompetenceGmpcImageUrl": coreCompetenceGmpcImage.asset->url,
   defaultSeo,
   socialLinks,
   headerCta,

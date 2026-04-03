@@ -435,7 +435,19 @@ const HomePage = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 max-w-6xl mx-auto">
             <div className="group bg-[#FAFAFA] p-8 md:p-12 border border-gray-100/50 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-500 rounded-[24px]">
               <div className="mb-8 overflow-hidden relative aspect-[16/9] rounded-[16px]">
-                <img src="https://images.unsplash.com/photo-1581093458791-9f3c3900df4b?auto=format&fit=crop&q=80&w=800" alt="实验室" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 filter grayscale-[10%]" />
+                <img
+                  src={
+                    siteSettings?.coreCompetenceLabImageUrl ||
+                    'https://dummyimage.com/1600x900/e5e7eb/374151.png&text=Lab'
+                  }
+                  alt="实验室"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 filter grayscale-[10%]"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src =
+                      'https://dummyimage.com/1600x900/e5e7eb/374151.png&text=Lab';
+                  }}
+                />
               </div>
               <div className="flex items-center gap-3 mb-4">
                 <Microscope size={24} className="text-[#111111]" strokeWidth={1.5} />
@@ -448,7 +460,19 @@ const HomePage = () => {
 
             <div className="group bg-[#1A1A1A] text-white p-8 md:p-12 shadow-[0_8px_30px_rgb(0,0,0,0.1)] transition-all duration-500 rounded-[24px]">
               <div className="mb-8 overflow-hidden relative aspect-[16/9] rounded-[16px]">
-                <img src="https://images.unsplash.com/photo-1613665813446-82a78c468a1d?auto=format&fit=crop&q=80&w=800" alt="无菌车间" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-70" />
+                <img
+                  src={
+                    siteSettings?.coreCompetenceGmpcImageUrl ||
+                    'https://dummyimage.com/1600x900/111827/e5e7eb.png&text=GMPC'
+                  }
+                  alt="无菌车间"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-70"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src =
+                      'https://dummyimage.com/1600x900/111827/e5e7eb.png&text=GMPC';
+                  }}
+                />
               </div>
               <div className="flex items-center gap-3 mb-4">
                 <Factory size={24} className="text-gray-300" strokeWidth={1.5} />

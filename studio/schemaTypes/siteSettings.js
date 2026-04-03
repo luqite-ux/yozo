@@ -8,6 +8,7 @@ export default defineType({
     { name: 'brand', title: '品牌与语言' },
     { name: 'contact', title: '联系方式' },
     { name: 'nav', title: '导航与 CTA' },
+    { name: 'home', title: '首页图片' },
     { name: 'footer', title: '页脚' },
     { name: 'seo', title: 'SEO' },
     { name: 'tabs', title: '筛选 Tab' },
@@ -54,6 +55,20 @@ export default defineType({
       type: 'image',
       options: { hotspot: true },
       group: 'brand',
+    }),
+    defineField({
+      name: 'coreCompetenceLabImage',
+      title: '首页「联合生物研发中心」配图',
+      type: 'image',
+      options: { hotspot: true },
+      group: 'home',
+    }),
+    defineField({
+      name: 'coreCompetenceGmpcImage',
+      title: '首页「GMPC 智造中心」配图',
+      type: 'image',
+      options: { hotspot: true },
+      group: 'home',
     }),
     defineField({ name: 'contactPhone', title: '联系电话', type: 'string', group: 'contact' }),
     defineField({
