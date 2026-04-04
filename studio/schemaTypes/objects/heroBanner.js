@@ -37,6 +37,8 @@ export default defineType({
       name: 'backgroundImage',
       title: '背景图',
       type: 'image',
+      description:
+        '前台为全宽铺满 + object-cover，高度约一屏 (min-height: 100dvh)。建议上传横向大图：约 2400×1350 像素（16∶9）或更大（如 2560×1440）；主体构图放在中下部，顶部预留导航区。文件尽量压缩以加快首屏加载。',
       options: { hotspot: true },
     }),
     defineField({

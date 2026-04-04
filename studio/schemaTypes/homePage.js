@@ -21,6 +21,8 @@ export default defineType({
       name: 'heroImage',
       title: '首屏背景图（旧版）',
       type: 'image',
+      description:
+        '与 Hero 组件一致：全宽 cover、约一屏高。建议 2400×1350 px（16∶9）或更大；重要视觉偏中下，避开顶栏。',
       options: { hotspot: true },
       group: 'hero',
     }),

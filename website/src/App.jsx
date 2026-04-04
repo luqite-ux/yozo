@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useCms } from './cms/CmsContext.jsx';
 import { useLocale } from './i18n/LocaleContext.jsx';
+import { cmsZhElseT, formatCategoryTabLabel, navLabelForItem } from './i18n/helpers.js';
 import { getDefaultAboutPage } from './lib/sanity/index.js';
 import { submitInquiry } from './lib/inquiry/submitInquiry.js';
 
@@ -82,16 +83,18 @@ function navItemActive(pathname, item) {
 // 共享组件 (Shared Components)
 // ==========================================
 
-function CmsLoadingScreen({ message = '载入内容…' }) {
+function CmsLoadingScreen({ message }) {
+  const { t } = useLocale();
   return (
     <div className="min-h-[50vh] flex flex-col items-center justify-center text-gray-400 text-[14px] font-light tracking-wide">
-      {message}
+      {message ?? t('common.loading')}
     </div>
   );
 }
 
 const SharedContactCTA = ({ source = 'cta', sourceProductId }) => {
   const { siteSettings } = useCms();
+  const { t } = useLocale();
   const location = useLocation();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -102,18 +105,18 @@ const SharedContactCTA = ({ source = 'cta', sourceProductId }) => {
   const [hint, setHint] = useState('');
 
   const phoneDisplay = siteSettings?.contactPhone
-    ? `全球热线：${siteSettings.contactPhone}`
-    : '全球热线：+86 0754-89920101';
+    ? `${t('inquiry.hotlinePrefix')}${siteSettings.contactPhone}`
+    : `${t('inquiry.hotlinePrefix')}${t('inquiry.hotlineDefault')}`;
   const waDisplay = siteSettings?.contactWhatsapp
-    ? `WhatsApp: ${siteSettings.contactWhatsapp}`
-    : 'WhatsApp: +86 13632470463';
+    ? `${t('inquiry.waPrefix')}${siteSettings.contactWhatsapp}`
+    : `${t('inquiry.waPrefix')}${t('inquiry.waDefault')}`;
   const mailDisplay = siteSettings?.contactEmail || 'yozobeauty@outlook.com';
 
   const submit = async (e) => {
     e.preventDefault();
     setHint('');
     if (!name.trim() || (!phone.trim() && !email.trim())) {
-      setHint('请填写姓名，并至少填写电话或邮箱');
+      setHint(t('inquiry.errRequired'));
       return;
     }
     setSubmitting(true);
@@ -128,14 +131,14 @@ const SharedContactCTA = ({ source = 'cta', sourceProductId }) => {
         sourcePath: location.pathname,
         sourceProductId: sourceProductId || undefined,
       });
-      setHint('提交成功，我们会尽快与您联系。');
+      setHint(t('inquiry.success'));
       setName('');
       setPhone('');
       setEmail('');
       setCompany('');
       setMessage('');
     } catch (err) {
-      setHint(err.message || '提交失败，请稍后再试');
+      setHint(err.message || t('inquiry.errSubmit'));
     } finally {
       setSubmitting(false);
     }
@@ -149,15 +152,15 @@ const SharedContactCTA = ({ source = 'cta', sourceProductId }) => {
             <div className="relative z-10">
               <div className="inline-flex items-center gap-2 mb-6">
                 <div className="w-2 h-2 rounded-full bg-[#111111]"></div>
-                <span className="text-[11px] tracking-[0.2em] text-gray-500 uppercase font-medium">Let's Build Together</span>
+                <span className="text-[11px] tracking-[0.2em] text-gray-500 uppercase font-medium">{t('inquiry.badge')}</span>
               </div>
               <h2 className="text-3xl sm:text-4xl md:text-5xl font-light tracking-tight mb-6 leading-[1.15] text-[#111111]">
-                提交您的诉求，
+                {t('inquiry.h2l1')}
                 <br className="hidden sm:block" />
-                索取免费打样。
+                {t('inquiry.h2l2')}
               </h2>
               <p className="text-gray-500 font-light leading-relaxed mb-12 text-[15px]">
-                专业的业务与产品经理团队 24 小时待命。即刻获取最新的美妆行业趋势、打样方案 (Fast Sampling) 及专属的高级定制报价。
+                {t('inquiry.lead')}
               </p>
             </div>
             <div className="space-y-5 pt-8 border-t border-gray-200 relative z-10">
@@ -176,13 +179,13 @@ const SharedContactCTA = ({ source = 'cta', sourceProductId }) => {
             </div>
           </div>
           <div className="bg-white p-6 sm:p-10 md:p-12 lg:p-16 text-[#111111] flex flex-col justify-center">
-            <h3 className="text-2xl font-light mb-10">意向需求表</h3>
+            <h3 className="text-2xl font-light mb-10">{t('inquiry.formTitle')}</h3>
             <form className="space-y-8" onSubmit={submit}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="relative group">
                   <input
                     type="text"
-                    placeholder="您的姓名 *"
+                    placeholder={t('inquiry.phName')}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     className="w-full bg-transparent border-b border-gray-200 pb-3 text-[14px] focus:outline-none focus:border-[#111111] transition-colors placeholder:text-gray-400 font-light"
@@ -191,7 +194,7 @@ const SharedContactCTA = ({ source = 'cta', sourceProductId }) => {
                 <div className="relative group">
                   <input
                     type="text"
-                    placeholder="电话 / WhatsApp"
+                    placeholder={t('inquiry.phPhone')}
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     className="w-full bg-transparent border-b border-gray-200 pb-3 text-[14px] focus:outline-none focus:border-[#111111] transition-colors placeholder:text-gray-400 font-light"
@@ -201,7 +204,7 @@ const SharedContactCTA = ({ source = 'cta', sourceProductId }) => {
               <div className="relative group">
                 <input
                   type="email"
-                  placeholder="邮箱（与电话至少填一项）"
+                  placeholder={t('inquiry.phEmail')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full bg-transparent border-b border-gray-200 pb-3 text-[14px] focus:outline-none focus:border-[#111111] transition-colors placeholder:text-gray-400 font-light"
@@ -210,7 +213,7 @@ const SharedContactCTA = ({ source = 'cta', sourceProductId }) => {
               <div className="relative group">
                 <input
                   type="text"
-                  placeholder="公司或品牌名称"
+                  placeholder={t('inquiry.phCompany')}
                   value={company}
                   onChange={(e) => setCompany(e.target.value)}
                   className="w-full bg-transparent border-b border-gray-200 pb-3 text-[14px] focus:outline-none focus:border-[#111111] transition-colors placeholder:text-gray-400 font-light"
@@ -218,7 +221,7 @@ const SharedContactCTA = ({ source = 'cta', sourceProductId }) => {
               </div>
               <div className="relative group">
                 <textarea
-                  placeholder="简述您的定制需求（如：研发抗老面霜，预估量5000支...）"
+                  placeholder={t('inquiry.phMsg')}
                   rows={3}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
@@ -231,7 +234,7 @@ const SharedContactCTA = ({ source = 'cta', sourceProductId }) => {
                 disabled={submitting}
                 className="group bg-[#1A1A1A] text-white w-full py-4 text-[13px] font-medium tracking-widest hover:bg-black transition-all duration-300 rounded-full mt-4 flex justify-center items-center gap-2 shadow-md disabled:opacity-60"
               >
-                {submitting ? '提交中…' : '提交意向申请'}{' '}
+                {submitting ? t('contact.submitting') : t('inquiry.submit')}{' '}
                 <ArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-1" />
               </button>
             </form>
@@ -249,6 +252,7 @@ const SharedContactCTA = ({ source = 'cta', sourceProductId }) => {
 // --- 首页 (HomePage) ---
 const HomePage = () => {
   const navigate = useNavigate();
+  const { locale, t } = useLocale();
   const { products, faqs, loading, error, reload, siteSettings } = useCms();
   const [openFaq, setOpenFaq] = useState(0);
 
@@ -271,13 +275,52 @@ const HomePage = () => {
     return Array.isArray(list) && list.length > 0 ? list : [];
   }, [siteSettings?.homeFeaturedCaseStudies]);
 
+  const trustBadgeText = cmsZhElseT(locale, siteSettings?.trustBadge, 'home.trustBadgeFallback', t);
+  const heroTitleText = cmsZhElseT(locale, siteSettings?.heroTitle, 'home.heroTitle', t);
+  const heroSubtitleText = cmsZhElseT(locale, siteSettings?.heroSubtitle, 'home.heroSubtitle', t);
+  const primaryCtaLabel =
+    locale === 'zh' && siteSettings?.heroPrimaryCta?.label?.trim()
+      ? siteSettings.heroPrimaryCta.label.trim()
+      : t('home.heroPrimaryCta');
+  const secondaryCtaLabel =
+    locale === 'zh' && siteSettings?.heroSecondaryCta?.label?.trim()
+      ? siteSettings.heroSecondaryCta.label.trim()
+      : t('home.heroSecondaryCta');
+  const coreLabTitle =
+    locale === 'zh' && siteSettings?.coreCompetenceLabTitle?.trim()
+      ? siteSettings.coreCompetenceLabTitle.trim()
+      : t('home.coreLabTitle');
+  const coreLabBody =
+    locale === 'zh' && siteSettings?.coreCompetenceLabBody?.trim()
+      ? siteSettings.coreCompetenceLabBody.trim()
+      : t('home.coreLabBody');
+  const coreGmpcTitle =
+    locale === 'zh' && siteSettings?.coreCompetenceGmpcTitle?.trim()
+      ? siteSettings.coreCompetenceGmpcTitle.trim()
+      : t('home.coreGmpcTitle');
+  const coreGmpcBody =
+    locale === 'zh' && siteSettings?.coreCompetenceGmpcBody?.trim()
+      ? siteSettings.coreCompetenceGmpcBody.trim()
+      : t('home.coreGmpcBody');
+  const faqSectionHeading = cmsZhElseT(locale, siteSettings?.faqSectionTitle, 'home.faqSectionTitle', t);
+
+  const whyItems = useMemo(
+    () => [
+      { icon: <Target size={24} strokeWidth={1.5} />, title: t('home.why1t'), desc: t('home.why1d') },
+      { icon: <Zap size={24} strokeWidth={1.5} />, title: t('home.why2t'), desc: t('home.why2d') },
+      { icon: <Lock size={24} strokeWidth={1.5} />, title: t('home.why3t'), desc: t('home.why3d') },
+      { icon: <Activity size={24} strokeWidth={1.5} />, title: t('home.why4t'), desc: t('home.why4d') },
+    ],
+    [t],
+  );
+
   if (loading) return <CmsLoadingScreen />;
   if (error) {
     return (
       <div className="pt-28 md:pt-36 lg:pt-40 pb-32 text-center text-[14px] text-gray-500 font-light">
         <p>{error}</p>
         <button type="button" onClick={() => reload()} className="mt-6 text-[#111111] underline">
-          重试
+          {t('common.retry')}
         </button>
       </div>
     );
@@ -316,33 +359,23 @@ const HomePage = () => {
         <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center text-white mt-12 sm:mt-16 md:mt-20 max-w-[100vw]">
           <div className="inline-flex flex-wrap items-center justify-center gap-2 bg-white/20 backdrop-blur-xl border border-white/30 px-4 sm:px-5 py-2 rounded-full text-[10px] sm:text-[11px] tracking-widest uppercase mb-6 sm:mb-8 text-white max-w-[95vw]">
             <ShieldCheck size={14} className="shrink-0" />
-            <span className="text-center leading-snug">{siteSettings?.trustBadge || 'ISO 22716 & GMPC Certified'}</span>
+            <span className="text-center leading-snug">{trustBadgeText}</span>
           </div>
           <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-light tracking-tight mb-6 leading-[1.15] max-w-5xl mx-auto drop-shadow-sm px-1">
-            {(siteSettings?.heroTitle || '以前沿生物科技，\n赋能顶尖美妆品牌。')
-              .split('\n')
-              .map((line, i, arr) => (
-                <span key={i}>
-                  {line}
-                  {i < arr.length - 1 ? <br /> : null}
-                </span>
-              ))}
+            {heroTitleText.split('\n').map((line, i, arr) => (
+              <span key={i}>
+                {line}
+                {i < arr.length - 1 ? <br /> : null}
+              </span>
+            ))}
           </h1>
           <p className="text-sm sm:text-base md:text-xl font-light text-white/90 max-w-2xl mx-auto mb-8 sm:mb-10 leading-relaxed px-1">
-            {siteSettings?.heroSubtitle ? (
-              siteSettings.heroSubtitle.split('\n').map((line, i, arr) => (
-                <span key={i}>
-                  {line}
-                  {i < arr.length - 1 ? <br /> : null}
-                </span>
-              ))
-            ) : (
-              <>
-                提供国际标准的 OEM / ODM 全链路代工方案。
-                <br className="hidden md:block" />
-                从配方研发到全球出海，为您构筑绝对护城河。
-              </>
-            )}
+            {heroSubtitleText.split('\n').map((line, i, arr) => (
+              <span key={i}>
+                {line}
+                {i < arr.length - 1 ? <br /> : null}
+              </span>
+            ))}
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 w-full max-w-md sm:max-w-none mx-auto px-1">
             <button
@@ -354,7 +387,7 @@ const HomePage = () => {
               }
               className="group bg-white text-[#111111] px-8 py-3.5 text-[14px] font-medium tracking-wide transition-all duration-300 rounded-full flex items-center justify-center gap-2 hover:shadow-lg"
             >
-              {siteSettings?.heroPrimaryCta?.label || '探索代工引擎'}{' '}
+              {primaryCtaLabel}{' '}
               <ArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-1"/>
             </button>
             <button
@@ -366,7 +399,7 @@ const HomePage = () => {
               }
               className="group border border-white/50 bg-white/5 backdrop-blur-md text-white px-8 py-3.5 text-[14px] font-medium tracking-wide hover:bg-white hover:text-[#111111] transition-all duration-300 rounded-full flex items-center justify-center"
             >
-              {siteSettings?.heroSecondaryCta?.label || '索取打样方案'}
+              {secondaryCtaLabel}
             </button>
           </div>
         </div>
@@ -375,7 +408,7 @@ const HomePage = () => {
       {/* 2. 国际认证与供应链信任背书墙 */}
       <section className="bg-[#FAFAFA] pt-8 pb-20 relative z-20">
         <div className="container mx-auto px-4">
-          <div className="text-[11px] tracking-[0.2em] text-center text-gray-400 uppercase mb-8 font-medium">Trusted by Global Brands & Premium Suppliers</div>
+          <div className="text-[11px] tracking-[0.2em] text-center text-gray-400 uppercase mb-8 font-medium">{t('home.trustLine')}</div>
           <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-40 grayscale hover:grayscale-0 transition-all duration-500 text-sm md:text-lg font-bold tracking-tighter">
             <span className="flex items-center gap-1"><Globe2 size={18}/> SGS Tested</span>
             <span>BASF</span>
@@ -392,16 +425,16 @@ const HomePage = () => {
       <section className="bg-white py-12 md:py-20">
         <div className="container mx-auto px-4 md:px-12 grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 max-w-6xl">
           <div className="bg-[#FAFAFA] rounded-xl md:rounded-2xl p-5 md:p-8 text-center hover:-translate-y-1 transition-transform duration-300">
-            <div className="text-3xl md:text-5xl font-light mb-1 md:mb-2 text-[#111111]">15+</div><div className="text-[11px] md:text-[12px] text-gray-500 font-medium">年深耕高端代工</div>
+            <div className="text-3xl md:text-5xl font-light mb-1 md:mb-2 text-[#111111]">15+</div><div className="text-[11px] md:text-[12px] text-gray-500 font-medium">{t('home.statYears')}</div>
           </div>
           <div className="bg-[#FAFAFA] rounded-xl md:rounded-2xl p-5 md:p-8 text-center hover:-translate-y-1 transition-transform duration-300">
-            <div className="text-3xl md:text-5xl font-light mb-1 md:mb-2 text-[#111111]">10k+</div><div className="text-[11px] md:text-[12px] text-gray-500 font-medium">成熟配方档案库</div>
+            <div className="text-3xl md:text-5xl font-light mb-1 md:mb-2 text-[#111111]">10k+</div><div className="text-[11px] md:text-[12px] text-gray-500 font-medium">{t('home.statFormulas')}</div>
           </div>
           <div className="bg-[#FAFAFA] rounded-xl md:rounded-2xl p-5 md:p-8 text-center hover:-translate-y-1 transition-transform duration-300">
-            <div className="text-3xl md:text-5xl font-light mb-1 md:mb-2 text-[#111111]">10w</div><div className="text-[11px] md:text-[12px] text-gray-500 font-medium">GMPC 无尘车间</div>
+            <div className="text-3xl md:text-5xl font-light mb-1 md:mb-2 text-[#111111]">10w</div><div className="text-[11px] md:text-[12px] text-gray-500 font-medium">{t('home.statClean')}</div>
           </div>
           <div className="bg-[#FAFAFA] rounded-xl md:rounded-2xl p-5 md:p-8 text-center hover:-translate-y-1 transition-transform duration-300">
-            <div className="text-3xl md:text-5xl font-light mb-1 md:mb-2 text-[#111111]">1M+</div><div className="text-[11px] md:text-[12px] text-gray-500 font-medium">日均峰值产能 (支)</div>
+            <div className="text-3xl md:text-5xl font-light mb-1 md:mb-2 text-[#111111]">1M+</div><div className="text-[11px] md:text-[12px] text-gray-500 font-medium">{t('home.statCap')}</div>
           </div>
         </div>
       </section>
@@ -410,28 +443,28 @@ const HomePage = () => {
       <section className="py-16 md:py-24 lg:py-32 bg-[#FAFAFA]">
         <div className="container mx-auto px-6 md:px-12">
           <div className="text-center mb-16 md:mb-20">
-            <div className="text-[11px] tracking-[0.2em] text-gray-400 uppercase mb-4 font-bold">Service Models</div>
-            <h2 className="text-3xl md:text-4xl font-light tracking-tight mb-6 text-[#111111]">全链路代工解决方案</h2>
-            <p className="text-gray-500 font-light max-w-2xl mx-auto text-[15px]">为全球跨国品牌、新锐国货以及跨界创作者提供高匹配度的柔性化制造与孵化服务。</p>
+            <div className="text-[11px] tracking-[0.2em] text-gray-400 uppercase mb-4 font-bold">{t('home.serviceEyebrow')}</div>
+            <h2 className="text-3xl md:text-4xl font-light tracking-tight mb-6 text-[#111111]">{t('home.serviceTitle')}</h2>
+            <p className="text-gray-500 font-light max-w-2xl mx-auto text-[15px]">{t('home.serviceLead')}</p>
           </div>
           <div className="grid md:grid-cols-3 gap-5 md:gap-8 max-w-6xl mx-auto">
             <div className="bg-white border border-gray-100/50 p-6 md:p-10 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-500 group cursor-pointer rounded-[20px] md:rounded-[24px]" onClick={() => navigate('/services')}>
               <Settings size={28} className="mb-4 md:mb-6 text-gray-400 group-hover:text-[#111111] transition-colors" strokeWidth={1.5} />
               <div className="text-[11px] font-bold tracking-widest text-[#1A1A1A] mb-2 uppercase">Original Equipment Mfg</div>
-              <h3 className="text-xl md:text-2xl font-light mb-3 md:mb-4">OEM 敏捷制造</h3>
-              <p className="text-[13px] md:text-[14px] text-gray-500 font-light leading-relaxed">您提供核心配方，我们依托 10 万级 GMPC 自动化车间进行精准复刻与规模化量产，保障极速响应与成本优势。</p>
+              <h3 className="text-xl md:text-2xl font-light mb-3 md:mb-4">{t('home.oemTitle')}</h3>
+              <p className="text-[13px] md:text-[14px] text-gray-500 font-light leading-relaxed">{t('home.oemCardLead')}</p>
             </div>
             <div className="bg-[#1A1A1A] text-white p-6 md:p-10 shadow-[0_10px_40px_rgb(0,0,0,0.1)] transform md:-translate-y-4 cursor-pointer rounded-[20px] md:rounded-[24px]" onClick={() => navigate('/services')}>
               <Beaker size={28} className="mb-4 md:mb-6 text-gray-300" strokeWidth={1.5} />
               <div className="text-[11px] font-bold tracking-widest text-gray-400 mb-2 uppercase">Original Design Mfg</div>
-              <h3 className="text-xl md:text-2xl font-light mb-3 md:mb-4">ODM 深度定制</h3>
-              <p className="text-[13px] md:text-[14px] text-gray-400 font-light leading-relaxed">联合生物实验室提供从专属配方研发、全套临床评估到包材甄选的端到端服务，打造绝对产品护城河。</p>
+              <h3 className="text-xl md:text-2xl font-light mb-3 md:mb-4">{t('home.odmTitle')}</h3>
+              <p className="text-[13px] md:text-[14px] text-gray-400 font-light leading-relaxed">{t('home.odmCardLead')}</p>
             </div>
             <div className="bg-white border border-gray-100/50 p-6 md:p-10 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-500 group cursor-pointer rounded-[20px] md:rounded-[24px]" onClick={() => navigate('/services')}>
               <Box size={28} className="mb-4 md:mb-6 text-gray-400 group-hover:text-[#111111] transition-colors" strokeWidth={1.5} />
               <div className="text-[11px] font-bold tracking-widest text-[#1A1A1A] mb-2 uppercase">Private Label / OBM</div>
-              <h3 className="text-xl md:text-2xl font-light mb-3 md:mb-4">贴牌与全案</h3>
-              <p className="text-[13px] md:text-[14px] text-gray-500 font-light leading-relaxed">海量验证过的成熟配方库，极低门槛启动 (Low MOQ)。提供商标注册、视觉包装与药监合规代办的保姆级孵化。</p>
+              <h3 className="text-xl md:text-2xl font-light mb-3 md:mb-4">{t('home.obmTitle')}</h3>
+              <p className="text-[13px] md:text-[14px] text-gray-500 font-light leading-relaxed">{t('home.obmCardLead')}</p>
             </div>
           </div>
         </div>
@@ -441,9 +474,9 @@ const HomePage = () => {
       <section className="py-16 md:py-24 lg:py-32 bg-white">
         <div className="container mx-auto px-6 md:px-12">
           <div className="text-center mb-20">
-            <div className="text-[11px] tracking-[0.2em] text-gray-400 uppercase mb-4 font-bold">Core Competence</div>
-            <h2 className="text-3xl md:text-4xl font-light tracking-tight mb-6">看得见的科研与智造底气</h2>
-            <p className="text-gray-500 font-light max-w-2xl mx-auto text-[15px]">拒绝代工黑盒操作，为您呈现透明化、数据驱动的产品诞生全链路。</p>
+            <div className="text-[11px] tracking-[0.2em] text-gray-400 uppercase mb-4 font-bold">{t('home.coreEyebrow')}</div>
+            <h2 className="text-3xl md:text-4xl font-light tracking-tight mb-6">{t('home.coreTitle')}</h2>
+            <p className="text-gray-500 font-light max-w-2xl mx-auto text-[15px]">{t('home.coreLead')}</p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 max-w-6xl mx-auto">
@@ -454,7 +487,7 @@ const HomePage = () => {
                     siteSettings?.coreCompetenceLabImageUrl ||
                     'https://dummyimage.com/1600x900/e5e7eb/374151.png&text=Lab'
                   }
-                  alt="实验室"
+                  alt={t('home.labAlt')}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 filter grayscale-[10%]"
                   onError={(e) => {
                     e.currentTarget.onerror = null;
@@ -465,11 +498,9 @@ const HomePage = () => {
               </div>
               <div className="flex items-center gap-3 mb-4">
                 <Microscope size={24} className="text-[#111111]" strokeWidth={1.5} />
-                <h3 className="text-2xl font-light text-[#111111]">联合生物研发中心</h3>
+                <h3 className="text-2xl font-light text-[#111111]">{coreLabTitle}</h3>
               </div>
-              <p className="text-[14px] text-gray-500 font-light leading-relaxed">
-                汇聚国内外顶尖皮肤学配方专家。自建 3D 皮肤模型与精密的临床功效测试平台。从靶向促渗技术到全球臻稀原料复配，确保每一款配方兼具卓效与安全。
-              </p>
+              <p className="text-[14px] text-gray-500 font-light leading-relaxed">{coreLabBody}</p>
             </div>
 
             <div className="group bg-[#1A1A1A] text-white p-8 md:p-12 shadow-[0_8px_30px_rgb(0,0,0,0.1)] transition-all duration-500 rounded-[24px]">
@@ -479,7 +510,7 @@ const HomePage = () => {
                     siteSettings?.coreCompetenceGmpcImageUrl ||
                     'https://dummyimage.com/1600x900/111827/e5e7eb.png&text=GMPC'
                   }
-                  alt="无菌车间"
+                  alt={t('home.gmpcAlt')}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-70"
                   onError={(e) => {
                     e.currentTarget.onerror = null;
@@ -490,11 +521,9 @@ const HomePage = () => {
               </div>
               <div className="flex items-center gap-3 mb-4">
                 <Factory size={24} className="text-gray-300" strokeWidth={1.5} />
-                <h3 className="text-2xl font-light">10万级 GMPC 智造中心</h3>
+                <h3 className="text-2xl font-light">{coreGmpcTitle}</h3>
               </div>
-              <p className="text-[14px] text-gray-400 font-light leading-relaxed">
-                对标制药级空气净化标准。引进 18 条进口全自动化无接触灌装流水线，深度集成 MES 系统，实现从原料投递到成品赋码的 100% 数据溯源。
-              </p>
+              <p className="text-[14px] text-gray-400 font-light leading-relaxed">{coreGmpcBody}</p>
             </div>
           </div>
         </div>
@@ -504,18 +533,13 @@ const HomePage = () => {
       <section className="py-14 md:py-24 bg-[#FAFAFA]">
         <div className="container mx-auto px-6 md:px-12">
           <div className="text-center mb-16">
-            <div className="text-[11px] tracking-[0.2em] text-gray-400 uppercase mb-4 font-bold">Why Choose Us</div>
-            <h2 className="text-3xl md:text-4xl font-light tracking-tight mb-4">解决痛点，超越期待</h2>
-            <p className="text-gray-500 font-light text-[15px] max-w-2xl mx-auto">不仅提供卓越的制造产能，更为您构筑坚实的商业后盾。</p>
+            <div className="text-[11px] tracking-[0.2em] text-gray-400 uppercase mb-4 font-bold">{t('home.whyEyebrow')}</div>
+            <h2 className="text-3xl md:text-4xl font-light tracking-tight mb-4">{t('home.whyTitle')}</h2>
+            <p className="text-gray-500 font-light text-[15px] max-w-2xl mx-auto">{t('home.whyLead')}</p>
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 max-w-6xl mx-auto">
-            {[
-              { icon: <Target size={24} strokeWidth={1.5}/>, title: "灵活起订 (Low MOQ)", desc: "打破代工高门槛。成熟配方支持小批量快返测试，缓解新锐品牌的资金压力。" },
-              { icon: <Zap size={24} strokeWidth={1.5}/>, title: "极速打样 (Fast Sampling)", desc: "依托成熟数据库与敏捷研发团队，常规需求最快 3 天精准出样，抢占市场先机。" },
-              { icon: <Lock size={24} strokeWidth={1.5}/>, title: "配方保密 (IP Protection)", desc: "签署严格保密协议 (NDA)。定制配方知识产权归属品牌方，保障商业机密。" },
-              { icon: <Activity size={24} strokeWidth={1.5}/>, title: "极致性价比 (Cost Efficiency)", desc: "源头工厂直供，从包材集采到全自动化灌装，将成本优势最大化让利于您。" }
-            ].map((item, idx) => (
+            {whyItems.map((item, idx) => (
               <div key={idx} className="bg-white p-5 md:p-8 border border-gray-100/50 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1 transition-all duration-300 rounded-[16px] md:rounded-[20px]">
                 <div className="text-[#111111] mb-4">{item.icon}</div>
                 <h4 className="text-[14px] md:text-[16px] font-medium mb-2">{item.title}</h4>
@@ -529,7 +553,7 @@ const HomePage = () => {
       {/* 7. 全球出口与市场覆盖 */}
       <div className="relative py-32 md:py-40 bg-[#1A1A1A] text-white overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <img src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=2000" alt="全球网络" className="w-full h-full object-cover opacity-[0.15] filter grayscale mix-blend-screen" />
+          <img src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=2000" alt={t('home.globalNetAlt')} className="w-full h-full object-cover opacity-[0.15] filter grayscale mix-blend-screen" />
           <div className="absolute inset-0 bg-gradient-to-r from-[#1A1A1A] via-[#1A1A1A]/80 to-transparent"></div>
         </div>
 
@@ -537,32 +561,34 @@ const HomePage = () => {
           <div className="max-w-3xl">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-2 h-2 rounded-full bg-white"></div>
-              <span className="text-[11px] font-bold tracking-[0.2em] text-gray-400 uppercase">Worldwide Service</span>
+              <span className="text-[11px] font-bold tracking-[0.2em] text-gray-400 uppercase">{t('home.worldEyebrow')}</span>
             </div>
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-light tracking-tight mb-6 leading-[1.15]">
-              跨越国界的<br />全球交付网络。
+              {t('home.worldTitle1')}
+              <br />
+              {t('home.worldTitle2')}
             </h2>
             <p className="text-gray-400 font-light text-base md:text-lg leading-relaxed mb-12 max-w-xl">
-              依托完善的国际合规团队与优质的跨境物流枢纽，我们的代工服务已成功覆盖多个海外主流及新兴市场。深谙各地区准入法规，为您的高效出海扫清障碍。
+              {t('home.worldLead')}
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 border-t border-white/10 pt-10">
                <div className="group">
                   <div className="flex items-center gap-3 mb-3">
                     <ShieldCheck size={20} className="text-white" strokeWidth={1.5} />
-                    <h4 className="text-[15px] font-medium text-white">国际法规准入</h4>
+                    <h4 className="text-[15px] font-medium text-white">{t('home.worldLawT')}</h4>
                   </div>
                   <p className="text-[13px] text-gray-400 font-light leading-relaxed">
-                    熟练应对 FDA、CPNP 等严苛审查，提供全套清关所需的理化检测报告、MSDS 及 COA 文件。
+                    {t('home.worldLawD')}
                   </p>
                </div>
                <div className="group">
                   <div className="flex items-center gap-3 mb-3">
                     <Globe2 size={20} className="text-white" strokeWidth={1.5} />
-                    <h4 className="text-[15px] font-medium text-white">无缝跨境物流</h4>
+                    <h4 className="text-[15px] font-medium text-white">{t('home.worldLogT')}</h4>
                   </div>
                   <p className="text-[13px] text-gray-400 font-light leading-relaxed">
-                    支持 EXW, FOB, CIF 等多种贸易条款，与多家顶级物流网络深度绑定，确保大货安全准时抵达。
+                    {t('home.worldLogD')}
                   </p>
                </div>
             </div>
@@ -575,11 +601,11 @@ const HomePage = () => {
         <div className="container mx-auto px-4 md:px-12">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 md:mb-16 gap-4 md:gap-6">
             <div>
-              <div className="text-[11px] tracking-[0.2em] text-gray-400 uppercase mb-4 font-bold">Featured Formulas</div>
-              <h2 className="text-3xl md:text-4xl font-light tracking-tight">热销配方与质地档案</h2>
+              <div className="text-[11px] tracking-[0.2em] text-gray-400 uppercase mb-4 font-bold">{t('home.featEyebrow')}</div>
+              <h2 className="text-3xl md:text-4xl font-light tracking-tight">{t('home.featTitle')}</h2>
             </div>
             <button onClick={() => navigate('/products')} className="group flex items-center gap-2 text-[14px] font-medium tracking-wide text-gray-500 hover:text-[#111111] transition-colors">
-              浏览产品中心 <ArrowUpRight size={16} className="transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"/>
+              {t('products.browseProducts')} <ArrowUpRight size={16} className="transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"/>
             </button>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
@@ -608,7 +634,7 @@ const HomePage = () => {
             <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
               <div>
                 <div className="text-[11px] tracking-[0.2em] text-gray-400 uppercase mb-4 font-bold">Case Studies</div>
-                <h2 className="text-3xl md:text-4xl font-light tracking-tight">合作案例精选</h2>
+                <h2 className="text-3xl md:text-4xl font-light tracking-tight">{t('home.casesTitle')}</h2>
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl">
@@ -644,9 +670,9 @@ const HomePage = () => {
         <div className="container mx-auto px-6 md:px-12 max-w-4xl">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-light tracking-tight mb-4">
-              {siteSettings?.faqSectionTitle || '合作答疑指南'}
+              {faqSectionHeading}
             </h2>
-            <p className="text-gray-500 font-light text-[15px]">解答您在选择代工厂时最关注的核心政策与周期问题。</p>
+            <p className="text-gray-500 font-light text-[15px]">{t('home.faqSectionLead')}</p>
           </div>
           <div className="border-t border-gray-200/60">
             {homeFaqs.map((faq, idx) => (
@@ -663,7 +689,7 @@ const HomePage = () => {
           </div>
           <div className="text-center mt-12">
             <button onClick={() => navigate('/faq')} className="group flex items-center justify-center gap-2 mx-auto text-[14px] font-medium text-gray-500 hover:text-[#111111] transition-colors">
-              浏览完整指引 <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-1"/>
+              {t('home.browseFullGuide')} <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-1"/>
             </button>
           </div>
         </div>
@@ -692,6 +718,7 @@ function aboutCertIcon(icon) {
 // --- About Us 品牌探索（Sanity aboutPage，缺省见 getDefaultAboutPage）---
 const AboutPage = () => {
   const navigate = useNavigate();
+  const { t } = useLocale();
   const { aboutPage, loading, error, reload } = useCms();
   const a = aboutPage ?? getDefaultAboutPage();
 
@@ -703,7 +730,7 @@ const AboutPage = () => {
       <div className="pt-28 md:pt-36 lg:pt-40 pb-32 text-center text-[14px] text-gray-500 font-light">
         <p>{error}</p>
         <button type="button" onClick={() => reload()} className="mt-6 text-[#111111] underline">
-          重试
+          {t('common.retry')}
         </button>
       </div>
     );
@@ -849,25 +876,31 @@ const AboutPage = () => {
 // --- OEM/ODM Services ---
 const ServicesPage = () => {
   const navigate = useNavigate();
+  const { t } = useLocale();
   return (
     <div className="yozo-animate-page-in pt-28 md:pt-36 lg:pt-40 bg-white min-h-screen">
       {/* Hero Section */}
       <div className="container mx-auto px-6 md:px-12 text-center mb-24 md:mb-32">
         <div className="inline-flex items-center gap-3 mb-6">
           <span className="h-px w-8 bg-gray-200"></span>
-          <span className="text-[11px] font-bold tracking-[0.2em] text-gray-400 uppercase">Global Cosmetic Manufacturing</span>
+          <span className="text-[11px] font-bold tracking-[0.2em] text-gray-400 uppercase">{t('services.eyebrow')}</span>
           <span className="h-px w-8 bg-gray-200"></span>
         </div>
         <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-light tracking-tight mb-6 sm:mb-8 leading-[1.1] px-1">
-          从卓越概念，
+          {t('services.h1l1')}
           <br className="hidden sm:block" />
-          到全球热销单品。
+          {t('services.h1l2')}
         </h1>
         <p className="text-gray-500 font-light max-w-2xl mx-auto text-[15px] sm:text-lg leading-relaxed mb-8 sm:mb-10 px-1">
-          依托符合国际 GMPC 及 ISO 22716 标准的智慧工厂，<br className="hidden md:block"/>YOZO 提供贯穿产品生命周期的端到端制造解决方案。赋能品牌高效出海，构筑核心产品护城河。
+          {t('services.lead').split('\n').map((line, i, arr) => (
+            <span key={i}>
+              {line}
+              {i < arr.length - 1 ? <br className="hidden md:block" /> : null}
+            </span>
+          ))}
         </p>
         <button onClick={() => navigate('/contact')} className="inline-flex items-center gap-2 bg-[#1A1A1A] text-white px-8 py-3.5 text-[14px] font-medium tracking-wide transition-all duration-300 rounded-full hover:bg-black hover:shadow-lg">
-          获取专属代工方案 <ArrowRight size={16} />
+          {t('services.cta')} <ArrowRight size={16} />
         </button>
       </div>
       
@@ -875,8 +908,8 @@ const ServicesPage = () => {
       <section className="bg-[#FAFAFA] py-24 border-y border-gray-100">
         <div className="container mx-auto px-6 md:px-12">
           <div className="text-center mb-20">
-            <h2 className="text-3xl md:text-4xl font-light tracking-tight mb-4 text-[#111111]">适应多维商业周期的全链路智造引擎</h2>
-            <p className="text-gray-500 text-[15px] font-light max-w-2xl mx-auto">无论您是寻求产能突破的国际大牌，还是从 0 孵化的新锐国货，我们均提供高匹配度的柔性制造模块。</p>
+            <h2 className="text-3xl md:text-4xl font-light tracking-tight mb-4 text-[#111111]">{t('services.modelsTitle')}</h2>
+            <p className="text-gray-500 text-[15px] font-light max-w-2xl mx-auto">{t('services.modelsLead')}</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
@@ -884,12 +917,12 @@ const ServicesPage = () => {
             <article className="bg-white border border-gray-100/50 p-10 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-500 flex flex-col h-full rounded-[24px]">
               <Settings size={32} className="mb-8 text-gray-300" strokeWidth={1} />
               <div className="text-[11px] font-bold tracking-widest text-[#111111] mb-3 uppercase">Original Equipment Mfg</div>
-              <h3 className="text-2xl font-light mb-4">OEM 敏捷代工</h3>
-              <p className="text-[14px] text-gray-500 font-light leading-relaxed mb-6">您提供核心配方或品牌标准，我们依托 10 万级无尘自动化产线进行高标准复刻，保障大批量品质一致性与极致的成本控制。</p>
+              <h3 className="text-2xl font-light mb-4">{t('services.oemH')}</h3>
+              <p className="text-[14px] text-gray-500 font-light leading-relaxed mb-6">{t('services.oemP')}</p>
               <ul className="text-[13px] text-gray-400 font-light space-y-3 mt-auto border-t border-gray-100 pt-6">
-                <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-[#111111]"/> 严苛的原料溯源与来料质检 (IQC)</li>
-                <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-[#111111]"/> 日均超百万支的柔性灌装产能</li>
-                <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-[#111111]"/> 符合 FDA/CPNP 的出厂检测标准</li>
+                <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-[#111111]"/>{t('services.oemL1')}</li>
+                <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-[#111111]"/>{t('services.oemL2')}</li>
+                <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-[#111111]"/>{t('services.oemL3')}</li>
               </ul>
             </article>
             
@@ -897,12 +930,12 @@ const ServicesPage = () => {
             <article className="bg-[#1A1A1A] text-white p-10 shadow-[0_10px_40px_rgb(0,0,0,0.1)] transform md:-translate-y-4 flex flex-col h-full rounded-[24px]">
               <Beaker size={32} className="mb-8 text-gray-400" strokeWidth={1} />
               <div className="text-[11px] font-bold tracking-widest text-gray-400 mb-3 uppercase">Original Design Mfg</div>
-              <h3 className="text-2xl font-light mb-4">ODM 深度定制研发</h3>
-              <p className="text-[14px] text-gray-400 font-light leading-relaxed mb-6">整合全球顶级原料供应链与临床测试数据。从前瞻性的市场趋势企划、专属独家配方研发，到特殊包材结构开模，构筑绝对技术壁垒。</p>
+              <h3 className="text-2xl font-light mb-4">{t('services.odmH')}</h3>
+              <p className="text-[14px] text-gray-400 font-light leading-relaxed mb-6">{t('services.odmP')}</p>
               <ul className="text-[13px] text-gray-400 font-light space-y-3 mt-auto border-t border-white/10 pt-6">
-                <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-white"/> 诺奖级核心成分/植物提取复配研发</li>
-                <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-white"/> 3D皮肤模型及人体功效实证测试</li>
-                <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-white"/> 配方知识产权 (IP) 排他性买断支持</li>
+                <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-white"/>{t('services.odmL1')}</li>
+                <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-white"/>{t('services.odmL2')}</li>
+                <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-white"/>{t('services.odmL3')}</li>
               </ul>
             </article>
             
@@ -910,12 +943,12 @@ const ServicesPage = () => {
             <article className="bg-white border border-gray-100/50 p-10 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-500 flex flex-col h-full rounded-[24px]">
               <Box size={32} className="mb-8 text-gray-300" strokeWidth={1} />
               <div className="text-[11px] font-bold tracking-widest text-[#111111] mb-3 uppercase">Private Label / OBM</div>
-              <h3 className="text-2xl font-light mb-4">品牌贴牌全案孵化</h3>
-              <p className="text-[14px] text-gray-500 font-light leading-relaxed mb-6">专为电商达人及跨界品牌打造。精选 10,000+ 经过市场验证的成熟爆款配方库，支持极低门槛启动 (Low MOQ) 与保姆级落地方案。</p>
+              <h3 className="text-2xl font-light mb-4">{t('services.obmH')}</h3>
+              <p className="text-[14px] text-gray-500 font-light leading-relaxed mb-6">{t('services.obmP')}</p>
               <ul className="text-[13px] text-gray-400 font-light space-y-3 mt-auto border-t border-gray-100 pt-6">
-                <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-[#111111]"/> 3-5天极速打样确认，抢占风口</li>
-                <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-[#111111]"/> 免费品牌视觉设计与包材选型</li>
-                <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-[#111111]"/> 药监局非特备案及特证代办服务</li>
+                <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-[#111111]"/>{t('services.obmL1')}</li>
+                <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-[#111111]"/>{t('services.obmL2')}</li>
+                <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-[#111111]"/>{t('services.obmL3')}</li>
               </ul>
             </article>
           </div>
@@ -926,17 +959,17 @@ const ServicesPage = () => {
       <section className="py-24 bg-white">
         <div className="container mx-auto px-6 md:px-12 max-w-6xl">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-light tracking-tight mb-4 text-[#111111]">标准化与透明化的高端代工流程</h2>
-            <p className="text-gray-500 text-[15px] font-light">全链路数据驱动，拒绝“制造黑盒”，保障您的新品以最高效的速度推向全球市场。</p>
+            <h2 className="text-3xl font-light tracking-tight mb-4 text-[#111111]">{t('services.flowTitle')}</h2>
+            <p className="text-gray-500 text-[15px] font-light">{t('services.flowLead')}</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative">
              <div className="hidden lg:block absolute top-[40px] left-[10%] right-[10%] h-[1px] bg-gray-100 -z-10"></div>
              {[
-               { step: "01", title: "需求企划与对接", desc: "专属业务总监 1对1 沟通。确立核心受众、功效宣称诉求、包材材质偏好及成本核算。" },
-               { step: "02", title: "联合实验室打样", desc: "资深配方师介入，调取数据库或重构配方体系。常规需求最快 3 天输出首版实物样品供评测。" },
-               { step: "03", title: "评测与合规备案", desc: "进行高低温稳定性挑战测试及理化防腐测试。同时法务团队平行推进药监系统产品备案核准。" },
-               { step: "04", title: "GMPC量产与交付", desc: "大货包材消毒入库，MES系统排单投料生产。全检合格后提供检测报告，并无缝对接跨境物流。" }
+               { step: '01', title: t('services.flow1t'), desc: t('services.flow1d') },
+               { step: '02', title: t('services.flow2t'), desc: t('services.flow2d') },
+               { step: '03', title: t('services.flow3t'), desc: t('services.flow3d') },
+               { step: '04', title: t('services.flow4t'), desc: t('services.flow4d') },
              ].map((item, idx) => (
                <div key={idx} className="bg-white border border-gray-100 rounded-[20px] p-8 relative hover:-translate-y-2 transition-transform duration-500 shadow-sm">
                  <div className="w-12 h-12 rounded-full bg-[#FAFAFA] text-[#111111] flex items-center justify-center font-bold text-lg mb-6 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]">
@@ -955,27 +988,27 @@ const ServicesPage = () => {
         <div className="container mx-auto px-6 md:px-12 max-w-6xl">
           <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
             <div>
-              <div className="text-[11px] font-bold tracking-widest text-gray-400 uppercase mb-4">Core Capacities</div>
-              <h2 className="text-3xl font-light tracking-tight text-white">驱动创新的核心工艺配置</h2>
+              <div className="text-[11px] font-bold tracking-widest text-gray-400 uppercase mb-4">{t('services.capEyebrow')}</div>
+              <h2 className="text-3xl font-light tracking-tight text-white">{t('services.capTitle')}</h2>
             </div>
             <p className="text-gray-400 font-light max-w-lg text-[14px]">
-              不仅局限于传统的膏霜水乳，我们斥资引进国际尖端设备，全面覆盖高难度剂型及医药级无菌包装生产线。
+              {t('services.capLead')}
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="border border-white/10 p-8 rounded-[20px] bg-white/5 backdrop-blur-sm">
               <Droplets className="text-gray-300 mb-6" size={28} strokeWidth={1.5} />
-              <h4 className="text-xl font-medium mb-3">BFS 无菌次抛与冻干线</h4>
+              <h4 className="text-xl font-medium mb-3">{t('services.cap1t')}</h4>
               <p className="text-[13px] text-gray-400 font-light leading-relaxed mb-4">
-                百级净化核心产区。配备吹灌封 (Blow-Fill-Seal) 一体机及真空冷冻干燥机，专攻高活性维C、蓝铜胜肽及冻干粉产品，确保无防腐剂添加条件下的绝佳鲜活度。
+                {t('services.cap1d')}
               </p>
             </div>
             <div className="border border-white/10 p-8 rounded-[20px] bg-white/5 backdrop-blur-sm">
               <Layers className="text-gray-300 mb-6" size={28} strokeWidth={1.5} />
-              <h4 className="text-xl font-medium mb-3">多相微乳化与微囊包裹工艺</h4>
+              <h4 className="text-xl font-medium mb-3">{t('services.cap2t')}</h4>
               <p className="text-[13px] text-gray-400 font-light leading-relaxed mb-4">
-                引进德国 IKA 高剪切均质乳化系统。突破传统水油相融限制，实现纳米级粒径乳液。通过微脂囊技术实现核心活性成分的定向靶向缓释。
+                {t('services.cap2d')}
               </p>
             </div>
           </div>
@@ -990,6 +1023,7 @@ const ServicesPage = () => {
 // --- Products Center ---
 const ProductsPage = () => {
   const navigate = useNavigate();
+  const { t } = useLocale();
   const { products, productCategories, loading, error, reload } = useCms();
   const [activeCategory, setActiveCategory] = useState("全部");
   const [searchQuery, setSearchQuery] = useState("");
@@ -1012,7 +1046,7 @@ const ProductsPage = () => {
       <div className="pt-28 md:pt-36 lg:pt-40 pb-32 text-center text-[14px] text-gray-500 font-light">
         <p>{error}</p>
         <button type="button" onClick={() => reload()} className="mt-6 text-[#111111] underline">
-          重试
+          {t('common.retry')}
         </button>
       </div>
     );
@@ -1025,11 +1059,16 @@ const ProductsPage = () => {
       <div className="container mx-auto px-6 md:px-12">
         <div className="text-center mb-20">
           <div className="inline-flex items-center gap-3 mb-6">
-            <span className="h-px w-8 bg-gray-200"></span><span className="text-[11px] tracking-[0.2em] text-gray-400 uppercase font-bold">Formula Center</span><span className="h-px w-8 bg-gray-200"></span>
+            <span className="h-px w-8 bg-gray-200"></span><span className="text-[11px] tracking-[0.2em] text-gray-400 uppercase font-bold">{t('products.eyebrow')}</span><span className="h-px w-8 bg-gray-200"></span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-light tracking-tight mb-6">配方档案库</h1>
+          <h1 className="text-4xl md:text-5xl font-light tracking-tight mb-6">{t('products.title')}</h1>
           <p className="text-gray-500 font-light max-w-2xl mx-auto text-[15px]">
-            浏览我们为您准备的精选代表作。<br/>所有配方均支持 OEM 极速复刻及 ODM 深度定制开模。
+            {t('products.lead').split('\n').map((line, i, arr) => (
+              <span key={i}>
+                {line}
+                {i < arr.length - 1 ? <br /> : null}
+              </span>
+            ))}
           </p>
         </div>
 
@@ -1044,13 +1083,13 @@ const ProductsPage = () => {
                   activeCategory === cat ? 'bg-[#1A1A1A] text-white border-[#1A1A1A] shadow-md' : 'bg-transparent text-gray-500 hover:text-[#111111] border-gray-200 hover:border-gray-300'
                 }`}
               >
-                {cat}
+                {formatCategoryTabLabel(cat, t)}
               </button>
             ))}
           </div>
           <div className="relative w-full lg:w-72 flex-shrink-0 mt-4 lg:mt-0">
             <input 
-              type="text" placeholder="搜索配方功效..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+              type="text" placeholder={t('products.searchPh')} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-[#FAFAFA] border border-gray-200 pl-10 pr-4 py-2.5 text-[13px] focus:outline-none focus:border-gray-400 rounded-full transition-colors"
             />
             <Search size={14} className="absolute left-4 top-3.5 text-gray-400" />
@@ -1072,7 +1111,7 @@ const ProductsPage = () => {
                   ))}
                 </div>
                 <div className="mt-auto pt-4 border-t border-gray-100 flex items-center gap-2 text-[11px] text-gray-400 font-light">
-                  <Package size={12} /><span className="truncate">包装建议: {product.packaging}</span>
+                  <Package size={12} /><span className="truncate">{t('products.packagingSuggest')}: {product.packaging}</span>
                 </div>
               </div>
             </div>
@@ -1082,7 +1121,7 @@ const ProductsPage = () => {
         {hasMore && (
           <div className="text-center">
             <button onClick={() => setVisibleCount(prev => prev + 4)} className="bg-white border border-gray-200 text-[#111111] px-10 py-3.5 text-[13px] font-medium hover:bg-gray-50 transition-colors rounded-full shadow-sm">
-              加载更多配方
+              {t('common.loadMoreFormulas')}
             </button>
           </div>
         )}
@@ -1095,6 +1134,7 @@ const ProductsPage = () => {
 const ProductDetailPage = () => {
   const navigate = useNavigate();
   const { productId } = useParams();
+  const { t } = useLocale();
   const { products, loading, error, reload } = useCms();
   const [openFaq, setOpenFaq] = useState(0);
 
@@ -1113,7 +1153,7 @@ const ProductDetailPage = () => {
       <div className="pt-28 md:pt-36 lg:pt-40 pb-32 text-center text-[14px] text-gray-500 font-light">
         <p>{error}</p>
         <button type="button" onClick={() => reload()} className="mt-6 text-[#111111] underline">
-          重试
+          {t('common.retry')}
         </button>
       </div>
     );
@@ -1121,12 +1161,19 @@ const ProductDetailPage = () => {
 
   const relatedProducts = products.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 3);
 
-  // 针对产品的动态 FAQ
-  const productFaqs = [
-    { q: `这款 ${product.name} 的配方可以微调吗？`, a: `完全可以。我们支持在现有成熟配方基础上，根据您的品牌定位对核心成分浓度、肤感质地及香型进行微调（ODM 敏捷定制）。${product.oemDesc}` },
-    { q: "如果采用这款配方，最快多久可以大货交付？", a: "在包材与原料齐备、且不需要重新进行特证备案的情况下，依托我们 10 万级 GMPC 智造中心的柔性产线，首单通常可在 25-30 个工作日内完成交付。返单最快可压缩至 15 天。" },
-    { q: "产品是否能提供相关的功效测试报告？", a: "我们的联合生物实验室可为您提供基础的理化与防腐挑战测试报告。如需 3D 皮肤模型或人体临床功效实证（如抗皱、美白），我们也可协助对接权威第三方检测机构（SGS 等）出具报告。" }
-  ];
+  const productFaqs = useMemo(
+    () => [
+      {
+        q: t('products.faq1q').replace(/\{\{name\}\}/g, product.name),
+        a: t('products.faq1a')
+          .replace(/\{\{name\}\}/g, product.name)
+          .replace(/\{\{oem\}\}/g, product.oemDesc || ''),
+      },
+      { q: t('products.faq2q'), a: t('products.faq2a') },
+      { q: t('products.faq3q'), a: t('products.faq3a') },
+    ],
+    [t, product.name, product.oemDesc],
+  );
 
   return (
     <div className="yozo-animate-page-in bg-white min-h-screen">
@@ -1135,7 +1182,7 @@ const ProductDetailPage = () => {
       <section className="pt-28 md:pt-36 lg:pt-40 pb-20 bg-[#FAFAFA] border-b border-gray-100">
         <div className="container mx-auto px-6 md:px-12">
           <button onClick={() => navigate('/products')} className="group text-[12px] font-medium tracking-[0.1em] text-gray-400 hover:text-[#111111] mb-12 flex items-center gap-2 transition-colors uppercase">
-             <ArrowRight size={14} className="rotate-180 transition-transform group-hover:-translate-x-1" /> 返回配方档案库
+             <ArrowRight size={14} className="rotate-180 transition-transform group-hover:-translate-x-1" /> {t('common.backToFormulas')}
           </button>
           
           <article itemScope itemType="https://schema.org/Product" className="grid grid-cols-1 lg:grid-cols-12 gap-10 sm:gap-12 lg:gap-24">
@@ -1187,29 +1234,29 @@ const ProductDetailPage = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 sm:gap-x-8 gap-y-6 mb-12 border-y border-gray-200/60 py-8">
                 <div>
-                  <div className="text-[10px] text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2"><Settings size={12}/> 建议起订量 (MOQ)</div>
-                  <div className="text-[15px] font-medium text-[#111111]">5,000 支起 (支持试单)</div>
+                  <div className="text-[10px] text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2"><Settings size={12}/> {t('products.moqLabel')}</div>
+                  <div className="text-[15px] font-medium text-[#111111]">{t('products.moqVal')}</div>
                 </div>
                 <div>
-                  <div className="text-[10px] text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2"><Beaker size={12}/> 敏捷打样 (Sampling)</div>
-                  <div className="text-[15px] font-medium text-[#111111]">3-5 个工作日内出样</div>
+                  <div className="text-[10px] text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2"><Beaker size={12}/> {t('products.sampleLabel')}</div>
+                  <div className="text-[15px] font-medium text-[#111111]">{t('products.sampleVal')}</div>
                 </div>
                 <div>
-                  <div className="text-[10px] text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2"><Package size={12}/> 推荐包材方案</div>
+                  <div className="text-[10px] text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2"><Package size={12}/> {t('products.packLabel')}</div>
                   <div className="text-[14px] text-[#111111] font-light">{product.packaging}</div>
                 </div>
                 <div>
-                  <div className="text-[10px] text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2"><Target size={12}/> 适用肤质 / 人群</div>
+                  <div className="text-[10px] text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2"><Target size={12}/> {t('products.skinLabel')}</div>
                   <div className="text-[14px] text-[#111111] font-light line-clamp-1" title={product.skinType}>{product.skinType}</div>
                 </div>
               </div>
 
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
                 <button onClick={() => navigate('/contact')} className="group bg-[#1A1A1A] text-white py-3.5 sm:py-4 px-8 sm:px-10 text-[13px] font-medium tracking-[0.1em] hover:bg-black transition-all duration-300 flex justify-center items-center gap-3 rounded-full shadow-[0_8px_20px_rgba(0,0,0,0.1)] w-full sm:w-auto">
-                  索取配方样板 <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
+                  {t('products.ctaSample')} <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
                 </button>
                 <button onClick={() => navigate('/contact')} className="group border border-gray-200 bg-white text-[#111111] py-3.5 sm:py-4 px-8 sm:px-10 text-[13px] font-medium tracking-[0.1em] hover:border-gray-400 transition-colors flex justify-center items-center gap-3 rounded-full w-full sm:w-auto">
-                  获取专属报价
+                  {t('products.ctaQuote')}
                 </button>
               </div>
             </div>
@@ -1224,12 +1271,12 @@ const ProductDetailPage = () => {
           {/* 模块 A：核心功效与受众 */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-12 mb-24">
             <div className="md:col-span-4">
-              <h2 className="text-2xl md:text-3xl font-light text-[#111111] mb-4">核心功效与受众</h2>
-              <p className="text-[13px] tracking-widest text-gray-400 uppercase font-bold">Efficacy & Target</p>
+              <h2 className="text-2xl md:text-3xl font-light text-[#111111] mb-4">{t('products.efficacyH')}</h2>
+              <p className="text-[13px] tracking-widest text-gray-400 uppercase font-bold">{t('products.efficacySub')}</p>
             </div>
             <div className="md:col-span-8 bg-[#FAFAFA] p-8 md:p-12 rounded-[24px] border border-gray-100/50">
               <div className="mb-8">
-                <h3 className="text-[13px] font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2"><Target size={14}/> 核心功效宣称</h3>
+                <h3 className="text-[13px] font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2"><Target size={14}/> {t('products.effClaim')}</h3>
                 <ul className="space-y-4">
                   {product.efficacy.map((eff, i) => (
                     <li key={i} className="flex items-start gap-3">
@@ -1240,7 +1287,7 @@ const ProductDetailPage = () => {
                 </ul>
               </div>
               <div className="pt-8 border-t border-gray-200/60">
-                <h3 className="text-[13px] font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2"><Activity size={14}/> 适用场景与肤质</h3>
+                <h3 className="text-[13px] font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2"><Activity size={14}/> {t('products.skinScene')}</h3>
                 <p className="text-[15px] text-gray-600 font-light leading-relaxed">{product.skinType}</p>
               </div>
             </div>
@@ -1249,8 +1296,8 @@ const ProductDetailPage = () => {
           {/* 模块 B：前沿成分剖析 */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-12 mb-24">
             <div className="md:col-span-4 md:order-last">
-              <h2 className="text-2xl md:text-3xl font-light text-[#111111] mb-4">前沿成分剖析</h2>
-              <p className="text-[13px] tracking-widest text-gray-400 uppercase font-bold">Key Ingredients</p>
+              <h2 className="text-2xl md:text-3xl font-light text-[#111111] mb-4">{t('products.ingH')}</h2>
+              <p className="text-[13px] tracking-widest text-gray-400 uppercase font-bold">{t('products.ingSub')}</p>
             </div>
             <div className="md:col-span-8 grid sm:grid-cols-2 gap-6">
               {product.ingredients.map((ing, i) => (
@@ -1266,17 +1313,17 @@ const ProductDetailPage = () => {
           {/* 模块 C：OEM/ODM 柔性定制能力 */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-12 mb-24">
             <div className="md:col-span-4">
-              <h2 className="text-2xl md:text-3xl font-light text-[#111111] mb-4">柔性定制空间</h2>
-              <p className="text-[13px] tracking-widest text-gray-400 uppercase font-bold">Customization</p>
+              <h2 className="text-2xl md:text-3xl font-light text-[#111111] mb-4">{t('products.custH')}</h2>
+              <p className="text-[13px] tracking-widest text-gray-400 uppercase font-bold">{t('products.custSub')}</p>
             </div>
             <div className="md:col-span-8 bg-[#1A1A1A] text-white p-8 md:p-12 rounded-[24px] shadow-lg relative overflow-hidden">
               <Sparkles className="absolute -bottom-6 -right-6 text-white/5 w-48 h-48" strokeWidth={1} />
               <div className="relative z-10">
                 <p className="text-[16px] text-gray-300 font-light leading-relaxed mb-8">
-                  作为专业的 ODM 工厂，我们不仅提供标准化成品，更支持围绕您的品牌基因进行深度改造。针对该配方，我们为您提供以下维度的专属定制选项：
+                  {t('products.custLead')}
                 </p>
                 <div className="bg-white/10 border border-white/20 p-6 rounded-[16px] backdrop-blur-sm">
-                  <h4 className="text-[14px] font-medium text-white mb-2 flex items-center gap-2"><Settings size={16}/> 专属定制项</h4>
+                  <h4 className="text-[14px] font-medium text-white mb-2 flex items-center gap-2"><Settings size={16}/> {t('products.custBox')}</h4>
                   <p className="text-[14px] text-gray-300 font-light leading-relaxed">{product.oemDesc}</p>
                 </div>
               </div>
@@ -1290,8 +1337,8 @@ const ProductDetailPage = () => {
       <section className="py-24 bg-[#FAFAFA] border-y border-gray-100">
         <div className="container mx-auto px-6 md:px-12 max-w-4xl" itemScope itemType="https://schema.org/FAQPage">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-light tracking-tight mb-4 text-[#111111]">定制与交付答疑</h2>
-            <p className="text-gray-500 text-[15px] font-light">关于该配方及生产周期的常见问题</p>
+            <h2 className="text-3xl md:text-4xl font-light tracking-tight mb-4 text-[#111111]">{t('products.faqH')}</h2>
+            <p className="text-gray-500 text-[15px] font-light">{t('products.faqLead')}</p>
           </div>
           <div className="border-t border-gray-200/60 bg-white rounded-[20px] overflow-hidden shadow-sm">
             {productFaqs.map((faq, idx) => (
@@ -1328,8 +1375,8 @@ const ProductDetailPage = () => {
           <div className="container mx-auto px-6 md:px-12 max-w-6xl">
             <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
               <div>
-                <h2 className="text-2xl md:text-3xl font-light tracking-tight text-[#111111] mb-2">更多同品类推荐</h2>
-                <p className="text-[13px] tracking-[0.2em] text-gray-400 uppercase font-bold">Related Formulas</p>
+                <h2 className="text-2xl md:text-3xl font-light tracking-tight text-[#111111] mb-2">{t('products.relH')}</h2>
+                <p className="text-[13px] tracking-[0.2em] text-gray-400 uppercase font-bold">{t('products.relSub')}</p>
               </div>
             </div>
             
@@ -1348,7 +1395,7 @@ const ProductDetailPage = () => {
                     <h3 className="text-[16px] font-medium mb-3 group-hover:text-[#111111] transition-colors line-clamp-1 text-[#333]">{relProduct.name}</h3>
                     <p className="text-[13px] text-gray-500 font-light line-clamp-2 mb-4">{relProduct.desc}</p>
                     <div className="mt-auto pt-4 border-t border-gray-100 flex items-center justify-between text-[11px] font-medium">
-                      <span className="text-gray-400 group-hover:text-[#111111] transition-colors flex items-center gap-1">查看详情 <ArrowUpRight size={12}/></span>
+                      <span className="text-gray-400 group-hover:text-[#111111] transition-colors flex items-center gap-1">{t('common.seeDetail')} <ArrowUpRight size={12}/></span>
                     </div>
                   </div>
                 </div>
@@ -1366,6 +1413,7 @@ const ProductDetailPage = () => {
 
 // --- FAQ 页 ---
 const FaqPage = () => {
+  const { t } = useLocale();
   const { faqs, loading, error, reload } = useCms();
   const [openFaq, setOpenFaq] = useState(0);
 
@@ -1375,7 +1423,7 @@ const FaqPage = () => {
       <div className="pt-28 md:pt-36 lg:pt-40 pb-32 text-center text-[14px] text-gray-500 font-light">
         <p>{error}</p>
         <button type="button" onClick={() => reload()} className="mt-6 text-[#111111] underline">
-          重试
+          {t('common.retry')}
         </button>
       </div>
     );
@@ -1386,9 +1434,9 @@ const FaqPage = () => {
       <div className="container mx-auto px-6 md:px-12 max-w-4xl pb-32">
         <div className="text-center mb-20">
           <div className="inline-flex items-center gap-3 mb-6">
-            <span className="h-px w-8 bg-gray-300"></span><span className="text-[11px] tracking-[0.2em] uppercase text-gray-400 font-bold">Guidelines</span><span className="h-px w-8 bg-gray-300"></span>
+            <span className="h-px w-8 bg-gray-300"></span><span className="text-[11px] tracking-[0.2em] uppercase text-gray-400 font-bold">{t('faqPage.eyebrow')}</span><span className="h-px w-8 bg-gray-300"></span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-light tracking-tight text-center mb-6">合作指引与答疑</h1>
+          <h1 className="text-4xl md:text-5xl font-light tracking-tight text-center mb-6">{t('faqPage.title')}</h1>
         </div>
         <div className="border-t border-gray-200/60">
           {faqs.map((faq, idx) => (
@@ -1412,14 +1460,27 @@ const FaqPage = () => {
 };
 
 // --- 联系我们 ---
-const ContactPage = () => (
+const ContactPage = () => {
+  const { t } = useLocale();
+  const hubDots = useMemo(
+    () => [
+      { top: '35%', left: '20%', label: t('contact.hubNA'), sub: 'New York' },
+      { top: '40%', left: '48%', label: t('contact.hubEU'), sub: 'Paris' },
+      { top: '55%', left: '60%', label: t('contact.hubME'), sub: 'Dubai' },
+      { top: '48%', left: '75%', label: t('contact.hubHQ'), sub: 'Shantou, CN', isHQ: true },
+      { top: '42%', left: '85%', label: t('contact.hubAP'), sub: 'Tokyo' },
+      { top: '70%', left: '82%', label: t('contact.hubOC'), sub: 'Sydney' },
+    ],
+    [t],
+  );
+  return (
   <div className="yozo-animate-page-in pt-28 md:pt-36 lg:pt-40 bg-[#FAFAFA] min-h-screen">
     <div className="container mx-auto px-6 md:px-12 text-center mb-16">
       <div className="inline-flex items-center gap-3 mb-6">
-        <span className="h-px w-8 bg-gray-300"></span><span className="text-[11px] font-bold tracking-[0.3em] uppercase text-gray-400">Global Network</span><span className="h-px w-8 bg-gray-300"></span>
+        <span className="h-px w-8 bg-gray-300"></span><span className="text-[11px] font-bold tracking-[0.3em] uppercase text-gray-400">{t('contact.eyebrow')}</span><span className="h-px w-8 bg-gray-300"></span>
       </div>
-      <h1 className="text-4xl md:text-5xl font-light tracking-tight mb-6 text-[#111111]">全球联络枢纽</h1>
-      <p className="text-gray-500 font-light text-lg">开启跨越国界的美妆制造合作之旅。</p>
+      <h1 className="text-4xl md:text-5xl font-light tracking-tight mb-6 text-[#111111]">{t('contact.title')}</h1>
+      <p className="text-gray-500 font-light text-lg">{t('contact.lead')}</p>
     </div>
 
     {/* Global Network Map Section */}
@@ -1433,9 +1494,9 @@ const ContactPage = () => (
 
         <div className="relative z-10 p-6 sm:p-10 md:p-16 lg:p-20">
            <div className="text-center mb-16">
-             <h2 className="text-3xl md:text-4xl font-light text-white mb-6 tracking-tight">业务版图辐射全球</h2>
+             <h2 className="text-3xl md:text-4xl font-light text-white mb-6 tracking-tight">{t('contact.mapH')}</h2>
              <p className="text-white/60 font-light text-[15px] max-w-2xl mx-auto leading-relaxed">
-               以中国智造为核心，我们的代工产品已成功远销北美、欧洲、中东及亚太等 50 多个国家与地区，具备完善的全球化清关与合规交付能力。
+               {t('contact.mapP')}
              </p>
            </div>
 
@@ -1445,14 +1506,7 @@ const ContactPage = () => (
              <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_80%)]"></div>
 
              {/* Hub Nodes */}
-             {[
-               { top: '35%', left: '20%', label: '北美枢纽', sub: 'New York' },
-               { top: '40%', left: '48%', label: '欧洲枢纽', sub: 'Paris' },
-               { top: '55%', left: '60%', label: '中东枢纽', sub: 'Dubai' },
-               { top: '48%', left: '75%', label: '全球制造总部', sub: 'Shantou, CN', isHQ: true },
-               { top: '42%', left: '85%', label: '亚太运营', sub: 'Tokyo' },
-               { top: '70%', left: '82%', label: '大洋洲枢纽', sub: 'Sydney' }
-             ].map((dot, i) => (
+             {hubDots.map((dot, i) => (
                <div key={i} className="absolute flex flex-col items-center group cursor-pointer" style={{ top: dot.top, left: dot.left, transform: 'translate(-50%, -50%)' }}>
                  <div className="relative flex items-center justify-center w-6 h-6 mb-2">
                    <span className={`absolute inline-flex w-full h-full rounded-full opacity-60 animate-ping ${dot.isHQ ? 'bg-white duration-1000' : 'bg-gray-400 duration-1000'}`}></span>
@@ -1466,8 +1520,8 @@ const ContactPage = () => (
              ))}
 
              <div className="absolute bottom-6 right-6 flex items-center gap-4 text-[10px] text-white/40 tracking-widest uppercase font-bold">
-                <span className="flex items-center gap-2"><span className="w-2 h-2 bg-white rounded-full shadow-[0_0_10px_#fff]"></span> Headquarters</span>
-                <span className="flex items-center gap-2"><span className="w-2 h-2 bg-gray-400 rounded-full"></span> Regional Hubs</span>
+                <span className="flex items-center gap-2"><span className="w-2 h-2 bg-white rounded-full shadow-[0_0_10px_#fff]"></span> {t('contact.legHQ')}</span>
+                <span className="flex items-center gap-2"><span className="w-2 h-2 bg-gray-400 rounded-full"></span> {t('contact.legHub')}</span>
              </div>
            </div>
 
@@ -1475,19 +1529,19 @@ const ContactPage = () => (
            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-4 text-center divide-x-0 md:divide-x divide-white/10">
               <div>
                  <div className="text-4xl font-light text-white mb-2">50<span className="text-2xl text-white/50">+</span></div>
-                 <div className="text-[11px] tracking-[0.2em] text-white/50 uppercase font-bold">出口国家/地区</div>
+                 <div className="text-[11px] tracking-[0.2em] text-white/50 uppercase font-bold">{t('contact.statCountries')}</div>
               </div>
               <div>
                  <div className="text-4xl font-light text-white mb-2">100<span className="text-2xl text-white/50">%</span></div>
-                 <div className="text-[11px] tracking-[0.2em] text-white/50 uppercase font-bold">FDA/CPNP 达标</div>
+                 <div className="text-[11px] tracking-[0.2em] text-white/50 uppercase font-bold">{t('contact.statFda')}</div>
               </div>
               <div>
                  <div className="text-4xl font-light text-white mb-2">15<span className="text-2xl text-white/50">d</span></div>
-                 <div className="text-[11px] tracking-[0.2em] text-white/50 uppercase font-bold">最快全球交付</div>
+                 <div className="text-[11px] tracking-[0.2em] text-white/50 uppercase font-bold">{t('contact.statDelivery')}</div>
               </div>
               <div>
                  <div className="text-4xl font-light text-white mb-2">7<span className="text-xl text-white/50">x</span>24</div>
-                 <div className="text-[11px] tracking-[0.2em] text-white/50 uppercase font-bold">全时区联络响应</div>
+                 <div className="text-[11px] tracking-[0.2em] text-white/50 uppercase font-bold">{t('contact.statSupport')}</div>
               </div>
            </div>
         </div>
@@ -1501,29 +1555,29 @@ const ContactPage = () => (
              <div className="w-10 h-10 rounded-full bg-[#FAFAFA] flex items-center justify-center mb-6 text-[#111111]">
                <MapPin size={18} strokeWidth={1.5}/>
              </div>
-             <h4 className="text-[16px] font-medium text-[#111111] mb-2">全球制造与研发总部</h4>
+             <h4 className="text-[16px] font-medium text-[#111111] mb-2">{t('contact.card1h')}</h4>
              <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-4">Shantou, China</div>
-             <p className="text-[13px] text-gray-500 font-light leading-relaxed">中国广东省汕头市龙湖区鸥汀街道防汛路31号东侧 (10万级 GMPC 智造中心)</p>
+             <p className="text-[13px] text-gray-500 font-light leading-relaxed">{t('contact.card1p')}</p>
           </div>
           <div className="bg-white p-8 rounded-[20px] border border-gray-100 shadow-[0_4px_20px_rgb(0,0,0,0.02)] hover:-translate-y-1 transition-transform">
              <div className="w-10 h-10 rounded-full bg-[#FAFAFA] flex items-center justify-center mb-6 text-[#111111]">
                <Phone size={18} strokeWidth={1.5}/>
              </div>
-             <h4 className="text-[16px] font-medium text-[#111111] mb-2">业务与出海咨询专线</h4>
+             <h4 className="text-[16px] font-medium text-[#111111] mb-2">{t('contact.card2h')}</h4>
              <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-4">24/7 Global Support</div>
              <p className="text-[13px] text-gray-500 font-light leading-relaxed space-y-2 flex flex-col">
-               <span>直线: +86 0754-89920101</span>
-               <span>WhatsApp: +86 13632470463</span>
+               <span>{t('contact.card2l1')}</span>
+               <span>{t('contact.card2l2')}</span>
              </p>
           </div>
           <div className="bg-white p-8 rounded-[20px] border border-gray-100 shadow-[0_4px_20px_rgb(0,0,0,0.02)] hover:-translate-y-1 transition-transform">
              <div className="w-10 h-10 rounded-full bg-[#FAFAFA] flex items-center justify-center mb-6 text-[#111111]">
                <Mail size={18} strokeWidth={1.5}/>
              </div>
-             <h4 className="text-[16px] font-medium text-[#111111] mb-2">企业邮箱与商务合作</h4>
+             <h4 className="text-[16px] font-medium text-[#111111] mb-2">{t('contact.card3h')}</h4>
              <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-4">Business Inquiry</div>
              <p className="text-[13px] text-gray-500 font-light leading-relaxed">
-               索取专属代工报价、产品图册或预约实地验厂，请发送邮件至：
+               {t('contact.card3p')}
                <br/><span className="text-[#111111] font-medium mt-2 block">yozobeauty@outlook.com</span>
              </p>
           </div>
@@ -1532,11 +1586,13 @@ const ContactPage = () => (
 
     <SharedContactCTA source="contact" />
   </div>
-);
+  );
+};
 
 // --- 资讯中心列表页 ---
 const NewsPage = () => {
   const navigate = useNavigate();
+  const { t } = useLocale();
   const { articles, articleCategories, loading, error, reload } = useCms();
   const [activeCategory, setActiveCategory] = useState("全部");
   const [searchQuery, setSearchQuery] = useState("");
@@ -1561,7 +1617,7 @@ const NewsPage = () => {
       <div className="pt-28 md:pt-36 lg:pt-40 pb-32 text-center text-[14px] text-gray-500 font-light">
         <p>{error}</p>
         <button type="button" onClick={() => reload()} className="mt-6 text-[#111111] underline">
-          重试
+          {t('common.retry')}
         </button>
       </div>
     );
@@ -1572,11 +1628,11 @@ const NewsPage = () => {
       <div className="container mx-auto px-6 md:px-12">
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-3 mb-6">
-            <span className="h-px w-8 bg-gray-200"></span><span className="text-[11px] tracking-[0.2em] text-gray-400 uppercase font-bold">News & Insights</span><span className="h-px w-8 bg-gray-200"></span>
+            <span className="h-px w-8 bg-gray-200"></span><span className="text-[11px] tracking-[0.2em] text-gray-400 uppercase font-bold">{t('news.eyebrow')}</span><span className="h-px w-8 bg-gray-200"></span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-light tracking-tight mb-6 text-[#111111]">资讯与洞察</h1>
+          <h1 className="text-4xl md:text-5xl font-light tracking-tight mb-6 text-[#111111]">{t('news.title')}</h1>
           <p className="text-gray-500 font-light max-w-2xl mx-auto text-[15px]">
-            获取美妆制造前沿动态、行业趋势研究与品牌孵化指南。
+            {t('news.lead')}
           </p>
         </div>
 
@@ -1589,7 +1645,7 @@ const NewsPage = () => {
             <div className="w-full lg:w-3/5 h-[300px] lg:h-[450px] relative overflow-hidden">
               <img src={featuredArticle.img} alt={featuredArticle.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" />
               <div className="absolute top-6 left-6 bg-white/90 backdrop-blur text-[#111111] px-4 py-1.5 rounded-full text-[11px] font-bold tracking-widest uppercase">
-                Featured
+                {t('common.featured')}
               </div>
             </div>
             <div className="w-full lg:w-2/5 p-10 lg:p-16 flex flex-col justify-center">
@@ -1605,7 +1661,7 @@ const NewsPage = () => {
                 {featuredArticle.summary}
               </p>
               <div className="inline-flex items-center gap-2 text-[13px] font-medium text-[#111111] group-hover:gap-4 transition-all mt-auto">
-                阅读深度长文 <ArrowRight size={16} />
+                {t('common.readLong')} <ArrowRight size={16} />
               </div>
             </div>
           </div>
@@ -1622,13 +1678,13 @@ const NewsPage = () => {
                   activeCategory === cat ? 'bg-[#1A1A1A] text-white border-[#1A1A1A] shadow-md' : 'bg-transparent text-gray-500 hover:text-[#111111] border-gray-200 hover:border-gray-300'
                 }`}
               >
-                {cat}
+                {formatCategoryTabLabel(cat, t)}
               </button>
             ))}
           </div>
           <div className="relative w-full lg:w-72 flex-shrink-0 mt-4 lg:mt-0">
             <input 
-              type="text" placeholder="搜索资讯..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+              type="text" placeholder={t('news.searchPh')} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-[#FAFAFA] border border-gray-200 pl-10 pr-4 py-2.5 text-[13px] focus:outline-none focus:border-gray-400 rounded-full transition-colors"
             />
             <Search size={14} className="absolute left-4 top-3.5 text-gray-400" />
@@ -1658,8 +1714,8 @@ const NewsPage = () => {
                   {article.summary}
                 </p>
                 <div className="mt-auto pt-4 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-400 font-light uppercase tracking-widest">
-                  <span className="flex items-center gap-1.5"><Clock size={12}/> {article.readTime} Read</span>
-                  <span className="text-[#111111] font-medium flex items-center gap-1 group-hover:gap-2 transition-all">阅读 <ChevronRight size={14}/></span>
+                  <span className="flex items-center gap-1.5"><Clock size={12}/> {article.readTime} {t('common.readTimeSuffix')}</span>
+                  <span className="text-[#111111] font-medium flex items-center gap-1 group-hover:gap-2 transition-all">{t('common.read')} <ChevronRight size={14}/></span>
                 </div>
               </div>
             </article>
@@ -1669,7 +1725,7 @@ const NewsPage = () => {
         {hasMore && (
           <div className="text-center">
             <button onClick={() => setVisibleCount(prev => prev + 6)} className="bg-white border border-gray-200 text-[#111111] px-10 py-3.5 text-[13px] font-medium hover:bg-gray-50 transition-colors rounded-full shadow-sm">
-              加载更多洞察
+              {t('common.loadMoreInsights')}
             </button>
           </div>
         )}
@@ -1682,6 +1738,7 @@ const NewsPage = () => {
 const NewsDetailPage = () => {
   const navigate = useNavigate();
   const { articleId } = useParams();
+  const { t } = useLocale();
   const { articles, loading, error, reload } = useCms();
   const [openFaq, setOpenFaq] = useState(0);
 
@@ -1700,7 +1757,7 @@ const NewsDetailPage = () => {
       <div className="pt-28 md:pt-36 lg:pt-40 pb-32 text-center text-[14px] text-gray-500 font-light">
         <p>{error}</p>
         <button type="button" onClick={() => reload()} className="mt-6 text-[#111111] underline">
-          重试
+          {t('common.retry')}
         </button>
       </div>
     );
@@ -1715,13 +1772,13 @@ const NewsDetailPage = () => {
       <header className="relative pt-28 md:pt-36 lg:pt-40 pb-20 md:pb-32 bg-[#FAFAFA] border-b border-gray-100">
         <div className="container mx-auto px-6 md:px-12 max-w-4xl">
           <button onClick={() => navigate('/news')} className="group text-[12px] font-medium tracking-[0.1em] text-gray-400 hover:text-[#111111] mb-12 flex items-center gap-2 transition-colors uppercase">
-            <ArrowRight size={14} className="rotate-180 transition-transform group-hover:-translate-x-1" /> Back to News
+            <ArrowRight size={14} className="rotate-180 transition-transform group-hover:-translate-x-1" /> {t('common.backToNews')}
           </button>
           <div className="flex items-center gap-4 text-[11px] font-bold tracking-widest text-gray-400 uppercase mb-6">
              <span className="bg-[#111111] text-white px-3 py-1 rounded-full">{article.category}</span>
              <time dateTime={article.date}>{article.date}</time>
              <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-             <span className="flex items-center gap-1.5"><Clock size={12}/> {article.readTime} Read</span>
+             <span className="flex items-center gap-1.5"><Clock size={12}/> {article.readTime} {t('common.readTimeSuffix')}</span>
           </div>
           <h1 className="text-3xl md:text-5xl lg:text-6xl font-light tracking-tight mb-8 leading-[1.2] text-[#111111]" itemProp="headline">
             {article.title}
@@ -1840,6 +1897,7 @@ const NewsDetailPage = () => {
 const CaseStudyDetailPage = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const { t } = useLocale();
   const { caseStudies, loading, error, reload } = useCms();
   const study = slug ? resolveCaseStudyBySlug(caseStudies, slug) : null;
 
@@ -1849,7 +1907,7 @@ const CaseStudyDetailPage = () => {
       <div className="pt-28 md:pt-36 lg:pt-40 pb-32 text-center text-[14px] text-gray-500 font-light">
         <p>{error}</p>
         <button type="button" onClick={() => reload()} className="mt-6 text-[#111111] underline">
-          重试
+          {t('common.retry')}
         </button>
       </div>
     );
@@ -1857,9 +1915,9 @@ const CaseStudyDetailPage = () => {
   if (!study) {
     return (
       <div className="pt-28 md:pt-36 lg:pt-40 pb-32 text-center text-[14px] text-gray-500 font-light">
-        <p>未找到该案例</p>
+        <p>{t('common.notFoundCase')}</p>
         <button type="button" onClick={() => navigate('/')} className="mt-6 text-[#111111] underline">
-          返回首页
+          {t('common.backHome')}
         </button>
       </div>
     );
@@ -1873,7 +1931,7 @@ const CaseStudyDetailPage = () => {
           onClick={() => navigate(-1)}
           className="group text-[12px] font-medium tracking-[0.1em] text-gray-400 hover:text-[#111111] mb-10 flex items-center gap-2 transition-colors uppercase"
         >
-          <ArrowRight size={14} className="rotate-180 transition-transform group-hover:-translate-x-1" /> 返回
+          <ArrowRight size={14} className="rotate-180 transition-transform group-hover:-translate-x-1" /> {t('common.back')}
         </button>
         {study.industry ? (
           <span className="text-[11px] tracking-widest text-gray-400 uppercase">{study.industry}</span>
@@ -1897,6 +1955,7 @@ const CaseStudyDetailPage = () => {
 const SimplePageView = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const { t } = useLocale();
   const { simplePages, loading, error, reload } = useCms();
   const page = slug ? resolveSimplePageBySlug(simplePages, slug) : null;
 
@@ -1906,7 +1965,7 @@ const SimplePageView = () => {
       <div className="pt-28 md:pt-36 lg:pt-40 pb-32 text-center text-[14px] text-gray-500 font-light">
         <p>{error}</p>
         <button type="button" onClick={() => reload()} className="mt-6 text-[#111111] underline">
-          重试
+          {t('common.retry')}
         </button>
       </div>
     );
@@ -1914,9 +1973,9 @@ const SimplePageView = () => {
   if (!page) {
     return (
       <div className="pt-28 md:pt-36 lg:pt-40 pb-32 text-center text-[14px] text-gray-500 font-light">
-        <p>未找到页面</p>
+        <p>{t('common.notFoundPage')}</p>
         <button type="button" onClick={() => navigate('/')} className="mt-6 text-[#111111] underline">
-          返回首页
+          {t('common.backHome')}
         </button>
       </div>
     );
@@ -1959,7 +2018,7 @@ const SimplePageView = () => {
 // ==========================================
 
 function LanguageSwitcher({ navOnLight }) {
-  const { locale, setLocale } = useLocale();
+  const { locale, setLocale, t } = useLocale();
   const opts = [
     { id: 'zh', label: '中文' },
     { id: 'en', label: 'EN' },
@@ -1968,7 +2027,7 @@ function LanguageSwitcher({ navOnLight }) {
   return (
     <div
       role="group"
-      aria-label="切换语言"
+      aria-label={t('shell.ariaLang')}
       className={`inline-flex shrink-0 items-center rounded-full border p-0.5 gap-0.5 ${
         navOnLight ? 'border-gray-200/80 bg-white/70' : 'border-white/30 bg-black/25'
       }`}
@@ -2001,6 +2060,7 @@ function LanguageSwitcher({ navOnLight }) {
 function SiteShell() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { locale, t } = useLocale();
   const { siteSettings, products } = useCms();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -2079,7 +2139,7 @@ function SiteShell() {
                       ? (navOnLight ? 'text-[#111111] font-medium' : 'text-white font-medium')
                       : (navOnLight ? 'hover:text-[#111111]' : 'hover:text-white')
                   }`}>
-                    {item.label}
+                    {navLabelForItem(item, t)}
                   </span>
                   <div className={`w-1 h-1 rounded-full transition-all duration-300 ${
                     isActive 
@@ -2106,7 +2166,9 @@ function SiteShell() {
                 : 'bg-white border-white text-[#111111] hover:bg-transparent hover:text-white'
             }`}
             >
-              {headerCta?.label || '免费询盘'}
+              {locale === 'zh' && headerCta?.label?.trim()
+                ? headerCta.label.trim()
+                : t('common.freeInquiry')}
             </button>
           </div>
 
@@ -2127,7 +2189,7 @@ function SiteShell() {
                  }}
                  className="w-full text-center px-6 py-4 text-[#111111] text-[14px] tracking-widest hover:bg-gray-50 transition-colors"
                >
-                 {item.label}
+                 {navLabelForItem(item, t)}
                </button>
              ))}
              <div className="px-6 pt-6 pb-2 flex justify-center">
@@ -2156,12 +2218,15 @@ function SiteShell() {
                   )}
                 </div>
                 <p className="text-[15px] font-light leading-relaxed max-w-md text-white/80 mb-8">
-                  {siteSettings?.footerTagline || siteSettings?.description ? (
-                    <span className="whitespace-pre-line">{siteSettings.footerTagline || siteSettings.description}</span>
+                  {locale === 'zh' && (siteSettings?.footerTagline || siteSettings?.description) ? (
+                    <span className="whitespace-pre-line">
+                      {siteSettings.footerTagline || siteSettings.description}
+                    </span>
                   ) : (
                     <>
-                      汕头市贞丽芙生物科技有限公司。<br />符合国际 GMPC 及 ISO 22716
-                      标准的高端化妆品代工厂，以生物科技赋能全球顶级美妆生态。
+                      {t('footer.taglineL1')}
+                      <br />
+                      {t('footer.taglineL2')}
                     </>
                   )}
                 </p>
@@ -2180,32 +2245,32 @@ function SiteShell() {
                 {/* 快速导览 */}
                 <div>
                   <h4 className="text-[12px] font-bold text-white tracking-[0.2em] uppercase mb-8 flex items-center gap-3">
-                    <span className="w-3 h-px bg-white/40"></span> 快速导览
+                    <span className="w-3 h-px bg-white/40"></span> {t('footer.colQuick')}
                   </h4>
                   <ul className="space-y-5 text-[14px] font-light text-white/70">
-                    <li><button onClick={()=>navigate('/about')} className="hover:text-white transition-colors relative group">品牌探索<span className="absolute -bottom-1 left-0 w-0 h-px bg-white transition-all duration-300 group-hover:w-full"></span></button></li>
-                    <li><button onClick={()=>navigate('/services')} className="hover:text-white transition-colors relative group">代工方案<span className="absolute -bottom-1 left-0 w-0 h-px bg-white transition-all duration-300 group-hover:w-full"></span></button></li>
-                    <li><button onClick={()=>navigate('/products')} className="hover:text-white transition-colors relative group">配方档案<span className="absolute -bottom-1 left-0 w-0 h-px bg-white transition-all duration-300 group-hover:w-full"></span></button></li>
-                    <li><button onClick={()=>navigate('/faq')} className="hover:text-white transition-colors relative group">合作指引<span className="absolute -bottom-1 left-0 w-0 h-px bg-white transition-all duration-300 group-hover:w-full"></span></button></li>
+                    <li><button onClick={()=>navigate('/about')} className="hover:text-white transition-colors relative group">{t('nav.about')}<span className="absolute -bottom-1 left-0 w-0 h-px bg-white transition-all duration-300 group-hover:w-full"></span></button></li>
+                    <li><button onClick={()=>navigate('/services')} className="hover:text-white transition-colors relative group">{t('nav.services')}<span className="absolute -bottom-1 left-0 w-0 h-px bg-white transition-all duration-300 group-hover:w-full"></span></button></li>
+                    <li><button onClick={()=>navigate('/products')} className="hover:text-white transition-colors relative group">{t('footer.linkFormulas')}<span className="absolute -bottom-1 left-0 w-0 h-px bg-white transition-all duration-300 group-hover:w-full"></span></button></li>
+                    <li><button onClick={()=>navigate('/faq')} className="hover:text-white transition-colors relative group">{t('nav.faq')}<span className="absolute -bottom-1 left-0 w-0 h-px bg-white transition-all duration-300 group-hover:w-full"></span></button></li>
                   </ul>
                 </div>
                 
                 {/* 业务中心 */}
                 <div>
                   <h4 className="text-[12px] font-bold text-white tracking-[0.2em] uppercase mb-8 flex items-center gap-3">
-                    <span className="w-3 h-px bg-white/40"></span> 业务中心
+                    <span className="w-3 h-px bg-white/40"></span> {t('footer.colBiz')}
                   </h4>
                   <ul className="space-y-5 text-[14px] font-light text-white/70">
-                    <li><button onClick={()=>navigate('/news')} className="hover:text-white transition-colors relative group">行业资讯<span className="absolute -bottom-1 left-0 w-0 h-px bg-white transition-all duration-300 group-hover:w-full"></span></button></li>
-                    <li><button onClick={()=>navigate('/contact')} className="hover:text-white transition-colors relative group">索取报价<span className="absolute -bottom-1 left-0 w-0 h-px bg-white transition-all duration-300 group-hover:w-full"></span></button></li>
-                    <li><button onClick={()=>navigate('/contact')} className="hover:text-white transition-colors relative group">申请打样<span className="absolute -bottom-1 left-0 w-0 h-px bg-white transition-all duration-300 group-hover:w-full"></span></button></li>
+                    <li><button onClick={()=>navigate('/news')} className="hover:text-white transition-colors relative group">{t('footer.industryNews')}<span className="absolute -bottom-1 left-0 w-0 h-px bg-white transition-all duration-300 group-hover:w-full"></span></button></li>
+                    <li><button onClick={()=>navigate('/contact')} className="hover:text-white transition-colors relative group">{t('footer.linkQuote')}<span className="absolute -bottom-1 left-0 w-0 h-px bg-white transition-all duration-300 group-hover:w-full"></span></button></li>
+                    <li><button onClick={()=>navigate('/contact')} className="hover:text-white transition-colors relative group">{t('footer.linkSample')}<span className="absolute -bottom-1 left-0 w-0 h-px bg-white transition-all duration-300 group-hover:w-full"></span></button></li>
                   </ul>
                 </div>
 
                 {/* 联络枢纽 */}
                 <div>
                   <h4 className="text-[12px] font-bold text-white tracking-[0.2em] uppercase mb-8 flex items-center gap-3">
-                    <span className="w-3 h-px bg-white/40"></span> 联络枢纽
+                    <span className="w-3 h-px bg-white/40"></span> {t('footer.colContact')}
                   </h4>
                   <ul className="space-y-5 text-[14px] font-light text-white/70">
                     <li className="flex items-start gap-3 group">
@@ -2235,9 +2300,9 @@ function SiteShell() {
                           siteSettings.address
                         ) : (
                           <>
-                            中国广东省汕头市龙湖区
+                            {t('footer.addressL1')}
                             <br />
-                            鸥汀街道防汛路31号东侧
+                            {t('footer.addressL2')}
                           </>
                         )}
                       </span>
@@ -2250,12 +2315,13 @@ function SiteShell() {
            {/* 版权声明区 */}
            <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 md:gap-6 text-[12px] sm:text-[13px] font-light text-white/50 px-1">
               <div className="text-center md:text-left order-2 md:order-1 tracking-wide">
-                {siteSettings?.footerCopyright ||
-                  `© ${new Date().getFullYear()} 汕头市贞丽芙生物科技有限公司 (YOZO). All rights reserved.`}
+                {locale === 'zh' && siteSettings?.footerCopyright?.trim()
+                  ? siteSettings.footerCopyright.trim()
+                  : `© ${new Date().getFullYear()} ${t('footer.copyrightFallback')}`}
               </div>
               <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 order-1 md:order-2">
-                <button type="button" className="hover:text-white transition-colors whitespace-nowrap">隐私政策 (Privacy Policy)</button>
-                <button type="button" className="hover:text-white transition-colors whitespace-nowrap">服务条款 (Terms of Service)</button>
+                <button type="button" className="hover:text-white transition-colors whitespace-nowrap">{t('footer.privacy')}</button>
+                <button type="button" className="hover:text-white transition-colors whitespace-nowrap">{t('footer.terms')}</button>
               </div>
            </div>
         </div>
@@ -2266,14 +2332,14 @@ function SiteShell() {
         {floatingFormOpen && (
           <div className="bg-white shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)] border border-gray-100 rounded-2xl p-5 sm:p-8 mb-3 sm:mb-4 w-[min(22rem,calc(100vw-2rem))] sm:w-[min(24rem,calc(100vw-2.5rem))] md:w-[380px] yozo-animate-panel-up">
             <div className="flex justify-between items-center mb-8">
-              <h4 className="text-[15px] font-medium text-[#111111] tracking-wide">发送询盘请求</h4>
+              <h4 className="text-[15px] font-medium text-[#111111] tracking-wide">{t('floating.title')}</h4>
               <button onClick={() => setFloatingFormOpen(false)} className="text-gray-400 hover:text-[#111111] transition-colors"><X size={18} strokeWidth={1.5}/></button>
             </div>
             <form className="space-y-5" onSubmit={async (e) => {
               e.preventDefault();
               setFloatHint('');
               if (!floatName.trim() || !floatPhone.trim()) {
-                setFloatHint('请填写姓名与联系方式');
+                setFloatHint(t('floating.errRequired'));
                 return;
               }
               setFloatSending(true);
@@ -2289,23 +2355,23 @@ function SiteShell() {
                   sourcePath: path,
                   sourceProductId: fromProduct?.sanityId,
                 });
-                setFloatHint('已提交，我们将尽快回复。');
+                setFloatHint(t('floating.success'));
                 setFloatName('');
                 setFloatPhone('');
                 setFloatMsg('');
                 setTimeout(() => setFloatingFormOpen(false), 1500);
               } catch (err) {
-                setFloatHint(err.message || '提交失败');
+                setFloatHint(err.message || t('floating.errSubmit'));
               } finally {
                 setFloatSending(false);
               }
             }}>
-              <input type="text" placeholder="您的姓名 *" value={floatName} onChange={(e) => setFloatName(e.target.value)} className="w-full bg-transparent border-b border-gray-200 pb-2 text-[13px] focus:outline-none focus:border-[#111111] transition-colors" />
-              <input type="text" placeholder="联系电话 / WhatsApp *" value={floatPhone} onChange={(e) => setFloatPhone(e.target.value)} className="w-full bg-transparent border-b border-gray-200 pb-2 text-[13px] focus:outline-none focus:border-[#111111] transition-colors" />
-              <textarea placeholder="简述您的定制需求..." rows={2} value={floatMsg} onChange={(e) => setFloatMsg(e.target.value)} className="w-full bg-transparent border-b border-gray-200 pb-2 text-[13px] focus:outline-none focus:border-[#111111] resize-none transition-colors"></textarea>
+              <input type="text" placeholder={t('floating.phName')} value={floatName} onChange={(e) => setFloatName(e.target.value)} className="w-full bg-transparent border-b border-gray-200 pb-2 text-[13px] focus:outline-none focus:border-[#111111] transition-colors" />
+              <input type="text" placeholder={t('floating.phPhone')} value={floatPhone} onChange={(e) => setFloatPhone(e.target.value)} className="w-full bg-transparent border-b border-gray-200 pb-2 text-[13px] focus:outline-none focus:border-[#111111] transition-colors" />
+              <textarea placeholder={t('floating.phMsg')} rows={2} value={floatMsg} onChange={(e) => setFloatMsg(e.target.value)} className="w-full bg-transparent border-b border-gray-200 pb-2 text-[13px] focus:outline-none focus:border-[#111111] resize-none transition-colors"></textarea>
               {floatHint ? <p className="text-[12px] text-gray-500">{floatHint}</p> : null}
               <button type="submit" disabled={floatSending} className="group w-full bg-[#1A1A1A] text-white py-3.5 text-[12px] font-medium tracking-widest uppercase hover:bg-black transition-colors rounded-full mt-4 flex justify-center items-center gap-2 disabled:opacity-60">
-                {floatSending ? '提交中…' : '获取专属报价'} <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-1"/>
+                {floatSending ? t('contact.submitting') : t('floating.cta')} <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-1"/>
               </button>
             </form>
           </div>

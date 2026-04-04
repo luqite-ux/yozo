@@ -2,10 +2,40 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import zh from './translations/zh.js';
 import en from './translations/en.js';
 import es from './translations/es.js';
+import uiExtraZh from './translations/uiExtra.zh.js';
+import uiExtraEn from './translations/uiExtra.en.js';
+import uiExtraEs from './translations/uiExtra.es.js';
 
 const STORAGE_KEY = 'yozo.locale';
 
-const dictionaries = { zh, en, es };
+function deepMerge(base, extra) {
+  if (!base) return extra || {};
+  if (!extra) return base;
+  const out = { ...base };
+  for (const k of Object.keys(extra)) {
+    const bv = base[k];
+    const ev = extra[k];
+    if (
+      ev &&
+      typeof ev === 'object' &&
+      !Array.isArray(ev) &&
+      bv &&
+      typeof bv === 'object' &&
+      !Array.isArray(bv)
+    ) {
+      out[k] = deepMerge(bv, ev);
+    } else {
+      out[k] = ev;
+    }
+  }
+  return out;
+}
+
+const dictionaries = {
+  zh: deepMerge(zh, uiExtraZh),
+  en: deepMerge(en, uiExtraEn),
+  es: deepMerge(es, uiExtraEs),
+};
 
 function normalizeLocale(input) {
   const raw = String(input || '').trim().toLowerCase();
