@@ -1,5 +1,8 @@
 /**
- * Sanity Webhook Handler — 产品自动翻译（ZH → EN / ES）
+ * Sanity Webhook Handler — 产品 / 产品分类 自动翻译（ZH → EN / ES）
+ *
+ * Sanity Webhook GROQ Filter（文档类型名为 productCategory，不是 category）：
+ *   _type == "product" || _type == "productCategory"
  *
  * 使用 MyMemory 免费翻译 API，无需付费账号。
  * 通过内容哈希防止翻译循环触发：
@@ -86,6 +89,10 @@ function computeContentHash(doc) {
     ...ARRAY_FIELDS.map(f => (doc[f] || []).join('‖')),
   ].join('|');
   return crypto.createHash('md5').update(parts).digest('hex');
+}
+
+function computeProductCategoryTitleHash(doc) {
+  return crypto.createHash('md5').update(String(doc.title || '').trim()).digest('hex');
 }
 
 // ── MyMemory 翻译 ─────────────────────────────────────────────────────────────
@@ -185,6 +192,46 @@ async function processProduct(doc) {
   return { success: true, _id, fieldsTranslated: Object.keys(patch).filter(k => k !== 'translationSourceHash') };
 }
 
+async function processProductCategory(doc) {
+  const { _id, _type } = doc;
+  if (_type !== 'productCategory') return { skipped: true, reason: 'not a productCategory' };
+
+  const title = String(doc.title || '').trim();
+  if (!title) {
+    console.log(`[${_id}] Skipped (productCategory) — empty title`);
+    return { skipped: true, reason: 'empty title' };
+  }
+
+  const currentHash = computeProductCategoryTitleHash(doc);
+  if (doc.translationSourceHash && doc.translationSourceHash === currentHash) {
+    console.log(`[${_id}] Skipped (productCategory) — already translated`);
+    return { skipped: true, reason: 'already translated' };
+  }
+
+  console.log(`[${_id}] Translating productCategory title…`);
+  const [titleEn, titleEs] = await Promise.all([
+    translateText(title, 'zh-CN', 'en'),
+    translateText(title, 'zh-CN', 'es'),
+  ]);
+
+  await client
+    .patch(_id)
+    .set({
+      titleEn,
+      titleEs,
+      translationSourceHash: currentHash,
+    })
+    .commit();
+  console.log(`[${_id}] Done (productCategory)`);
+  return { success: true, _id, type: 'productCategory' };
+}
+
+async function routeTranslation(doc) {
+  if (doc._type === 'product') return processProduct(doc);
+  if (doc._type === 'productCategory') return processProductCategory(doc);
+  return { skipped: true, reason: `unsupported _type: ${doc._type}` };
+}
+
 // ── HTTP 服务器 ───────────────────────────────────────────────────────────────
 const server = http.createServer((req, res) => {
   if (req.method === 'GET' && req.url === '/health') {
@@ -221,7 +268,7 @@ const server = http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ received: true, _id: doc._id }));
 
-    processProduct(doc).catch(err => {
+    routeTranslation(doc).catch(err => {
       console.error(`Translation error for ${doc._id}:`, err.message);
     });
   });

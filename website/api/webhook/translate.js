@@ -1,6 +1,9 @@
 /**
- * Vercel Serverless Function — 产品自动翻译（ZH → EN / ES）
+ * Vercel Serverless Function — 产品 / 产品分类 自动翻译（ZH → EN / ES）
  * 路由：POST /api/webhook/translate
+ *
+ * Sanity → Webhooks → 本 URL 的 GROQ Filter 请设为（类型名是 productCategory，不是 category）：
+ *   _type == "product" || _type == "productCategory"
  *
  * 环境变量（在 Vercel 项目设置 → Environment Variables 里添加）：
  *   SANITY_PROJECT_ID       来自 website/.env.local 的 VITE_SANITY_PROJECT_ID
@@ -62,6 +65,10 @@ function computeContentHash(doc) {
     ...ARRAY_FIELDS.map(f => (doc[f] || []).join('‖')),
   ].join('|');
   return crypto.createHash('md5').update(parts).digest('hex');
+}
+
+function computeProductCategoryTitleHash(doc) {
+  return crypto.createHash('md5').update(String(doc.title || '').trim()).digest('hex');
 }
 
 const MYMEMORY_MAX_CHARS = 500;
@@ -150,6 +157,53 @@ async function processProduct(doc) {
   console.log(`[translate] ${_id} done`);
 }
 
+async function processProductCategory(doc) {
+  const { _id, _type } = doc;
+  if (_type !== 'productCategory') return;
+
+  const title = String(doc.title || '').trim();
+  if (!title) {
+    console.log(`[translate] productCategory ${_id} skipped — empty title`);
+    return;
+  }
+
+  const currentHash = computeProductCategoryTitleHash(doc);
+  if (doc.translationSourceHash === currentHash) {
+    console.log(`[translate] productCategory ${_id} skipped — already translated`);
+    return;
+  }
+
+  const client = createClient({
+    projectId: process.env.SANITY_PROJECT_ID || process.env.VITE_SANITY_PROJECT_ID,
+    dataset: process.env.SANITY_DATASET || 'production',
+    token: process.env.SANITY_API_WRITE_TOKEN,
+    apiVersion: '2024-01-01',
+    useCdn: false,
+  });
+
+  console.log(`[translate] productCategory ${_id} translating title…`);
+  const [titleEn, titleEs] = await Promise.all([
+    translateText(title, 'zh-CN', 'en'),
+    translateText(title, 'zh-CN', 'es'),
+  ]);
+
+  await client
+    .patch(_id)
+    .set({
+      titleEn,
+      titleEs,
+      translationSourceHash: currentHash,
+    })
+    .commit();
+  console.log(`[translate] productCategory ${_id} done`);
+}
+
+function routeTranslation(doc) {
+  if (doc._type === 'product') return processProduct(doc);
+  if (doc._type === 'productCategory') return processProductCategory(doc);
+  return Promise.resolve();
+}
+
 // ── Vercel Handler ────────────────────────────────────────────────────────────
 
 export default async function handler(req, res) {
@@ -174,7 +228,7 @@ export default async function handler(req, res) {
   // 立即返回 200（Sanity webhook 超时约 10s），翻译异步执行
   res.status(200).json({ received: true, _id: doc._id });
 
-  processProduct(doc).catch(err => {
+  routeTranslation(doc).catch(err => {
     console.error(`[translate] error for ${doc._id}:`, err.message);
   });
 }

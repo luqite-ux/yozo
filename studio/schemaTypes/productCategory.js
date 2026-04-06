@@ -31,6 +31,14 @@ export default defineType({
       group: 'main',
     }),
     defineField({
+      name: 'translationSourceHash',
+      title: '翻译源哈希（自动，防重复翻译）',
+      type: 'string',
+      readOnly: true,
+      hidden: true,
+      group: 'main',
+    }),
+    defineField({
       name: 'slug',
       title: 'Slug',
       type: 'slug',
