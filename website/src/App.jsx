@@ -9,7 +9,13 @@ import {
 } from 'lucide-react';
 import { useCms } from './cms/CmsContext.jsx';
 import { useLocale } from './i18n/LocaleContext.jsx';
-import { cmsZhElseT, formatCategoryTabLabel, navLabelForItem } from './i18n/helpers.js';
+import {
+  cmsZhElseT,
+  formatCategoryTabLabel,
+  labelProductCategory,
+  labelProductCategoryTab,
+  navLabelForItem,
+} from './i18n/helpers.js';
 import { getDefaultAboutPage } from './lib/sanity/index.js';
 import { submitInquiry } from './lib/inquiry/submitInquiry.js';
 
@@ -618,7 +624,7 @@ const HomePage = () => {
                   }
                 </div>
                 <div className="p-3 md:p-5 pt-1 md:pt-2">
-                  <div className="text-[9px] md:text-[10px] tracking-widest text-gray-400 uppercase mb-1">{product.category}</div>
+                  <div className="text-[9px] md:text-[10px] tracking-widest text-gray-400 uppercase mb-1">{labelProductCategory(product, locale)}</div>
                   <h3 className="text-[13px] md:text-[15px] font-medium group-hover:text-[#1A1A1A] transition-colors line-clamp-2 text-[#333]">{product.name}</h3>
                 </div>
               </div>
@@ -1023,7 +1029,7 @@ const ServicesPage = () => {
 // --- Products Center ---
 const ProductsPage = () => {
   const navigate = useNavigate();
-  const { t } = useLocale();
+  const { locale, t } = useLocale();
   const { products, productCategories, loading, error, reload } = useCms();
   const [activeCategory, setActiveCategory] = useState("全部");
   const [searchQuery, setSearchQuery] = useState("");
@@ -1076,14 +1082,14 @@ const ProductsPage = () => {
         <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 sm:gap-6 mb-12 bg-white p-4 sm:p-5 border border-gray-100 rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.02)] min-w-0">
           <div className="flex flex-nowrap md:flex-wrap items-center gap-2.5 w-full min-w-0 lg:w-auto flex-1 overflow-x-auto md:overflow-visible pb-1 md:pb-0 [-webkit-overflow-scrolling:touch]">
             <Filter size={16} className="text-gray-300 mr-2 hidden lg:block shrink-0" />
-            {productCategories.map((cat) => (
+            {productCategories.map((tab) => (
               <button 
-                key={cat} onClick={() => { setActiveCategory(cat); setVisibleCount(8); }}
+                key={tab.canonical} onClick={() => { setActiveCategory(tab.canonical); setVisibleCount(8); }}
                 className={`px-5 py-2 text-[13px] transition-all duration-300 rounded-full whitespace-nowrap border ${
-                  activeCategory === cat ? 'bg-[#1A1A1A] text-white border-[#1A1A1A] shadow-md' : 'bg-transparent text-gray-500 hover:text-[#111111] border-gray-200 hover:border-gray-300'
+                  activeCategory === tab.canonical ? 'bg-[#1A1A1A] text-white border-[#1A1A1A] shadow-md' : 'bg-transparent text-gray-500 hover:text-[#111111] border-gray-200 hover:border-gray-300'
                 }`}
               >
-                {formatCategoryTabLabel(cat, t)}
+                {labelProductCategoryTab(tab, locale, t)}
               </button>
             ))}
           </div>
@@ -1103,7 +1109,7 @@ const ProductsPage = () => {
                 <img src={product.img} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
               </div>
               <div className="p-6 flex flex-col flex-grow">
-                <div className="text-[10px] tracking-widest text-gray-400 uppercase mb-2">{product.category}</div>
+                <div className="text-[10px] tracking-widest text-gray-400 uppercase mb-2">{labelProductCategory(product, locale)}</div>
                 <h3 className="text-[16px] font-medium mb-4 group-hover:text-[#111111] transition-colors line-clamp-1 text-[#333]">{product.name}</h3>
                 <div className="flex flex-wrap gap-1.5 mb-6">
                   {product.tags.map((tag, i) => (
@@ -1134,7 +1140,7 @@ const ProductsPage = () => {
 const ProductDetailPage = () => {
   const navigate = useNavigate();
   const { productId } = useParams();
-  const { t } = useLocale();
+  const { locale, t } = useLocale();
   const { products, loading, error, reload } = useCms();
   const [openFaq, setOpenFaq] = useState(0);
 
@@ -1200,7 +1206,7 @@ const ProductDetailPage = () => {
             {/* 右侧：产品参数与转化核心 */}
             <div className="lg:col-span-7 flex flex-col justify-center py-4 lg:py-6 min-w-0">
               <div className="flex items-center gap-3 mb-6">
-                <span className="text-[11px] font-bold tracking-[0.2em] text-[#111111] uppercase bg-gray-200/50 px-3 py-1 rounded-full">{product.category}</span>
+                <span className="text-[11px] font-bold tracking-[0.2em] text-[#111111] uppercase bg-gray-200/50 px-3 py-1 rounded-full">{labelProductCategory(product, locale)}</span>
                 <span className="text-[11px] text-gray-400 tracking-widest uppercase flex items-center gap-1"><ShieldCheck size={12}/> Mature Formula</span>
               </div>
               
@@ -1391,7 +1397,7 @@ const ProductDetailPage = () => {
                     <img src={relProduct.img} alt={relProduct.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                   </div>
                   <div className="p-6 flex flex-col flex-grow">
-                    <div className="text-[10px] tracking-widest text-gray-400 uppercase mb-2">{relProduct.category}</div>
+                    <div className="text-[10px] tracking-widest text-gray-400 uppercase mb-2">{labelProductCategory(relProduct, locale)}</div>
                     <h3 className="text-[16px] font-medium mb-3 group-hover:text-[#111111] transition-colors line-clamp-1 text-[#333]">{relProduct.name}</h3>
                     <p className="text-[13px] text-gray-500 font-light line-clamp-2 mb-4">{relProduct.desc}</p>
                     <div className="mt-auto pt-4 border-t border-gray-100 flex items-center justify-between text-[11px] font-medium">

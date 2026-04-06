@@ -53,7 +53,9 @@ const productProjection = `
   "imageUrl": coalesce(mainImage.asset->url, image.asset->url, featuredImage.asset->url),
   "category": category->{
     _id,
-    "title": title,
+    title,
+    titleEn,
+    titleEs,
     "slug": slug.current
   },
   "ingredientsList": ingredients[]{

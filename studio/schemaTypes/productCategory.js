@@ -17,6 +17,20 @@ export default defineType({
       validation: (r) => r.required(),
     }),
     defineField({
+      name: 'titleEn',
+      title: '英文名称（前台 EN）',
+      type: 'string',
+      description: '选英文语言时显示；不填则仍显示中文「名称」',
+      group: 'main',
+    }),
+    defineField({
+      name: 'titleEs',
+      title: '西班牙文名称（前台 ES）',
+      type: 'string',
+      description: '选西语时显示；不填则仍显示中文「名称」',
+      group: 'main',
+    }),
+    defineField({
       name: 'slug',
       title: 'Slug',
       type: 'slug',

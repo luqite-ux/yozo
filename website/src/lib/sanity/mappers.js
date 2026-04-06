@@ -91,6 +91,7 @@ export function mapSanityProduct(raw) {
     typeof cat === 'string'
       ? cat
       : coalescePlain(cat?.title, cat?.name, raw.categoryTitle, raw.categoryLabel, '未分类');
+  const catObj = typeof cat === 'object' && cat ? cat : null;
 
   const ingredients = normalizeIngredients(
     raw.ingredientsList || raw.ingredients || raw.keyIngredients,
@@ -116,6 +117,8 @@ export function mapSanityProduct(raw) {
     sanityId: raw._id,
     slug: raw.slug || null,
     category: categoryTitle,
+    categoryTitleEn: coalescePlain(catObj?.titleEn),
+    categoryTitleEs: coalescePlain(catObj?.titleEs),
     name: coalescePlain(raw.name, raw.title),
     img,
     desc: desc || (bodyContent[0]?.text ?? ''),
@@ -282,21 +285,37 @@ export function productCategoryDocsToLabels(docs) {
     .filter(Boolean);
 }
 
+const TAB_ALL = '全部';
+
 /**
+ * 产品筛选 Tab：canonical 始终为中文「名称」（与 product.category 一致，用于筛选）。
+ * titleEn / titleEs 来自 productCategory 文档；站点设置里手写的字符串列表无多语言字段时各语种显示同一条文案。
  * @param {Record<string, unknown>|null} settings
- * @param {string[]} fromDocs
+ * @param {Record<string, unknown>[]|null} rawPcatDocs
+ * @returns {{ canonical: string, titleEn?: string, titleEs?: string }[]}
  */
-export function buildProductCategoryTabs(settings, fromDocs) {
+export function buildProductCategoryTabs(settings, rawPcatDocs) {
   const fromSettings = settings?.productCategories ?? settings?.productCategoriesLabels;
   if (Array.isArray(fromSettings) && fromSettings.length) {
     const labels = fromSettings
       .map((x) => (typeof x === 'string' ? x : x?.title || x?.name || ''))
       .filter(Boolean)
-      .filter((x) => x !== '全部');
-    return ['全部', ...labels];
+      .filter((x) => x !== TAB_ALL);
+    return [{ canonical: TAB_ALL }, ...labels.map((s) => ({ canonical: s }))];
   }
-  const rest = fromDocs.filter((x) => x !== '全部');
-  return ['全部', ...rest];
+  const docs = Array.isArray(rawPcatDocs) ? rawPcatDocs : [];
+  const rows = docs
+    .map((d) => {
+      const canonical = coalescePlain(d.title, d.name, d.label);
+      if (!canonical || canonical === TAB_ALL) return null;
+      return {
+        canonical,
+        titleEn: coalescePlain(d.titleEn),
+        titleEs: coalescePlain(d.titleEs),
+      };
+    })
+    .filter(Boolean);
+  return [{ canonical: TAB_ALL }, ...rows];
 }
 
 /**

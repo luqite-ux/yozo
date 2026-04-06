@@ -14,6 +14,22 @@ export function formatCategoryTabLabel(cat, t) {
   return cat === CATEGORY_ALL ? t('common.all') : cat;
 }
 
+/** 产品分类 Tab（canonical + 可选 titleEn/titleEs） */
+export function labelProductCategoryTab(tab, locale, t) {
+  if (!tab?.canonical || tab.canonical === CATEGORY_ALL) return t('common.all');
+  if (locale === 'en' && tab.titleEn?.trim()) return tab.titleEn.trim();
+  if (locale === 'es' && tab.titleEs?.trim()) return tab.titleEs.trim();
+  return tab.canonical;
+}
+
+/** 产品卡片/详情上的分类文案 */
+export function labelProductCategory(product, locale) {
+  if (!product) return '';
+  if (locale === 'en' && product.categoryTitleEn?.trim()) return product.categoryTitleEn.trim();
+  if (locale === 'es' && product.categoryTitleEs?.trim()) return product.categoryTitleEs.trim();
+  return product.category || '';
+}
+
 function normalizeInternalPath(href) {
   const s = String(href || '').trim();
   if (!s || /^https?:\/\//i.test(s)) return null;

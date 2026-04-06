@@ -16,7 +16,6 @@ import {
   mapSanityPost,
   mapSanityCaseStudy,
   mapSanitySimplePage,
-  productCategoryDocsToLabels,
   buildProductCategoryTabs,
   buildArticleCategoryTabs,
   mapSiteSettingsForHome,
@@ -72,13 +71,12 @@ export async function readCmsPayloadFromSanity() {
 
   const mappedSettings = mapSiteSettingsForHome(rawSettings);
   const siteSettings = mergeHomePageIntoSiteSettings(mappedSettings, rawHome);
-  const pcatLabels = productCategoryDocsToLabels(rawPcat);
   const products = rawProducts.map(mapSanityProduct);
   const faqs = rawFaqs.map(mapSanityFaq);
   const articles = rawPosts.map(mapSanityPost);
   const caseStudies = rawCases.map(mapSanityCaseStudy);
   const simplePages = rawPages.map(mapSanitySimplePage);
-  const productCategories = buildProductCategoryTabs(rawSettings, pcatLabels);
+  const productCategories = buildProductCategoryTabs(rawSettings, rawPcat);
   const articleCategories = buildArticleCategoryTabs(rawSettings, articles);
 
   return {
