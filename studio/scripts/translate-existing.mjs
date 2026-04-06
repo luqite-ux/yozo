@@ -142,10 +142,23 @@ const TEXT_FIELDS = [
 ];
 const ARRAY_FIELDS = ['efficacy', 'tags'];
 
+function serializeSpecs(specs) {
+  if (!Array.isArray(specs) || specs.length === 0) return '';
+  return specs
+    .map((r) => {
+      const l = (r && typeof r === 'object' ? String(r.label || r.name || '').trim() : '').trim();
+      const v = (r && typeof r === 'object' ? String(r.value || r.text || '').trim() : '').trim();
+      return `${l}:${v}`;
+    })
+    .filter(Boolean)
+    .join('‖');
+}
+
 function hashProduct(doc) {
   const parts = [
     ...TEXT_FIELDS.map((f) => doc[f] || ''),
     ...ARRAY_FIELDS.map((f) => (doc[f] || []).join('‖')),
+    serializeSpecs(doc.specifications),
   ].join('|');
   return crypto.createHash('md5').update(parts).digest('hex');
 }
@@ -211,6 +224,22 @@ async function processProduct(doc) {
     patch[`${field}_es`] = await translateArray(arr, 'zh-CN', 'es');
   }
 
+  // specifications：逐行翻译 label/value
+  if (Array.isArray(doc.specifications) && doc.specifications.length > 0) {
+    console.log(`    specifications[] → en/es…`);
+    const rows = [];
+    for (const row of doc.specifications) {
+      const label = row?.label ? String(row.label) : '';
+      const value = row?.value ? String(row.value) : '';
+      const label_en = await translateText(label, 'zh-CN', 'en');
+      const label_es = await translateText(label, 'zh-CN', 'es');
+      const value_en = await translateText(value, 'zh-CN', 'en');
+      const value_es = await translateText(value, 'zh-CN', 'es');
+      rows.push({ ...row, label_en, label_es, value_en, value_es });
+    }
+    patch.specifications = rows;
+  }
+
   await client.patch(doc._id).set(patch).commit();
   console.log(`    ✓ done`);
   return { success: true };
@@ -257,7 +286,7 @@ async function main() {
     }`),
     client.fetch(`*[_type == "product" && !(_id in path("drafts.**"))]{
       _id, name, excerpt, description, applicationScenarios,
-      packaging, skinType, oemDesc, efficacy, translationSourceHash
+      packaging, skinType, oemDesc, efficacy, tags, specifications, translationSourceHash
     }`),
     client.fetch(`*[_type == "faq" && !(_id in path("drafts.**"))]{
       _id, question, answer, translationSourceHash

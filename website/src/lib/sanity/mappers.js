@@ -159,6 +159,10 @@ function normalizeSpecs(raw) {
     .map((row) => ({
       label: coalescePlain(row?.label, row?.name),
       value: coalescePlain(row?.value, row?.text),
+      label_en: coalescePlain(row?.label_en),
+      label_es: coalescePlain(row?.label_es),
+      value_en: coalescePlain(row?.value_en),
+      value_es: coalescePlain(row?.value_es),
     }))
     .filter((x) => x.label || x.value);
 }

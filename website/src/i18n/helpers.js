@@ -16,6 +16,14 @@ export function localizeProduct(product, locale) {
     const arr = locale === 'en' ? en : es;
     return Array.isArray(arr) && arr.length ? arr : (zh || []);
   };
+  const pickSpecs = (specs) => {
+    if (!Array.isArray(specs) || specs.length === 0) return [];
+    return specs.map((r) => ({
+      ...r,
+      label: pick(r?.label, r?.label_en, r?.label_es),
+      value: pick(r?.value, r?.value_en, r?.value_es),
+    }));
+  };
   return {
     ...product,
     name: pick(product.name, product.name_en, product.name_es),
@@ -30,6 +38,7 @@ export function localizeProduct(product, locale) {
     ),
     efficacy: pickArr(product.efficacy, product.efficacy_en, product.efficacy_es),
     tags: pickArr(product.tags, product.tags_en, product.tags_es),
+    specifications: pickSpecs(product.specifications),
   };
 }
 

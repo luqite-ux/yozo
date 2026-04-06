@@ -79,6 +79,11 @@ export default defineType({
           fields: [
             defineField({ name: 'label', title: '名称', type: 'string' }),
             defineField({ name: 'value', title: '值', type: 'string' }),
+            // 自动翻译（由 Webhook 写入，勿手动编辑）
+            defineField({ name: 'label_en', title: 'Label (EN)', type: 'string', readOnly: true }),
+            defineField({ name: 'label_es', title: 'Label (ES)', type: 'string', readOnly: true }),
+            defineField({ name: 'value_en', title: 'Value (EN)', type: 'string', readOnly: true }),
+            defineField({ name: 'value_es', title: 'Value (ES)', type: 'string', readOnly: true }),
           ],
           preview: {
             select: { l: 'label', v: 'value' },
