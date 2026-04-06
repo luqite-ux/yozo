@@ -15,6 +15,7 @@ import {
   labelProductCategory,
   labelProductCategoryTab,
   navLabelForItem,
+  pickFaqLocale,
 } from './i18n/helpers.js';
 import { getDefaultAboutPage } from './lib/sanity/index.js';
 import { submitInquiry } from './lib/inquiry/submitInquiry.js';
@@ -681,17 +682,20 @@ const HomePage = () => {
             <p className="text-gray-500 font-light text-[15px]">{t('home.faqSectionLead')}</p>
           </div>
           <div className="border-t border-gray-200/60">
-            {homeFaqs.map((faq, idx) => (
+            {homeFaqs.map((faq, idx) => {
+              const { q: faqQ, a: faqA } = pickFaqLocale(faq, locale);
+              return (
               <div key={faq.sanityId || faq.id || idx} className="border-b border-gray-200/60 bg-white">
                 <button className="w-full py-6 px-6 flex justify-between items-center text-left hover:text-gray-500 transition-colors" onClick={() => setOpenFaq(openFaq === idx ? -1 : idx)}>
-                  <span className={`text-[15px] md:text-[16px] font-light pr-8 ${openFaq === idx ? 'text-[#111111] font-medium' : 'text-[#333]'}`}>{faq.q}</span>
+                  <span className={`text-[15px] md:text-[16px] font-light pr-8 ${openFaq === idx ? 'text-[#111111] font-medium' : 'text-[#333]'}`}>{faqQ}</span>
                   <span className={openFaq === idx ? 'text-[#111111]' : 'text-gray-400'}>{openFaq === idx ? <Minus size={18} strokeWidth={1.5} /> : <Plus size={18} strokeWidth={1.5} />}</span>
                 </button>
                 <div className={`overflow-hidden transition-all duration-300 ease-in-out px-6 ${openFaq === idx ? 'max-h-[60rem] opacity-100 pb-6' : 'max-h-0 opacity-0'}`}>
-                  <p className="text-gray-500 font-light text-[14px] leading-relaxed pr-8">{faq.a}</p>
+                  <p className="text-gray-500 font-light text-[14px] leading-relaxed pr-8">{faqA}</p>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
           <div className="text-center mt-12">
             <button onClick={() => navigate('/faq')} className="group flex items-center justify-center gap-2 mx-auto text-[14px] font-medium text-gray-500 hover:text-[#111111] transition-colors">
@@ -1419,7 +1423,7 @@ const ProductDetailPage = () => {
 
 // --- FAQ 页 ---
 const FaqPage = () => {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { faqs, loading, error, reload } = useCms();
   const [openFaq, setOpenFaq] = useState(0);
 
@@ -1445,19 +1449,22 @@ const FaqPage = () => {
           <h1 className="text-4xl md:text-5xl font-light tracking-tight text-center mb-6">{t('faqPage.title')}</h1>
         </div>
         <div className="border-t border-gray-200/60">
-          {faqs.map((faq, idx) => (
+          {faqs.map((faq, idx) => {
+            const { q: faqQ, a: faqA } = pickFaqLocale(faq, locale);
+            return (
             <div key={faq.id ?? faq.q ?? idx} className="border-b border-gray-200/60 group">
               <button className="w-full py-8 flex justify-between items-center text-left hover:text-gray-600 transition-colors" onClick={() => setOpenFaq(openFaq === idx ? -1 : idx)}>
-                <span className={`text-base md:text-lg font-light pr-8 ${openFaq === idx ? 'text-[#111111] font-medium' : 'text-gray-600'}`}>{faq.q}</span>
+                <span className={`text-base md:text-lg font-light pr-8 ${openFaq === idx ? 'text-[#111111] font-medium' : 'text-gray-600'}`}>{faqQ}</span>
                 <span className={`transition-transform duration-300 ${openFaq === idx ? 'text-[#111111] rotate-180' : 'text-gray-300'}`}>
                   {openFaq === idx ? <Minus size={20} strokeWidth={1.5} /> : <Plus size={20} strokeWidth={1.5} />}
                 </span>
               </button>
               <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openFaq === idx ? 'max-h-[60rem] opacity-100 pb-8' : 'max-h-0 opacity-0'}`}>
-                <p className="text-gray-500 font-light text-[14px] leading-relaxed pr-8">{faq.a}</p>
+                <p className="text-gray-500 font-light text-[14px] leading-relaxed pr-8">{faqA}</p>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
       <SharedContactCTA source="faq" />

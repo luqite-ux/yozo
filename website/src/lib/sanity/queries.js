@@ -105,7 +105,11 @@ export const homePageQuery = `*[_type == "homePage"][0]{
   featuredFaqs[]->{
     _id,
     question,
+    question_en,
+    question_es,
     answer,
+    answer_en,
+    answer_es,
     sortOrder,
     showOnHome,
     category
@@ -152,10 +156,14 @@ export const productsQuery = `*[_type == "product" && ${published}] | order(coal
 
 /** @type {string} */
 export const faqsQuery = `*[_type == "faq" && ${published}] | order(coalesce(sortOrder, 0) asc, _createdAt asc) {
-  ...,
+  _id,
   "slug": slug.current,
   question,
+  question_en,
+  question_es,
   answer,
+  answer_en,
+  answer_es,
   category,
   isFeatured,
   showOnHome

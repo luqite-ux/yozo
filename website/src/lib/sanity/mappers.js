@@ -155,12 +155,11 @@ export function mapSanityFaq(raw) {
     id: sanityRefToLegacyId(String(raw._id)),
     sanityId: raw._id,
     q: coalescePlain(raw.question, raw.q, raw.title),
-    a: coalescePlain(
-      raw.answer,
-      raw.a,
-      raw.body,
-      typeof raw.content === 'string' ? raw.content : '',
-    ),
+    a: coalescePlain(raw.answer, raw.a, raw.body, typeof raw.content === 'string' ? raw.content : ''),
+    q_en: coalescePlain(raw.question_en),
+    q_es: coalescePlain(raw.question_es),
+    a_en: coalescePlain(raw.answer_en),
+    a_es: coalescePlain(raw.answer_es),
     showOnHome: Boolean(raw.showOnHome),
   };
 }

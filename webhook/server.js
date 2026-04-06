@@ -226,9 +226,56 @@ async function processProductCategory(doc) {
   return { success: true, _id, type: 'productCategory' };
 }
 
+async function processFaq(doc) {
+  const { _id, _type } = doc;
+  if (_type !== 'faq') return { skipped: true, reason: 'not a faq' };
+
+  const question = String(doc.question || '').trim();
+  const answer   = String(doc.answer   || '').trim();
+  if (!question && !answer) {
+    console.log(`[${_id}] Skipped (faq) — empty question and answer`);
+    return { skipped: true, reason: 'empty content' };
+  }
+
+  const currentHash = crypto
+    .createHash('md5')
+    .update([question, answer].join('|'))
+    .digest('hex');
+
+  if (doc.translationSourceHash && doc.translationSourceHash === currentHash) {
+    console.log(`[${_id}] Skipped (faq) — already translated`);
+    return { skipped: true, reason: 'already translated' };
+  }
+
+  console.log(`[${_id}] Translating faq…`);
+  const patch = { translationSourceHash: currentHash };
+
+  if (question) {
+    const [question_en, question_es] = await Promise.all([
+      translateText(question, 'zh-CN', 'en'),
+      translateText(question, 'zh-CN', 'es'),
+    ]);
+    patch.question_en = question_en;
+    patch.question_es = question_es;
+  }
+  if (answer) {
+    const [answer_en, answer_es] = await Promise.all([
+      translateText(answer, 'zh-CN', 'en'),
+      translateText(answer, 'zh-CN', 'es'),
+    ]);
+    patch.answer_en = answer_en;
+    patch.answer_es = answer_es;
+  }
+
+  await client.patch(_id).set(patch).commit();
+  console.log(`[${_id}] Done (faq)`);
+  return { success: true, _id, type: 'faq' };
+}
+
 async function routeTranslation(doc) {
   if (doc._type === 'product') return processProduct(doc);
   if (doc._type === 'productCategory') return processProductCategory(doc);
+  if (doc._type === 'faq') return processFaq(doc);
   return { skipped: true, reason: `unsupported _type: ${doc._type}` };
 }
 

@@ -1,0 +1,307 @@
+/**
+ * 一次性脚本：将 Sanity 中已有的 productCategory / product 文档
+ * 批量翻译 ZH→EN/ES，写回对应的 _en/_es（或 titleEn/titleEs）字段。
+ *
+ * 用法（在项目根目录或 studio 目录均可）：
+ *   node studio/scripts/translate-existing.mjs
+ *   node studio/scripts/translate-existing.mjs --force   # 忽略 hash，强制重译
+ *
+ * 依赖：@sanity/client（studio/node_modules 已有）
+ * 翻译：MyMemory 免费 API，无需 key；每天限约 5 000 词。
+ *       脚本在每次 API 调用之间加 600ms 延迟，防止超额。
+ */
+
+import { createClient } from '@sanity/client';
+import { readFileSync, existsSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import crypto from 'node:crypto';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const studioRoot = join(__dirname, '..');
+const websiteRoot = join(studioRoot, '..', 'website');
+const FORCE = process.argv.includes('--force');
+
+// ── 解析 .env 文件 ────────────────────────────────────────────────────────────
+function parseEnvFile(dir, fname) {
+  const p = join(dir, fname);
+  if (!existsSync(p)) return {};
+  const out = {};
+  for (const line of readFileSync(p, 'utf8').split(/\r?\n/)) {
+    const t = line.trim();
+    if (!t || t.startsWith('#')) continue;
+    const eq = t.indexOf('=');
+    if (eq === -1) continue;
+    const k = t.slice(0, eq).trim();
+    let v = t.slice(eq + 1).trim();
+    if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'")))
+      v = v.slice(1, -1);
+    out[k] = v;
+  }
+  return out;
+}
+
+const env = { ...process.env };
+for (const dir of [websiteRoot, studioRoot]) {
+  Object.assign(env, parseEnvFile(dir, '.env'));
+  Object.assign(env, parseEnvFile(dir, '.env.local'));
+}
+
+const projectId =
+  env.SANITY_STUDIO_PROJECT_ID?.trim() ||
+  env.VITE_SANITY_PROJECT_ID?.trim() ||
+  env.SANITY_PROJECT_ID?.trim() ||
+  '';
+const dataset =
+  env.SANITY_STUDIO_DATASET?.trim() ||
+  env.VITE_SANITY_DATASET?.trim() ||
+  env.SANITY_DATASET?.trim() ||
+  'production';
+const token =
+  env.SANITY_API_WRITE_TOKEN?.trim() ||
+  env.SANITY_WRITE_TOKEN?.trim() ||
+  env.SANITY_AUTH_TOKEN?.trim() ||
+  env.SANITY_TOKEN?.trim() ||
+  '';
+const MYMEMORY_EMAIL = env.MYMEMORY_EMAIL || '';
+
+if (!projectId || !token) {
+  console.error('缺少 projectId 或写 Token，请检查 website/.env.local 或 studio/.env.local');
+  process.exit(1);
+}
+
+const client = createClient({
+  projectId,
+  dataset,
+  token,
+  apiVersion: '2024-01-01',
+  useCdn: false,
+});
+
+// ── 翻译工具 ──────────────────────────────────────────────────────────────────
+const DELAY_MS = 600;           // 每次 API 调用之间的间隔
+const MAX_CHARS = 500;          // MyMemory 单次请求上限
+
+function sleep(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+async function translateChunk(text, from, to) {
+  const emailParam = MYMEMORY_EMAIL ? `&de=${encodeURIComponent(MYMEMORY_EMAIL)}` : '';
+  const url =
+    `https://api.mymemory.translated.net/get` +
+    `?q=${encodeURIComponent(text)}&langpair=${from}|${to}${emailParam}`;
+
+  await sleep(DELAY_MS);
+  const res = await fetch(url, { signal: AbortSignal.timeout(20_000) });
+  if (!res.ok) throw new Error(`MyMemory HTTP ${res.status}`);
+  const data = await res.json();
+  if (data.responseStatus !== 200)
+    throw new Error(`MyMemory: ${data.responseDetails}`);
+  return data.responseData.translatedText;
+}
+
+async function translateText(text, from, to) {
+  if (!text || !text.trim()) return '';
+  if (text.length <= MAX_CHARS) return translateChunk(text, from, to);
+
+  // 超长文本按句分段
+  const sentences = text.split(/(?<=[。！？.!?])\s*/);
+  const chunks = [];
+  let buf = '';
+  for (const s of sentences) {
+    if (buf.length + s.length > MAX_CHARS) {
+      if (buf) chunks.push(buf);
+      buf = s;
+    } else {
+      buf += (buf ? ' ' : '') + s;
+    }
+  }
+  if (buf) chunks.push(buf);
+
+  const parts = [];
+  for (const c of chunks) {
+    parts.push(await translateChunk(c, from, to));
+  }
+  return parts.join(' ');
+}
+
+async function translateArray(arr, from, to) {
+  if (!arr || arr.length === 0) return [];
+  const out = [];
+  for (const item of arr) {
+    out.push(await translateText(String(item), from, to));
+  }
+  return out;
+}
+
+// ── 哈希（与 webhook/server.js 保持一致）─────────────────────────────────────
+const TEXT_FIELDS = [
+  'name', 'excerpt', 'description', 'applicationScenarios',
+  'packaging', 'skinType', 'oemDesc',
+];
+const ARRAY_FIELDS = ['efficacy'];
+
+function hashProduct(doc) {
+  const parts = [
+    ...TEXT_FIELDS.map((f) => doc[f] || ''),
+    ...ARRAY_FIELDS.map((f) => (doc[f] || []).join('‖')),
+  ].join('|');
+  return crypto.createHash('md5').update(parts).digest('hex');
+}
+
+function hashCategory(doc) {
+  return crypto.createHash('md5').update(String(doc.title || '').trim()).digest('hex');
+}
+
+function hashFaq(doc) {
+  return crypto.createHash('md5')
+    .update([String(doc.question || '').trim(), String(doc.answer || '').trim()].join('|'))
+    .digest('hex');
+}
+
+// ── 处理单条 productCategory ──────────────────────────────────────────────────
+async function processCategory(doc) {
+  const title = String(doc.title || '').trim();
+  if (!title) return { skipped: true, reason: 'empty title' };
+
+  const hash = hashCategory(doc);
+  if (!FORCE && doc.translationSourceHash === hash)
+    return { skipped: true, reason: 'already translated' };
+
+  console.log(`  [category] ${doc._id}  "${title}"`);
+  const titleEn = await translateText(title, 'zh-CN', 'en');
+  const titleEs = await translateText(title, 'zh-CN', 'es');
+  await client.patch(doc._id).set({ titleEn, titleEs, translationSourceHash: hash }).commit();
+  console.log(`    → EN: ${titleEn}`);
+  console.log(`    → ES: ${titleEs}`);
+  return { success: true };
+}
+
+// ── 处理单条 product ──────────────────────────────────────────────────────────
+async function processProduct(doc) {
+  const hash = hashProduct(doc);
+  if (!FORCE && doc.translationSourceHash === hash)
+    return { skipped: true, reason: 'already translated' };
+
+  console.log(`  [product]  ${doc._id}  "${doc.name || '(无名称)'}"`);
+  const patch = { translationSourceHash: hash };
+
+  for (const field of TEXT_FIELDS) {
+    const val = doc[field];
+    if (!val) continue;
+    console.log(`    ${field} → en…`);
+    patch[`${field}_en`] = await translateText(val, 'zh-CN', 'en');
+    console.log(`    ${field} → es…`);
+    patch[`${field}_es`] = await translateText(val, 'zh-CN', 'es');
+  }
+
+  for (const field of ARRAY_FIELDS) {
+    const arr = doc[field];
+    if (!arr || arr.length === 0) continue;
+    console.log(`    ${field}[] → en…`);
+    patch[`${field}_en`] = await translateArray(arr, 'zh-CN', 'en');
+    console.log(`    ${field}[] → es…`);
+    patch[`${field}_es`] = await translateArray(arr, 'zh-CN', 'es');
+  }
+
+  await client.patch(doc._id).set(patch).commit();
+  console.log(`    ✓ done`);
+  return { success: true };
+}
+
+// ── 处理单条 faq ──────────────────────────────────────────────────────────────
+async function processFaq(doc) {
+  const question = String(doc.question || '').trim();
+  const answer   = String(doc.answer   || '').trim();
+  if (!question && !answer) return { skipped: true, reason: 'empty content' };
+
+  const hash = hashFaq(doc);
+  if (!FORCE && doc.translationSourceHash === hash)
+    return { skipped: true, reason: 'already translated' };
+
+  console.log(`  [faq]  ${doc._id}  "${question.slice(0, 40)}…"`);
+  const patch = { translationSourceHash: hash };
+
+  if (question) {
+    console.log(`    question → en…`);
+    patch.question_en = await translateText(question, 'zh-CN', 'en');
+    console.log(`    question → es…`);
+    patch.question_es = await translateText(question, 'zh-CN', 'es');
+  }
+  if (answer) {
+    console.log(`    answer → en…`);
+    patch.answer_en = await translateText(answer, 'zh-CN', 'en');
+    console.log(`    answer → es…`);
+    patch.answer_es = await translateText(answer, 'zh-CN', 'es');
+  }
+
+  await client.patch(doc._id).set(patch).commit();
+  console.log(`    ✓ done`);
+  return { success: true };
+}
+
+// ── main ──────────────────────────────────────────────────────────────────────
+async function main() {
+  console.log(`\nproject=${projectId}  dataset=${dataset}  force=${FORCE}\n`);
+
+  const [categories, products, faqs] = await Promise.all([
+    client.fetch(`*[_type == "productCategory" && !(_id in path("drafts.**"))]{
+      _id, title, titleEn, titleEs, translationSourceHash
+    }`),
+    client.fetch(`*[_type == "product" && !(_id in path("drafts.**"))]{
+      _id, name, excerpt, description, applicationScenarios,
+      packaging, skinType, oemDesc, efficacy, translationSourceHash
+    }`),
+    client.fetch(`*[_type == "faq" && !(_id in path("drafts.**"))]{
+      _id, question, answer, translationSourceHash
+    }`),
+  ]);
+
+  console.log(`找到 ${categories.length} 个分类，${products.length} 个产品，${faqs.length} 条 FAQ\n`);
+
+  let catDone = 0, catSkipped = 0;
+  let prodDone = 0, prodSkipped = 0;
+  let faqDone = 0, faqSkipped = 0;
+
+  console.log('── 翻译分类 ──────────────────────────────────────────────────');
+  for (const doc of categories) {
+    try {
+      const r = await processCategory(doc);
+      if (r.skipped) { catSkipped++; console.log(`  [skip] ${doc._id} — ${r.reason}`); }
+      else catDone++;
+    } catch (e) {
+      console.error(`  [ERROR] ${doc._id}: ${e.message}`);
+    }
+  }
+
+  console.log('\n── 翻译产品 ──────────────────────────────────────────────────');
+  for (const doc of products) {
+    try {
+      const r = await processProduct(doc);
+      if (r.skipped) { prodSkipped++; console.log(`  [skip] ${doc._id} — ${r.reason}`); }
+      else prodDone++;
+    } catch (e) {
+      console.error(`  [ERROR] ${doc._id}: ${e.message}`);
+    }
+  }
+
+  console.log('\n── 翻译 FAQ ──────────────────────────────────────────────────');
+  for (const doc of faqs) {
+    try {
+      const r = await processFaq(doc);
+      if (r.skipped) { faqSkipped++; console.log(`  [skip] ${doc._id} — ${r.reason}`); }
+      else faqDone++;
+    } catch (e) {
+      console.error(`  [ERROR] ${doc._id}: ${e.message}`);
+    }
+  }
+
+  console.log('\n══════════════════════════════════════════════════════════════');
+  console.log(`分类：翻译 ${catDone} 条，跳过 ${catSkipped} 条`);
+  console.log(`产品：翻译 ${prodDone} 条，跳过 ${prodSkipped} 条`);
+  console.log(`FAQ：翻译 ${faqDone} 条，跳过 ${faqSkipped} 条`);
+  console.log(`合计：翻译 ${catDone + prodDone + faqDone} 条`);
+}
+
+main().catch((e) => { console.error(e); process.exit(1); });

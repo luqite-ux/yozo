@@ -44,6 +44,15 @@ export default defineType({
       title: '语言（预留）',
       type: 'string',
     }),
+
+    // ── 自动翻译字段（由 Webhook / 脚本写入，勿手动编辑）──────────────────
+    defineField({ name: 'question_en', title: 'Question (EN)', type: 'string', readOnly: true,
+      description: '由翻译 Webhook 自动填充' }),
+    defineField({ name: 'question_es', title: 'Question (ES)', type: 'string', readOnly: true }),
+    defineField({ name: 'answer_en', title: 'Answer (EN)', type: 'text', rows: 6, readOnly: true }),
+    defineField({ name: 'answer_es', title: 'Answer (ES)', type: 'text', rows: 6, readOnly: true }),
+    defineField({ name: 'translationSourceHash', title: '翻译源哈希', type: 'string',
+      readOnly: true, hidden: true }),
   ],
   preview: { select: { title: 'question' } },
 });

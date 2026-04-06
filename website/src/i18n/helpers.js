@@ -1,3 +1,15 @@
+/**
+ * 按 locale 选 FAQ 的问题或答案，有翻译则用翻译，否则降级到中文原文。
+ * @param {object} faq  mapSanityFaq 的输出
+ * @param {'zh'|'en'|'es'} locale
+ * @returns {{ q: string, a: string }}
+ */
+export function pickFaqLocale(faq, locale) {
+  const q = (locale === 'en' && faq.q_en) || (locale === 'es' && faq.q_es) || faq.q || '';
+  const a = (locale === 'en' && faq.a_en) || (locale === 'es' && faq.a_es) || faq.a || '';
+  return { q, a };
+}
+
 /** CMS 文案仅在中文界面优先展示；英文/西语使用翻译键，避免整站仍显示中文。 */
 export function cmsZhElseT(locale, cmsValue, tKey, t) {
   if (locale === 'zh') {
