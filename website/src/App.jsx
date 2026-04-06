@@ -14,6 +14,7 @@ import {
   formatCategoryTabLabel,
   labelProductCategory,
   labelProductCategoryTab,
+  localizeProduct,
   navLabelForItem,
   pickFaqLocale,
 } from './i18n/helpers.js';
@@ -265,9 +266,9 @@ const HomePage = () => {
 
   const featuredProducts = useMemo(() => {
     const hand = siteSettings?.homeFeaturedProducts;
-    if (Array.isArray(hand) && hand.length > 0) return hand;
-    return products.slice(0, 4);
-  }, [siteSettings?.homeFeaturedProducts, products]);
+    const list = Array.isArray(hand) && hand.length > 0 ? hand : products.slice(0, 4);
+    return list.map((p) => localizeProduct(p, locale));
+  }, [siteSettings?.homeFeaturedProducts, products, locale]);
 
   const homeFaqs = useMemo(() => {
     const hand = siteSettings?.homeFeaturedFaqs;
@@ -728,9 +729,11 @@ function aboutCertIcon(icon) {
 // --- About Us 品牌探索（Sanity aboutPage，缺省见 getDefaultAboutPage）---
 const AboutPage = () => {
   const navigate = useNavigate();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { aboutPage, loading, error, reload } = useCms();
   const a = aboutPage ?? getDefaultAboutPage();
+  // c(field, key): zh 用 CMS 值，EN/ES 用 i18n key
+  const c = (field, key) => cmsZhElseT(locale, a[field], key, t);
 
   if (loading && !aboutPage) {
     return <CmsLoadingScreen />;
@@ -751,11 +754,11 @@ const AboutPage = () => {
       <div className="pt-28 md:pt-36 lg:pt-40 pb-24 container mx-auto px-6 md:px-12 text-center">
         <div className="inline-flex items-center gap-3 mb-8">
           <span className="h-px w-8 bg-gray-200"></span>
-          <span className="text-[11px] font-bold tracking-[0.3em] uppercase text-gray-400">{a.heroEyebrow}</span>
+          <span className="text-[11px] font-bold tracking-[0.3em] uppercase text-gray-400">{c('heroEyebrow', 'about.eyebrow')}</span>
           <span className="h-px w-8 bg-gray-200"></span>
         </div>
         <h1 className="text-3xl sm:text-5xl md:text-7xl font-light tracking-tight mb-6 sm:mb-8 leading-[1.15] text-[#111111] px-1">
-          {String(a.heroTitle || '')
+          {String(c('heroTitle', 'about.heroTitle'))
             .split('\n')
             .map((line, i, arr) => (
               <span key={i}>
@@ -765,7 +768,7 @@ const AboutPage = () => {
             ))}
         </h1>
         <p className="text-gray-500 font-light max-w-2xl mx-auto text-base sm:text-lg leading-relaxed whitespace-pre-line px-1">
-          {a.heroSubtitle}
+          {c('heroSubtitle', 'about.heroSubtitle')}
         </p>
       </div>
 
@@ -788,26 +791,26 @@ const AboutPage = () => {
                 </span>
               ))}
           </h2>
-          <p className="text-white/80 font-light tracking-widest text-[13px] uppercase">{a.labOverlaySubtitle}</p>
+          <p className="text-white/80 font-light tracking-widest text-[13px] uppercase">{c('labOverlaySubtitle', 'about.labOverlaySubtitle')}</p>
         </div>
       </div>
 
       <section className="py-16 md:py-24 bg-white">
         <div className="container mx-auto px-6 md:px-12 max-w-4xl text-center">
           <h3 className="text-2xl md:text-3xl font-light text-[#111111] mb-8 leading-relaxed whitespace-pre-line">
-            {a.manifestoQuote}
+            {c('manifestoQuote', 'about.manifestoQuote')}
           </h3>
-          <p className="text-gray-500 font-light leading-loose text-[15px] whitespace-pre-line">{a.manifestoBody}</p>
+          <p className="text-gray-500 font-light leading-loose text-[15px] whitespace-pre-line">{c('manifestoBody', 'about.manifestoBody')}</p>
         </div>
       </section>
 
       <section className="py-24 bg-[#FAFAFA] border-y border-gray-100">
         <div className="container mx-auto px-6 md:px-12">
           <div className="text-center mb-20">
-            <div className="text-[11px] tracking-[0.3em] text-gray-400 uppercase mb-4 font-bold">{a.portfolioEyebrow}</div>
-            <h2 className="text-3xl md:text-4xl font-light tracking-tight mb-6 text-[#111111]">{a.portfolioTitle}</h2>
+            <div className="text-[11px] tracking-[0.3em] text-gray-400 uppercase mb-4 font-bold">{c('portfolioEyebrow', 'about.portfolioEyebrow')}</div>
+            <h2 className="text-3xl md:text-4xl font-light tracking-tight mb-6 text-[#111111]">{c('portfolioTitle', 'about.portfolioTitle')}</h2>
             <p className="text-gray-500 font-light max-w-2xl mx-auto text-[15px] whitespace-pre-line">
-              {a.portfolioIntro}
+              {c('portfolioIntro', 'about.portfolioIntro')}
             </p>
           </div>
 
@@ -832,9 +835,12 @@ const AboutPage = () => {
                 </div>
                 <div className="p-8">
                   <h4 className="text-[14px] font-medium text-[#111111] mb-3 flex items-center gap-2">
-                    <Hexagon size={14} className="text-gray-300" /> {brand.subtitle}
+                    <Hexagon size={14} className="text-gray-300" />
+                    {locale !== 'zh' ? t(`about.brand${a.portfolioBrands.indexOf(brand)}subtitle`) || brand.subtitle : brand.subtitle}
                   </h4>
-                  <p className="text-[13px] text-gray-500 font-light leading-relaxed whitespace-pre-line">{brand.desc}</p>
+                  <p className="text-[13px] text-gray-500 font-light leading-relaxed whitespace-pre-line">
+                    {locale !== 'zh' ? t(`about.brand${a.portfolioBrands.indexOf(brand)}desc`) || brand.desc : brand.desc}
+                  </p>
                 </div>
               </div>
             ))}
@@ -846,7 +852,7 @@ const AboutPage = () => {
               onClick={() => followHref(navigate, a.portfolioCtaHref || '/services')}
               className="group inline-flex items-center gap-2 text-[13px] font-medium tracking-[0.1em] text-gray-500 hover:text-[#111111] transition-colors border-b border-transparent hover:border-[#111111] pb-1"
             >
-              {a.portfolioCtaLabel}{' '}
+              {c('portfolioCtaLabel', 'about.portfolioCtaLabel')}{' '}
               <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
             </button>
           </div>
@@ -856,7 +862,7 @@ const AboutPage = () => {
       <section className="py-24 bg-white">
         <div className="container mx-auto px-6 md:px-12 text-center">
           <div className="mb-16">
-            <h3 className="text-3xl font-light mb-4 text-[#111111]">{a.certSectionTitle}</h3>
+            <h3 className="text-3xl font-light mb-4 text-[#111111]">{c('certSectionTitle', 'about.certSectionTitle')}</h3>
             <p className="text-gray-400 font-light text-[13px] tracking-widest uppercase">{a.certSectionSubtitle}</p>
           </div>
 
@@ -1039,8 +1045,13 @@ const ProductsPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [visibleCount, setVisibleCount] = useState(8);
 
+  const localizedProducts = useMemo(
+    () => products.map((p) => localizeProduct(p, locale)),
+    [products, locale],
+  );
+
   const filteredProducts = useMemo(() => {
-    return products.filter((p) => {
+    return localizedProducts.filter((p) => {
       const matchCategory = activeCategory === "全部" || p.category === activeCategory;
       const matchSearch =
         p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -1048,7 +1059,7 @@ const ProductsPage = () => {
         p.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()));
       return matchCategory && matchSearch;
     });
-  }, [products, activeCategory, searchQuery]);
+  }, [localizedProducts, activeCategory, searchQuery]);
 
   if (loading) return <CmsLoadingScreen />;
   if (error) {
@@ -1121,7 +1132,7 @@ const ProductsPage = () => {
                   ))}
                 </div>
                 <div className="mt-auto pt-4 border-t border-gray-100 flex items-center gap-2 text-[11px] text-gray-400 font-light">
-                  <Package size={12} /><span className="truncate">{t('products.packagingSuggest')}: {product.packaging}</span>
+                  <Package size={12} /><span className="truncate">{t('common.packagingSuggest')}: {product.packaging}</span>
                 </div>
               </div>
             </div>
@@ -1149,7 +1160,7 @@ const ProductDetailPage = () => {
   const [openFaq, setOpenFaq] = useState(0);
 
   const resolvedProduct = resolveProductByRouteParam(products, productId);
-  const product = resolvedProduct ?? products[0];
+  const product = localizeProduct(resolvedProduct ?? products[0], locale);
 
   useEffect(() => {
     if (!loading && products.length && !resolvedProduct) {

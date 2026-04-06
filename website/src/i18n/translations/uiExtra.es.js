@@ -180,6 +180,38 @@ export default {
     faq3a:
       'Informes básicos físico-químicos y de conservación. Para piel 3D o eficacia humana, coordinamos terceros (p. ej. SGS).',
   },
+  about: {
+    eyebrow: 'Sobre YOZO',
+    heroTitle: 'De la excelencia en manufactura,\na una gran incubadora de marcas.',
+    heroSubtitle:
+      'Shantou Zhenlif Biotechnology Co., Ltd. No somos solo fabricantes de primer nivel que trabajan entre bastidores — somos los arquitectos comerciales y el cerebro de I+D detrás de varias marcas líderes de belleza en el mundo.',
+    labOverlaySubtitle: 'Más allá de la fabricación, impulsamos el éxito comercial',
+    manifestoQuote:
+      '"Un gran fabricante por contrato debe saber primero cómo operar una marca exitosa."',
+    manifestoBody:
+      'Respaldado por más de una década de experiencia en I+D y una cadena de suministro ágil, YOZO ha superado los límites tradicionales de la fabricación OEM. Hemos construido un ciclo cerrado completo: desde la planificación de categorías, el desarrollo de fórmulas exclusivas hasta la comercialización total de marca (OBM). Este ADN de operación de marca nos permite ofrecer empoderamiento estratégico a clientes B2B muy por encima de los estándares del sector.',
+    portfolioEyebrow: 'Nuestro Portafolio de Marcas',
+    portfolioTitle: 'Un portafolio diversificado de marcas propias',
+    portfolioIntro:
+      'Los resultados hablan por sí solos. Hemos incubado y operado con éxito marcas de referencia en los siguientes nichos — la mejor prueba de nuestra capacidad de producto y visión de mercado.',
+    portfolioCtaLabel: 'Explorar nuestro servicio integral OBM',
+    certSectionTitle: 'Cumplimiento global y certificaciones',
+    brand0subtitle: 'Pionera en antienvejecimiento clínico',
+    brand0desc:
+      'Marca de vanguardia especializada en biotecnología y activos antiedad de última generación. Transforma moléculas de grado laboratorio en experiencias de rejuvenecimiento visibles.',
+    brand1subtitle: 'Skincare minimalista multibeneficios',
+    brand1desc:
+      'Creada para el consumidor urbano moderno. Filosofía "hacer más con menos" — rutinas simplificadas sin comprometer la eficacia de reparación profunda.',
+    brand2subtitle: 'Recuperación del microbioma para piel sensible',
+    brand2desc:
+      'Especializada en reparación de barrera dañada y pieles sensibles. Extractos botánicos puros combinados con ceramidas para reconstruir la red microbioma saludable de la piel.',
+    brand3subtitle: 'Estética de color neo-oriental',
+    brand3desc:
+      'Marca de maquillaje que fusiona arte del color moderno con filosofía de nutrición ligera. Redefine la textura de base y la expresión de color de alta definición para piel asiática.',
+    brand4subtitle: 'Especialista en antienvejecimiento para piel madura',
+    brand4desc:
+      'Diseñada para preocupaciones de piel 35+. Soluciones de antienvejecimiento estructuradas y de ciclo completo — desde firmeza de contornos hasta reducción intensiva de arrugas.',
+  },
   faqPage: {
     eyebrow: 'Guidelines',
     title: 'Guía y preguntas frecuentes',

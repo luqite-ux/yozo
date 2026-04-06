@@ -180,6 +180,38 @@ export default {
     faq3a:
       'We supply basic physicochemical and preservative challenge reports. For 3D skin models or human efficacy (e.g. anti-wrinkle, brightening), we coordinate third parties such as SGS.',
   },
+  about: {
+    eyebrow: 'About YOZO',
+    heroTitle: 'From excellence in manufacturing,\nto a great brand incubator.',
+    heroSubtitle:
+      'Shantou Zhenlif Biotechnology Co., Ltd. We are not just elite contract manufacturers working behind the scenes — we are the commercial architects and core R&D intelligence behind several of the world\'s leading beauty brands.',
+    labOverlaySubtitle: 'Beyond manufacturing, we empower commercial success',
+    manifestoQuote:
+      '"A great contract manufacturer must first understand how to operate a successful brand."',
+    manifestoBody:
+      'Backed by over a decade of R&D expertise and an agile supply chain, YOZO has transcended the traditional limits of OEM contract manufacturing. We have built a complete closed loop — from forward-looking category planning and proprietary formula R&D to full brand commercialization (OBM). This deep-rooted brand-operation DNA enables us to deliver strategic-level empowerment to B2B clients that far exceeds industry standards.',
+    portfolioEyebrow: 'Our Brand Portfolio',
+    portfolioTitle: 'A diversified portfolio of proprietary brands',
+    portfolioIntro:
+      'Real-world results speak for themselves. We have successfully incubated and operated benchmark brands across the following niche categories — the strongest proof of our product capability and market insight.',
+    portfolioCtaLabel: 'Explore our OBM full-service incubation',
+    certSectionTitle: 'Global compliance & certifications',
+    brand0subtitle: 'Clinical-grade anti-aging pioneer',
+    brand0desc:
+      'A frontier brand specializing in cutting-edge biotechnology and anti-aging actives. Translating lab-grade molecules into visible rejuvenation experiences.',
+    brand1subtitle: 'Minimalist multi-benefit skincare',
+    brand1desc:
+      'Built for the modern fast-paced urban consumer. A do-more-with-less philosophy — streamlined routines without compromising deep-repair efficacy.',
+    brand2subtitle: 'Sensitive-skin microbiome recovery',
+    brand2desc:
+      'Focused on compromised barrier repair and sensitive skin. Pure botanical extracts combined with ceramides to rebuild the skin\'s healthy microbiome network.',
+    brand3subtitle: 'Neo-Eastern colour aesthetics',
+    brand3desc:
+      'A makeup brand fusing modern colour artistry with lightweight skin-nourishing philosophy. Redefining foundation texture and high-definition colour for Asian skin.',
+    brand4subtitle: 'Mature-skin anti-aging specialist',
+    brand4desc:
+      'Tailored for 35+ skin concerns. Structured, full-lifecycle anti-aging solutions — from contour firming to intensive wrinkle reduction.',
+  },
   faqPage: {
     eyebrow: 'Guidelines',
     title: 'Guidelines & FAQ',

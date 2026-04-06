@@ -4,6 +4,34 @@
  * @param {'zh'|'en'|'es'} locale
  * @returns {{ q: string, a: string }}
  */
+/**
+ * 按 locale 选产品的文本字段，有翻译则用翻译，否则降级到中文原文。
+ * @param {object} product  mapSanityProduct 的输出
+ * @param {'zh'|'en'|'es'} locale
+ */
+export function localizeProduct(product, locale) {
+  if (!product || locale === 'zh') return product;
+  const pick = (zh, en, es) => (locale === 'en' ? en : es) || zh || '';
+  const pickArr = (zh, en, es) => {
+    const arr = locale === 'en' ? en : es;
+    return Array.isArray(arr) && arr.length ? arr : (zh || []);
+  };
+  return {
+    ...product,
+    name: pick(product.name, product.name_en, product.name_es),
+    desc: pick(product.desc, product.desc_en, product.desc_es),
+    packaging: pick(product.packaging, product.packaging_en, product.packaging_es),
+    skinType: pick(product.skinType, product.skinType_en, product.skinType_es),
+    oemDesc: pick(product.oemDesc, product.oemDesc_en, product.oemDesc_es),
+    applicationScenarios: pick(
+      product.applicationScenarios,
+      product.applicationScenarios_en,
+      product.applicationScenarios_es,
+    ),
+    efficacy: pickArr(product.efficacy, product.efficacy_en, product.efficacy_es),
+  };
+}
+
 export function pickFaqLocale(faq, locale) {
   const q = (locale === 'en' && faq.q_en) || (locale === 'es' && faq.q_es) || faq.q || '';
   const a = (locale === 'en' && faq.a_en) || (locale === 'es' && faq.a_es) || faq.a || '';
