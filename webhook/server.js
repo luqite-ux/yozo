@@ -272,10 +272,52 @@ async function processFaq(doc) {
   return { success: true, _id, type: 'faq' };
 }
 
+async function processPost(doc) {
+  const { _id, _type } = doc;
+  if (_type !== 'post') return { skipped: true, reason: 'not a post' };
+
+  const title   = String(doc.title   || '').trim();
+  const summary = String(doc.summary || '').trim();
+  if (!title && !summary) return { skipped: true, reason: 'empty content' };
+
+  const currentHash = crypto.createHash('md5')
+    .update([title, summary].join('|')).digest('hex');
+
+  if (doc.translationSourceHash && doc.translationSourceHash === currentHash) {
+    console.log(`[${_id}] Skipped (post) — already translated`);
+    return { skipped: true, reason: 'already translated' };
+  }
+
+  console.log(`[${_id}] Translating post…`);
+  const patch = { translationSourceHash: currentHash };
+
+  if (title) {
+    const [title_en, title_es] = await Promise.all([
+      translateText(title, 'zh-CN', 'en'),
+      translateText(title, 'zh-CN', 'es'),
+    ]);
+    patch.title_en = title_en;
+    patch.title_es = title_es;
+  }
+  if (summary) {
+    const [summary_en, summary_es] = await Promise.all([
+      translateText(summary, 'zh-CN', 'en'),
+      translateText(summary, 'zh-CN', 'es'),
+    ]);
+    patch.summary_en = summary_en;
+    patch.summary_es = summary_es;
+  }
+
+  await client.patch(_id).set(patch).commit();
+  console.log(`[${_id}] Done (post)`);
+  return { success: true, _id, type: 'post' };
+}
+
 async function routeTranslation(doc) {
   if (doc._type === 'product') return processProduct(doc);
   if (doc._type === 'productCategory') return processProductCategory(doc);
   if (doc._type === 'faq') return processFaq(doc);
+  if (doc._type === 'post') return processPost(doc);
   return { skipped: true, reason: `unsupported _type: ${doc._type}` };
 }
 

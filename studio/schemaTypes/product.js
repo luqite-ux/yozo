@@ -134,6 +134,8 @@ export default defineType({
     defineField({ name: 'oemDesc_es', title: 'OEM Desc (ES)', type: 'text', rows: 4, group: 'translations', readOnly: true }),
     defineField({ name: 'efficacy_en', title: 'Efficacy (EN)', type: 'array', of: [{ type: 'string' }], group: 'translations', readOnly: true }),
     defineField({ name: 'efficacy_es', title: 'Efficacy (ES)', type: 'array', of: [{ type: 'string' }], group: 'translations', readOnly: true }),
+    defineField({ name: 'tags_en', title: 'Tags (EN)', type: 'array', of: [{ type: 'string' }], group: 'translations', readOnly: true }),
+    defineField({ name: 'tags_es', title: 'Tags (ES)', type: 'array', of: [{ type: 'string' }], group: 'translations', readOnly: true }),
     // 内容哈希，用于防止翻译 Webhook 循环触发
     defineField({ name: 'translationSourceHash', title: '翻译源哈希', type: 'string', group: 'translations', readOnly: true,
       hidden: true }),

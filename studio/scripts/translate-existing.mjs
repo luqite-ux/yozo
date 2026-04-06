@@ -140,7 +140,7 @@ const TEXT_FIELDS = [
   'name', 'excerpt', 'description', 'applicationScenarios',
   'packaging', 'skinType', 'oemDesc',
 ];
-const ARRAY_FIELDS = ['efficacy'];
+const ARRAY_FIELDS = ['efficacy', 'tags'];
 
 function hashProduct(doc) {
   const parts = [
@@ -157,6 +157,12 @@ function hashCategory(doc) {
 function hashFaq(doc) {
   return crypto.createHash('md5')
     .update([String(doc.question || '').trim(), String(doc.answer || '').trim()].join('|'))
+    .digest('hex');
+}
+
+function hashPost(doc) {
+  return crypto.createHash('md5')
+    .update([String(doc.title || '').trim(), String(doc.summary || '').trim()].join('|'))
     .digest('hex');
 }
 
@@ -245,7 +251,7 @@ async function processFaq(doc) {
 async function main() {
   console.log(`\nproject=${projectId}  dataset=${dataset}  force=${FORCE}\n`);
 
-  const [categories, products, faqs] = await Promise.all([
+  const [categories, products, faqs, posts] = await Promise.all([
     client.fetch(`*[_type == "productCategory" && !(_id in path("drafts.**"))]{
       _id, title, titleEn, titleEs, translationSourceHash
     }`),
@@ -256,13 +262,17 @@ async function main() {
     client.fetch(`*[_type == "faq" && !(_id in path("drafts.**"))]{
       _id, question, answer, translationSourceHash
     }`),
+    client.fetch(`*[_type == "post" && !(_id in path("drafts.**"))]{
+      _id, title, summary, translationSourceHash
+    }`),
   ]);
 
-  console.log(`找到 ${categories.length} 个分类，${products.length} 个产品，${faqs.length} 条 FAQ\n`);
+  console.log(`找到 ${categories.length} 个分类，${products.length} 个产品，${faqs.length} 条 FAQ，${posts.length} 篇文章\n`);
 
   let catDone = 0, catSkipped = 0;
   let prodDone = 0, prodSkipped = 0;
   let faqDone = 0, faqSkipped = 0;
+  let postDone = 0, postSkipped = 0;
 
   console.log('── 翻译分类 ──────────────────────────────────────────────────');
   for (const doc of categories) {
@@ -297,11 +307,52 @@ async function main() {
     }
   }
 
+  console.log('\n── 翻译文章 ──────────────────────────────────────────────────');
+  for (const doc of posts) {
+    const title = String(doc.title || '').trim();
+    const summary = String(doc.summary || '').trim();
+    if (!title && !summary) { postSkipped++; console.log(`  [skip] ${doc._id} — empty`); continue; }
+
+    const hash = hashPost(doc);
+    if (!FORCE && doc.translationSourceHash === hash) {
+      postSkipped++; console.log(`  [skip] ${doc._id} — already translated`); continue;
+    }
+
+    // 只翻译含中文的文章
+    const hasChinese = /[\u4e00-\u9fff]/.test(title + summary);
+    if (!hasChinese) {
+      postSkipped++; console.log(`  [skip] ${doc._id} — no Chinese content`); continue;
+    }
+
+    console.log(`  [post] ${doc._id}  "${title.slice(0, 40)}…"`);
+    try {
+      const patch = { translationSourceHash: hash };
+      if (title) {
+        console.log(`    title → en…`);
+        patch.title_en = await translateText(title, 'zh-CN', 'en');
+        console.log(`    title → es…`);
+        patch.title_es = await translateText(title, 'zh-CN', 'es');
+      }
+      if (summary) {
+        console.log(`    summary → en…`);
+        patch.summary_en = await translateText(summary, 'zh-CN', 'en');
+        console.log(`    summary → es…`);
+        patch.summary_es = await translateText(summary, 'zh-CN', 'es');
+      }
+      await client.patch(doc._id).set(patch).commit();
+      console.log(`    ✓ done`);
+      postDone++;
+    } catch (e) {
+      console.error(`  [ERROR] ${doc._id}: ${e.message}`);
+    }
+  }
+
   console.log('\n══════════════════════════════════════════════════════════════');
   console.log(`分类：翻译 ${catDone} 条，跳过 ${catSkipped} 条`);
   console.log(`产品：翻译 ${prodDone} 条，跳过 ${prodSkipped} 条`);
   console.log(`FAQ：翻译 ${faqDone} 条，跳过 ${faqSkipped} 条`);
-  console.log(`合计：翻译 ${catDone + prodDone + faqDone} 条`);
+  console.log(`文章：翻译 ${postDone} 条，跳过 ${postSkipped} 条`);
+  console.log(`合计：翻译 ${catDone + prodDone + faqDone + postDone} 条`);
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

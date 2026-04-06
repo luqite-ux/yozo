@@ -29,6 +29,21 @@ export function localizeProduct(product, locale) {
       product.applicationScenarios_es,
     ),
     efficacy: pickArr(product.efficacy, product.efficacy_en, product.efficacy_es),
+    tags: pickArr(product.tags, product.tags_en, product.tags_es),
+  };
+}
+
+/**
+ * 按 locale 选文章的标题和摘要。
+ * @param {object} article  mapSanityPost 的输出
+ * @param {'zh'|'en'|'es'} locale
+ */
+export function localizePost(article, locale) {
+  if (!article || locale === 'zh') return article;
+  return {
+    ...article,
+    title: (locale === 'en' ? article.title_en : article.title_es) || article.title,
+    summary: (locale === 'en' ? article.summary_en : article.summary_es) || article.summary,
   };
 }
 

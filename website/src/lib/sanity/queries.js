@@ -41,7 +41,7 @@ const productProjection = `
   oemDesc, oemDesc_en, oemDesc_es,
   applicationScenarios, applicationScenarios_en, applicationScenarios_es,
   ingredients,
-  tags,
+  tags, tags_en, tags_es,
   sortOrder,
   isFeatured,
   body,
@@ -171,11 +171,11 @@ export const faqsQuery = `*[_type == "faq" && ${published}] | order(coalesce(sor
 /** @type {string} */
 export const postsQuery = `*[_type == "post" && ${published}] | order(coalesce(publishedAt, _createdAt) desc) {
   _id,
-  title,
+  title, title_en, title_es,
   slug,
   headline,
   excerpt,
-  summary,
+  summary, summary_en, summary_es,
   blurb,
   readTime,
   readingTime,

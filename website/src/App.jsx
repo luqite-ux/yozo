@@ -14,6 +14,7 @@ import {
   formatCategoryTabLabel,
   labelProductCategory,
   labelProductCategoryTab,
+  localizePost,
   localizeProduct,
   navLabelForItem,
   pickFaqLocale,
@@ -1616,23 +1617,28 @@ const ContactPage = () => {
 // --- 资讯中心列表页 ---
 const NewsPage = () => {
   const navigate = useNavigate();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { articles, articleCategories, loading, error, reload } = useCms();
   const [activeCategory, setActiveCategory] = useState("全部");
   const [searchQuery, setSearchQuery] = useState("");
   const [visibleCount, setVisibleCount] = useState(6);
 
+  const localizedArticles = useMemo(
+    () => articles.map((a) => localizePost(a, locale)),
+    [articles, locale],
+  );
+
   const filteredArticles = useMemo(() => {
-    return articles.filter((a) => {
+    return localizedArticles.filter((a) => {
       const matchCategory = activeCategory === "全部" || a.category === activeCategory;
       const matchSearch =
         a.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         a.summary.toLowerCase().includes(searchQuery.toLowerCase());
       return matchCategory && matchSearch;
     });
-  }, [articles, activeCategory, searchQuery]);
+  }, [localizedArticles, activeCategory, searchQuery]);
 
-  const featuredArticle = articles[0];
+  const featuredArticle = localizedArticles[0];
   const hasMore = visibleCount < filteredArticles.length;
 
   if (loading) return <CmsLoadingScreen />;
@@ -1762,12 +1768,12 @@ const NewsPage = () => {
 const NewsDetailPage = () => {
   const navigate = useNavigate();
   const { articleId } = useParams();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { articles, loading, error, reload } = useCms();
   const [openFaq, setOpenFaq] = useState(0);
 
   const resolvedArticle = resolveArticleByRouteParam(articles, articleId);
-  const article = resolvedArticle ?? articles[0];
+  const article = localizePost(resolvedArticle ?? articles[0], locale);
 
   useEffect(() => {
     if (!loading && articles.length && !resolvedArticle) {
