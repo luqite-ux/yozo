@@ -1,4 +1,5 @@
-import { useLocation, useMemo } from 'react';
+import { useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import { CmsProvider } from './cms/CmsContext.jsx';
 import App from './App.jsx';
 import { LocaleProvider } from './i18n/LocaleContext.jsx';
