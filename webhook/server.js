@@ -95,13 +95,37 @@ function serializeSpecs(specs) {
     .join('‖');
 }
 
+/** Portable Text block[] → 纯文本（双换行分段），用于翻译产品详情正文 */
+function portableBlocksToPlain(blocks) {
+  if (!blocks || !Array.isArray(blocks)) return '';
+  const parts = [];
+  for (const block of blocks) {
+    if (!block || block._type !== 'block') continue;
+    const text = (block.children || []).map((c) => (c && c.text) || '').join('');
+    if (text.trim()) parts.push(text.trim());
+  }
+  return parts.join('\n\n');
+}
+
 function computeContentHash(doc) {
   const parts = [
     ...TEXT_FIELDS.map(f => doc[f] || ''),
     ...ARRAY_FIELDS.map(f => (doc[f] || []).join('‖')),
     serializeSpecs(doc.specifications),
+    portableBlocksToPlain(doc.body),
   ].join('|');
   return crypto.createHash('md5').update(parts).digest('hex');
+}
+
+function serializeRelatedFaqsForHash(list) {
+  if (!Array.isArray(list) || list.length === 0) return '';
+  return list
+    .map((item) => {
+      const q = String(item?.question ?? '').trim();
+      const a = String(item?.answer ?? '').trim();
+      return `${q}‖${a}`;
+    })
+    .join('¶');
 }
 
 function computeProductCategoryTitleHash(doc) {
@@ -201,6 +225,17 @@ async function processProduct(doc) {
   }
 
   // 参数/规格：逐行翻译 label/value，写回 label_en/value_en/label_es/value_es
+  const bodyPlain = portableBlocksToPlain(doc.body);
+  if (bodyPlain) {
+    console.log(`  body (plain) → en/es`);
+    const [bodyPlain_en, bodyPlain_es] = await Promise.all([
+      translateText(bodyPlain, 'zh-CN', 'en'),
+      translateText(bodyPlain, 'zh-CN', 'es'),
+    ]);
+    patch.bodyPlain_en = bodyPlain_en;
+    patch.bodyPlain_es = bodyPlain_es;
+  }
+
   if (Array.isArray(doc.specifications) && doc.specifications.length > 0) {
     console.log(`  specifications[] → en/es`);
     const rows = [];
@@ -315,10 +350,13 @@ async function processPost(doc) {
 
   const title   = String(doc.title   || '').trim();
   const summary = String(doc.summary || '').trim();
-  if (!title && !summary) return { skipped: true, reason: 'empty content' };
+  const faqKey  = serializeRelatedFaqsForHash(doc.relatedFaqs);
+  const hasFaqs = Array.isArray(doc.relatedFaqs) && doc.relatedFaqs.length > 0;
+  if (!title && !summary && !hasFaqs) return { skipped: true, reason: 'empty content' };
 
   const currentHash = crypto.createHash('md5')
-    .update([title, summary].join('|')).digest('hex');
+    .update([title, summary, faqKey].join('|'))
+    .digest('hex');
 
   if (doc.translationSourceHash && doc.translationSourceHash === currentHash) {
     console.log(`[${_id}] Skipped (post) — already translated`);
@@ -343,6 +381,34 @@ async function processPost(doc) {
     ]);
     patch.summary_en = summary_en;
     patch.summary_es = summary_es;
+  }
+
+  if (hasFaqs) {
+    console.log(`  relatedFaqs[] → en/es`);
+    const rows = [];
+    for (const item of doc.relatedFaqs) {
+      const q = String(item.question || '').trim();
+      const a = String(item.answer || '').trim();
+      const row = { ...item };
+      if (q) {
+        const [question_en, question_es] = await Promise.all([
+          translateText(q, 'zh-CN', 'en'),
+          translateText(q, 'zh-CN', 'es'),
+        ]);
+        row.question_en = question_en;
+        row.question_es = question_es;
+      }
+      if (a) {
+        const [answer_en, answer_es] = await Promise.all([
+          translateText(a, 'zh-CN', 'en'),
+          translateText(a, 'zh-CN', 'es'),
+        ]);
+        row.answer_en = answer_en;
+        row.answer_es = answer_es;
+      }
+      rows.push(row);
+    }
+    patch.relatedFaqs = rows;
   }
 
   await client.patch(_id).set(patch).commit();

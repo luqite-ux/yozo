@@ -38,6 +38,16 @@ export function portableTextToLegacyContent(blocks) {
   return out;
 }
 
+/** Webhook 写入的译文本（双换行分段）→ 与 detailContent 相近的段落列表 */
+function legacyContentFromPlain(text) {
+  if (!text || typeof text !== 'string') return [];
+  const parts = text
+    .split(/\n\n+/)
+    .map((t) => t.trim())
+    .filter(Boolean);
+  return parts.map((t) => ({ type: 'p', text: t }));
+}
+
 function coalescePlain(...vals) {
   for (const v of vals) {
     if (v !== undefined && v !== null && v !== '') return v;
@@ -108,6 +118,8 @@ export function mapSanityProduct(raw) {
   );
 
   const bodyContent = portableTextToLegacyContent(raw.body);
+  const detailEn = legacyContentFromPlain(coalescePlain(raw.bodyPlain_en));
+  const detailEs = legacyContentFromPlain(coalescePlain(raw.bodyPlain_es));
   const desc = coalescePlain(raw.desc, raw.description, raw.excerpt, raw.summary);
   const applicationScenarios = coalescePlain(raw.applicationScenarios, raw.applications);
   const specs = normalizeSpecs(raw.specifications);
@@ -128,6 +140,8 @@ export function mapSanityProduct(raw) {
     desc_es: coalescePlain(raw.description_es, raw.excerpt_es),
     galleryUrls: Array.isArray(raw.galleryUrls) ? raw.galleryUrls.filter(Boolean) : [],
     detailContent: bodyContent,
+    detailContent_en: detailEn,
+    detailContent_es: detailEs,
     applicationScenarios,
     applicationScenarios_en: coalescePlain(raw.applicationScenarios_en),
     applicationScenarios_es: coalescePlain(raw.applicationScenarios_es),
@@ -190,6 +204,10 @@ function mapArticleFaqs(rawList) {
     .map((item) => ({
       q: coalescePlain(item?.question, item?.q, item?.title),
       a: coalescePlain(item?.answer, item?.a, item?.body),
+      q_en: coalescePlain(item?.question_en),
+      q_es: coalescePlain(item?.question_es),
+      a_en: coalescePlain(item?.answer_en),
+      a_es: coalescePlain(item?.answer_es),
     }))
     .filter((x) => x.q || x.a);
 }

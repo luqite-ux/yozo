@@ -67,6 +67,33 @@ export default defineType({
           fields: [
             { name: 'question', title: '问', type: 'string' },
             { name: 'answer', title: '答', type: 'text', rows: 3 },
+            {
+              name: 'question_en',
+              title: 'Question (EN)',
+              type: 'string',
+              readOnly: true,
+              description: '由翻译 Webhook 自动填充',
+            },
+            {
+              name: 'question_es',
+              title: 'Question (ES)',
+              type: 'string',
+              readOnly: true,
+            },
+            {
+              name: 'answer_en',
+              title: 'Answer (EN)',
+              type: 'text',
+              rows: 3,
+              readOnly: true,
+            },
+            {
+              name: 'answer_es',
+              title: 'Answer (ES)',
+              type: 'text',
+              rows: 3,
+              readOnly: true,
+            },
           ],
         },
       ],

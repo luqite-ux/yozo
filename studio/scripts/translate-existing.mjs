@@ -154,11 +154,34 @@ function serializeSpecs(specs) {
     .join('‖');
 }
 
+function portableBlocksToPlain(blocks) {
+  if (!blocks || !Array.isArray(blocks)) return '';
+  const parts = [];
+  for (const block of blocks) {
+    if (!block || block._type !== 'block') continue;
+    const text = (block.children || []).map((c) => (c && c.text) || '').join('');
+    if (text.trim()) parts.push(text.trim());
+  }
+  return parts.join('\n\n');
+}
+
+function serializeRelatedFaqsForHash(list) {
+  if (!Array.isArray(list) || list.length === 0) return '';
+  return list
+    .map((item) => {
+      const q = String(item?.question ?? '').trim();
+      const a = String(item?.answer ?? '').trim();
+      return `${q}‖${a}`;
+    })
+    .join('¶');
+}
+
 function hashProduct(doc) {
   const parts = [
     ...TEXT_FIELDS.map((f) => doc[f] || ''),
     ...ARRAY_FIELDS.map((f) => (doc[f] || []).join('‖')),
     serializeSpecs(doc.specifications),
+    portableBlocksToPlain(doc.body),
   ].join('|');
   return crypto.createHash('md5').update(parts).digest('hex');
 }
@@ -174,8 +197,15 @@ function hashFaq(doc) {
 }
 
 function hashPost(doc) {
-  return crypto.createHash('md5')
-    .update([String(doc.title || '').trim(), String(doc.summary || '').trim()].join('|'))
+  return crypto
+    .createHash('md5')
+    .update(
+      [
+        String(doc.title || '').trim(),
+        String(doc.summary || '').trim(),
+        serializeRelatedFaqsForHash(doc.relatedFaqs),
+      ].join('|'),
+    )
     .digest('hex');
 }
 
@@ -240,10 +270,18 @@ async function processProduct(doc) {
     patch.specifications = rows;
   }
 
-  await client.patch(doc._id).set(patch).commit();
-  console.log(`    ✓ done`);
-  return { success: true };
-}
+    const bodyPlain = portableBlocksToPlain(doc.body);
+    if (bodyPlain) {
+      console.log(`    body (plain) → en…`);
+      patch.bodyPlain_en = await translateText(bodyPlain, 'zh-CN', 'en');
+      console.log(`    body (plain) → es…`);
+      patch.bodyPlain_es = await translateText(bodyPlain, 'zh-CN', 'es');
+    }
+
+    await client.patch(doc._id).set(patch).commit();
+    console.log(`    ✓ done`);
+    return { success: true };
+  }
 
 // ── 处理单条 faq ──────────────────────────────────────────────────────────────
 async function processFaq(doc) {
@@ -286,13 +324,15 @@ async function main() {
     }`),
     client.fetch(`*[_type == "product" && !(_id in path("drafts.**"))]{
       _id, name, excerpt, description, applicationScenarios,
-      packaging, skinType, oemDesc, efficacy, tags, specifications, translationSourceHash
+      packaging, skinType, oemDesc, efficacy, tags, specifications, translationSourceHash,
+      body
     }`),
     client.fetch(`*[_type == "faq" && !(_id in path("drafts.**"))]{
       _id, question, answer, translationSourceHash
     }`),
     client.fetch(`*[_type == "post" && !(_id in path("drafts.**"))]{
-      _id, title, summary, translationSourceHash
+      _id, title, summary, translationSourceHash,
+      relatedFaqs[]{ _key, question, answer }
     }`),
   ]);
 
@@ -340,17 +380,32 @@ async function main() {
   for (const doc of posts) {
     const title = String(doc.title || '').trim();
     const summary = String(doc.summary || '').trim();
-    if (!title && !summary) { postSkipped++; console.log(`  [skip] ${doc._id} — empty`); continue; }
+    const hasFaqs =
+      Array.isArray(doc.relatedFaqs) &&
+      doc.relatedFaqs.some(
+        (i) => String(i?.question || '').trim() || String(i?.answer || '').trim(),
+      );
+    if (!title && !summary && !hasFaqs) {
+      postSkipped++;
+      console.log(`  [skip] ${doc._id} — empty`);
+      continue;
+    }
 
     const hash = hashPost(doc);
     if (!FORCE && doc.translationSourceHash === hash) {
-      postSkipped++; console.log(`  [skip] ${doc._id} — already translated`); continue;
+      postSkipped++;
+      console.log(`  [skip] ${doc._id} — already translated`);
+      continue;
     }
 
-    // 只翻译含中文的文章
-    const hasChinese = /[\u4e00-\u9fff]/.test(title + summary);
+    const faqText = (doc.relatedFaqs || [])
+      .map((i) => (i?.question || '') + (i?.answer || ''))
+      .join('');
+    const hasChinese = /[\u4e00-\u9fff]/.test(title + summary + faqText);
     if (!hasChinese) {
-      postSkipped++; console.log(`  [skip] ${doc._id} — no Chinese content`); continue;
+      postSkipped++;
+      console.log(`  [skip] ${doc._id} — no Chinese content`);
+      continue;
     }
 
     console.log(`  [post] ${doc._id}  "${title.slice(0, 40)}…"`);
@@ -367,6 +422,25 @@ async function main() {
         patch.summary_en = await translateText(summary, 'zh-CN', 'en');
         console.log(`    summary → es…`);
         patch.summary_es = await translateText(summary, 'zh-CN', 'es');
+      }
+      if (hasFaqs) {
+        console.log(`    relatedFaqs[] → en/es…`);
+        const rows = [];
+        for (const item of doc.relatedFaqs) {
+          const q = String(item.question || '').trim();
+          const a = String(item.answer || '').trim();
+          const row = { ...item };
+          if (q) {
+            row.question_en = await translateText(q, 'zh-CN', 'en');
+            row.question_es = await translateText(q, 'zh-CN', 'es');
+          }
+          if (a) {
+            row.answer_en = await translateText(a, 'zh-CN', 'en');
+            row.answer_es = await translateText(a, 'zh-CN', 'es');
+          }
+          rows.push(row);
+        }
+        patch.relatedFaqs = rows;
       }
       await client.patch(doc._id).set(patch).commit();
       console.log(`    ✓ done`);

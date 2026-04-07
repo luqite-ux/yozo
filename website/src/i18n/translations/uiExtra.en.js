@@ -179,6 +179,8 @@ export default {
     faq3q: 'Do you provide efficacy test reports?',
     faq3a:
       'We supply basic physicochemical and preservative challenge reports. For 3D skin models or human efficacy (e.g. anti-wrinkle, brightening), we coordinate third parties such as SGS.',
+    readyToLabel: 'Ready to Label',
+    matureFormula: 'Mature formula',
   },
   about: {
     eyebrow: 'About YOZO',
@@ -248,6 +250,10 @@ export default {
     title: 'Insights',
     lead: 'Manufacturing trends, research, and brand-building guides.',
     searchPh: 'Search insights…',
+    insightsTag: 'YOZO Insights',
+    shareArticle: 'Share article',
+    articleFaqTitle: 'Article FAQ',
+    readMoreTitle: 'Further reading',
   },
   inquiry: {
     badge: "Let's Build Together",

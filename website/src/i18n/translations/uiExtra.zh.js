@@ -177,6 +177,8 @@ export default {
     faq3q: '产品是否能提供相关的功效测试报告？',
     faq3a:
       '我们的联合生物实验室可为您提供基础的理化与防腐挑战测试报告。如需 3D 皮肤模型或人体临床功效实证（如抗皱、美白），我们也可协助对接权威第三方检测机构（SGS 等）出具报告。',
+    readyToLabel: 'Ready to Label',
+    matureFormula: '成熟配方',
   },
   faqPage: {
     eyebrow: 'Guidelines',
@@ -214,6 +216,10 @@ export default {
     title: '资讯与洞察',
     lead: '获取美妆制造前沿动态、行业趋势研究与品牌孵化指南。',
     searchPh: '搜索资讯...',
+    insightsTag: 'YOZO 洞察',
+    shareArticle: '分享文章',
+    articleFaqTitle: '本文相关问答',
+    readMoreTitle: '延伸阅读',
   },
   inquiry: {
     badge: "Let's Build Together",

@@ -1257,7 +1257,7 @@ const ProductDetailPage = () => {
               <div className="bg-white aspect-[4/5] max-h-[min(70vh,520px)] lg:max-h-none rounded-[20px] sm:rounded-[24px] overflow-hidden border border-gray-100/80 p-4 sm:p-6 flex items-center justify-center shadow-[0_20px_40px_-15px_rgba(0,0,0,0.03)] relative lg:sticky lg:top-28 xl:top-32">
                 <img src={product.img} alt={product.name} itemProp="image" className="w-full h-full object-cover rounded-[12px] hover:scale-105 transition-transform duration-1000" />
                 <div className="absolute top-4 left-4 sm:top-10 sm:left-10 bg-white/90 backdrop-blur text-[#111111] px-3 sm:px-4 py-1.5 rounded-full text-[10px] sm:text-[11px] font-bold tracking-widest uppercase shadow-sm">
-                  Ready to Label
+                  {t('products.readyToLabel')}
                 </div>
               </div>
             </div>
@@ -1266,7 +1266,7 @@ const ProductDetailPage = () => {
             <div className="lg:col-span-7 flex flex-col justify-center py-4 lg:py-6 min-w-0">
               <div className="flex items-center gap-3 mb-6">
                 <span className="text-[11px] font-bold tracking-[0.2em] text-[#111111] uppercase bg-gray-200/50 px-3 py-1 rounded-full">{labelProductCategory(product, locale)}</span>
-                <span className="text-[11px] text-gray-400 tracking-widest uppercase flex items-center gap-1"><ShieldCheck size={12}/> Mature Formula</span>
+                <span className="text-[11px] text-gray-400 tracking-widest uppercase flex items-center gap-1"><ShieldCheck size={12}/> {t('products.matureFormula')}</span>
               </div>
               
               <h1 className="text-3xl md:text-5xl lg:text-5xl font-light tracking-tight mb-6 leading-[1.15] text-[#111111]" itemProp="name">
@@ -1891,10 +1891,10 @@ const NewsDetailPage = () => {
           <div className="mt-16 pt-8 border-t border-gray-100 flex justify-between items-center">
              <div className="flex gap-2">
                 <span className="text-[11px] font-medium tracking-widest text-gray-400 uppercase bg-gray-50 px-3 py-1.5 rounded-full">{article.category}</span>
-                <span className="text-[11px] font-medium tracking-widest text-gray-400 uppercase bg-gray-50 px-3 py-1.5 rounded-full">YOZO Insights</span>
+                <span className="text-[11px] font-medium tracking-widest text-gray-400 uppercase bg-gray-50 px-3 py-1.5 rounded-full">{t('news.insightsTag')}</span>
              </div>
              <div className="text-[12px] font-medium tracking-widest text-gray-400 uppercase cursor-pointer hover:text-[#111111] transition-colors">
-                Share Article
+                {t('news.shareArticle')}
              </div>
           </div>
         </article>
@@ -1904,7 +1904,7 @@ const NewsDetailPage = () => {
       {article.faqs && article.faqs.length > 0 && (
         <section className="py-16 bg-white border-t border-gray-100">
           <div className="container mx-auto px-6 md:px-12 max-w-4xl" itemScope itemType="https://schema.org/FAQPage">
-            <h3 className="text-2xl font-light mb-8 text-[#111111] tracking-tight">本文相关问答 (FAQ)</h3>
+            <h3 className="text-2xl font-light mb-8 text-[#111111] tracking-tight">{t('news.articleFaqTitle')}</h3>
             <div className="border-t border-gray-200/60">
               {article.faqs.map((faq, idx) => (
                 <div key={idx} className="border-b border-gray-200/60 group" itemScope itemProp="mainEntity" itemType="https://schema.org/Question">
@@ -1939,7 +1939,7 @@ const NewsDetailPage = () => {
       {relatedArticles.length > 0 && (
         <aside className="py-20 bg-[#FAFAFA] border-t border-gray-100" aria-label="相关文章推荐">
           <div className="container mx-auto px-6 md:px-12 max-w-6xl">
-            <h3 className="text-2xl font-light mb-10 text-center tracking-tight text-[#111111]">延伸阅读</h3>
+            <h3 className="text-2xl font-light mb-10 text-center tracking-tight text-[#111111]">{t('news.readMoreTitle')}</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {relatedArticles.map(rel => (
                 <article 

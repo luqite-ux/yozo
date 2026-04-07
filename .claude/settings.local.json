@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls E:/huanqiuweb/jubin/website/*.env* E:/huanqiuweb/jubin/website/.env*)",
+      "Bash(ls E:/huanqiuweb/jubin/studio/.env*)",
+      "Bash(ls E:/huanqiuweb/jubin/*.env*)",
+      "Bash(node scripts/translate-existing.mjs)",
+      "Bash(node --input-type=module --eval \"import\\('./src/App.jsx'\\)\")",
+      "Bash(npm run:*)",
+      "Bash(node -e ':*)",
+      "Bash(node scripts/translate-existing.mjs --force)"
+    ]
+  }
+}

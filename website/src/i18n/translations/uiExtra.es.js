@@ -179,6 +179,8 @@ export default {
     faq3q: '¿Informes de eficacia?',
     faq3a:
       'Informes básicos físico-químicos y de conservación. Para piel 3D o eficacia humana, coordinamos terceros (p. ej. SGS).',
+    readyToLabel: 'Listo para marca',
+    matureFormula: 'Fórmula consolidada',
   },
   about: {
     eyebrow: 'Sobre YOZO',
@@ -248,6 +250,10 @@ export default {
     title: 'Novedades',
     lead: 'Tendencias de fabricación e incubación de marcas.',
     searchPh: 'Buscar…',
+    insightsTag: 'YOZO Insights',
+    shareArticle: 'Compartir artículo',
+    articleFaqTitle: 'Preguntas frecuentes',
+    readMoreTitle: 'Para seguir leyendo',
   },
   inquiry: {
     badge: "Let's Build Together",

@@ -141,6 +141,23 @@ export default defineType({
     defineField({ name: 'efficacy_es', title: 'Efficacy (ES)', type: 'array', of: [{ type: 'string' }], group: 'translations', readOnly: true }),
     defineField({ name: 'tags_en', title: 'Tags (EN)', type: 'array', of: [{ type: 'string' }], group: 'translations', readOnly: true }),
     defineField({ name: 'tags_es', title: 'Tags (ES)', type: 'array', of: [{ type: 'string' }], group: 'translations', readOnly: true }),
+    defineField({
+      name: 'bodyPlain_en',
+      title: '详情正文（纯文本 EN，自动）',
+      type: 'text',
+      rows: 6,
+      group: 'translations',
+      readOnly: true,
+      description: '由 Webhook 从「详情正文」抽取并翻译，前台英文站用于展示',
+    }),
+    defineField({
+      name: 'bodyPlain_es',
+      title: '详情正文（纯文本 ES，自动）',
+      type: 'text',
+      rows: 6,
+      group: 'translations',
+      readOnly: true,
+    }),
     // 内容哈希，用于防止翻译 Webhook 循环触发
     defineField({ name: 'translationSourceHash', title: '翻译源哈希', type: 'string', group: 'translations', readOnly: true,
       hidden: true }),

@@ -39,6 +39,11 @@ export function localizeProduct(product, locale) {
     efficacy: pickArr(product.efficacy, product.efficacy_en, product.efficacy_es),
     tags: pickArr(product.tags, product.tags_en, product.tags_es),
     specifications: pickSpecs(product.specifications),
+    detailContent: pickArr(
+      product.detailContent,
+      product.detailContent_en,
+      product.detailContent_es,
+    ),
   };
 }
 
@@ -48,11 +53,33 @@ export function localizeProduct(product, locale) {
  * @param {'zh'|'en'|'es'} locale
  */
 export function localizePost(article, locale) {
-  if (!article || locale === 'zh') return article;
+  if (!article) return article;
+  const faqs = Array.isArray(article.faqs)
+    ? article.faqs
+        .map((f) => {
+          const picked = pickFaqLocale(
+            {
+              q: f.q,
+              a: f.a,
+              q_en: f.q_en,
+              q_es: f.q_es,
+              a_en: f.a_en,
+              a_es: f.a_es,
+            },
+            locale,
+          );
+          return { ...f, q: picked.q, a: picked.a };
+        })
+        .filter((f) => f.q || f.a)
+    : article.faqs;
+  if (locale === 'zh') {
+    return { ...article, faqs };
+  }
   return {
     ...article,
     title: (locale === 'en' ? article.title_en : article.title_es) || article.title,
     summary: (locale === 'en' ? article.summary_en : article.summary_es) || article.summary,
+    faqs,
   };
 }
 

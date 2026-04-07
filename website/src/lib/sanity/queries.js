@@ -45,6 +45,8 @@ const productProjection = `
   sortOrder,
   isFeatured,
   body,
+  bodyPlain_en,
+  bodyPlain_es,
   specifications,
   gallery,
   "slug": slug.current,
@@ -206,7 +208,7 @@ export const postsQuery = `*[_type == "post" && ${published}] | order(coalesce(p
     articleCategory->name
   ),
   "articleFaqs": coalesce(
-    relatedFaqs[]{ question, answer },
+    relatedFaqs[]{ question, answer, question_en, question_es, answer_en, answer_es },
     relatedFaqs
   ),
   seo,
