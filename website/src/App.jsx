@@ -1937,7 +1937,7 @@ const NewsDetailPage = () => {
 
       {/* 相关推荐 */}
       {relatedArticles.length > 0 && (
-        <aside className="py-20 bg-[#FAFAFA] border-t border-gray-100" aria-label="相关文章推荐">
+        <aside className="py-20 bg-[#FAFAFA] border-t border-gray-100" aria-label={t('news.readMoreTitle')}>
           <div className="container mx-auto px-6 md:px-12 max-w-6xl">
             <h3 className="text-2xl font-light mb-10 text-center tracking-tight text-[#111111]">{t('news.readMoreTitle')}</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

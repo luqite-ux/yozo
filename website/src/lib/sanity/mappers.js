@@ -74,6 +74,10 @@ function normalizeIngredients(list) {
   return list.map((ing) => ({
     name: coalescePlain(ing?.name, ing?.title, ing?.ingredient),
     desc: coalescePlain(ing?.desc, ing?.description, ing?.text, ing?.detail),
+    name_en: coalescePlain(ing?.name_en),
+    name_es: coalescePlain(ing?.name_es),
+    desc_en: coalescePlain(ing?.description_en, ing?.desc_en),
+    desc_es: coalescePlain(ing?.description_es, ing?.desc_es),
   }));
 }
 

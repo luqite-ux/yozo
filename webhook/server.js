@@ -259,6 +259,23 @@ async function processProduct(doc) {
     patch.specifications = rows;
   }
 
+  if (Array.isArray(doc.ingredients) && doc.ingredients.length > 0) {
+    console.log(`  ingredients[] → en/es`);
+    const ingRows = [];
+    for (const ing of doc.ingredients) {
+      const name = ing?.name ? String(ing.name) : '';
+      const desc = ing?.description ? String(ing.description) : '';
+      const [name_en, name_es, description_en, description_es] = await Promise.all([
+        translateText(name, 'zh-CN', 'en'),
+        translateText(name, 'zh-CN', 'es'),
+        translateText(desc, 'zh-CN', 'en'),
+        translateText(desc, 'zh-CN', 'es'),
+      ]);
+      ingRows.push({ ...ing, name_en, name_es, description_en, description_es });
+    }
+    patch.ingredients = ingRows;
+  }
+
   await client.patch(_id).set(patch).commit();
   console.log(`[${_id}] Done`);
   return { success: true, _id, fieldsTranslated: Object.keys(patch).filter(k => k !== 'translationSourceHash') };

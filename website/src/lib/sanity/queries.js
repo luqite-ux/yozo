@@ -61,8 +61,12 @@ const productProjection = `
   },
   "ingredientsList": ingredients[]{
     name,
+    name_en,
+    name_es,
     "desc": description,
     description,
+    description_en,
+    description_es,
     text,
     detail
   },

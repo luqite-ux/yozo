@@ -24,6 +24,14 @@ export function localizeProduct(product, locale) {
       value: pick(r?.value, r?.value_en, r?.value_es),
     }));
   };
+  const pickIngredients = (ings) => {
+    if (!Array.isArray(ings) || ings.length === 0) return [];
+    return ings.map((ing) => ({
+      ...ing,
+      name: pick(ing?.name, ing?.name_en, ing?.name_es),
+      desc: pick(ing?.desc, ing?.desc_en, ing?.desc_es),
+    }));
+  };
   return {
     ...product,
     name: pick(product.name, product.name_en, product.name_es),
@@ -39,6 +47,7 @@ export function localizeProduct(product, locale) {
     efficacy: pickArr(product.efficacy, product.efficacy_en, product.efficacy_es),
     tags: pickArr(product.tags, product.tags_en, product.tags_es),
     specifications: pickSpecs(product.specifications),
+    ingredients: pickIngredients(product.ingredients),
     detailContent: pickArr(
       product.detailContent,
       product.detailContent_en,
@@ -75,10 +84,14 @@ export function localizePost(article, locale) {
   if (locale === 'zh') {
     return { ...article, faqs };
   }
+  const localizedContent = Array.isArray(article.content_en) || Array.isArray(article.content_es)
+    ? ((locale === 'en' ? article.content_en : article.content_es) || article.content)
+    : article.content;
   return {
     ...article,
     title: (locale === 'en' ? article.title_en : article.title_es) || article.title,
     summary: (locale === 'en' ? article.summary_en : article.summary_es) || article.summary,
+    content: localizedContent,
     faqs,
   };
 }

@@ -5,16 +5,16 @@
 function humanizeInquiryError(status, rawMessage) {
   const msg = String(rawMessage || '').trim();
   if (status === 400) {
-    return msg || '请检查表单必填项';
+    return msg || 'INQUIRY_ERR_VALIDATION';
   }
-  if (status === 405) return '请求方法不正确';
+  if (status === 405) return 'INQUIRY_ERR_METHOD';
   if (status >= 500) {
     if (/SANITY_API_WRITE_TOKEN|SANITY_PROJECT_ID|misconfigured/i.test(msg)) {
-      return '询盘服务未配置或暂时不可用（部署环境需配置 SANITY_API_WRITE_TOKEN 与 SANITY_PROJECT_ID）。请稍后再试或联系管理员。';
+      return 'INQUIRY_ERR_NOT_CONFIGURED';
     }
-    return msg || '服务器错误，请稍后再试';
+    return msg || 'INQUIRY_ERR_SERVER';
   }
-  return msg || '提交失败，请稍后再试';
+  return msg || 'INQUIRY_ERR_UNKNOWN';
 }
 
 export async function submitInquiry(payload) {
