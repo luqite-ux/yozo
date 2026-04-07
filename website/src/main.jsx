@@ -19,7 +19,11 @@ const app = (
 );
 
 const el = document.getElementById('root');
-if (el.hasChildNodes()) {
+/** 仅当存在 SSR 注入的真实 DOM 节点时才 hydrate（忽略空白/注释，避免误 hydrate 导致白屏） */
+const hasSsrMarkup = el?.childNodes
+  ? Array.from(el.childNodes).some((n) => n.nodeType === Node.ELEMENT_NODE)
+  : false;
+if (hasSsrMarkup) {
   hydrateRoot(el, app);
 } else {
   createRoot(el).render(app);
