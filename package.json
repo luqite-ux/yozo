@@ -3,6 +3,7 @@
   "private": true,
   "description": "外贸企业官网模板：website（Vite）+ studio（Sanity）",
   "scripts": {
+    "dev": "npm run dev --prefix website",
     "dev:website": "npm run dev --prefix website",
     "dev:studio": "npm run dev --prefix studio",
     "build:website": "npm run build --prefix website",
