@@ -15,7 +15,8 @@ import {
 } from './i18n/LocaleContext.jsx';
 import {
   cmsZhElseT,
-  formatCategoryTabLabel,
+  CATEGORY_ALL,
+  labelArticleCategoryTab,
   labelProductCategory,
   labelProductCategoryTab,
   localizePost,
@@ -1082,7 +1083,7 @@ const ProductsPage = () => {
   const navigate = useLocalizedNavigate();
   const { locale, t } = useLocale();
   const { products, productCategories, loading, error, reload } = useCms();
-  const [activeCategory, setActiveCategory] = useState("全部");
+  const [activeCategory, setActiveCategory] = useState(CATEGORY_ALL);
   const [searchQuery, setSearchQuery] = useState("");
   const [visibleCount, setVisibleCount] = useState(8);
 
@@ -1093,7 +1094,7 @@ const ProductsPage = () => {
 
   const filteredProducts = useMemo(() => {
     return localizedProducts.filter((p) => {
-      const matchCategory = activeCategory === "全部" || p.category === activeCategory;
+      const matchCategory = activeCategory === CATEGORY_ALL || p.category === activeCategory;
       const matchSearch =
         p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.desc.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -1662,7 +1663,7 @@ const NewsPage = () => {
   const navigate = useLocalizedNavigate();
   const { t, locale } = useLocale();
   const { articles, articleCategories, loading, error, reload } = useCms();
-  const [activeCategory, setActiveCategory] = useState("全部");
+  const [activeCategory, setActiveCategory] = useState(CATEGORY_ALL);
   const [searchQuery, setSearchQuery] = useState("");
   const [visibleCount, setVisibleCount] = useState(6);
 
@@ -1673,7 +1674,7 @@ const NewsPage = () => {
 
   const filteredArticles = useMemo(() => {
     return localizedArticles.filter((a) => {
-      const matchCategory = activeCategory === "全部" || a.category === activeCategory;
+      const matchCategory = activeCategory === CATEGORY_ALL || a.category === activeCategory;
       const matchSearch =
         a.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         a.summary.toLowerCase().includes(searchQuery.toLowerCase());
@@ -1710,7 +1711,7 @@ const NewsPage = () => {
         </div>
 
         {/* 推荐文章板块 */}
-        {activeCategory === "全部" && searchQuery === "" && featuredArticle && (
+        {activeCategory === CATEGORY_ALL && searchQuery === "" && featuredArticle && (
           <div 
             onClick={() => navigate(`/news/${featuredArticle.id}`)}
             className="mb-20 bg-white rounded-[24px] overflow-hidden border border-gray-100 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] transition-all duration-500 cursor-pointer group flex flex-col lg:flex-row"
@@ -1744,14 +1745,14 @@ const NewsPage = () => {
         <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 sm:gap-6 mb-12 bg-white p-4 sm:p-5 border border-gray-100 rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.02)] min-w-0">
           <div className="flex flex-nowrap md:flex-wrap items-center gap-2.5 w-full min-w-0 lg:w-auto flex-1 overflow-x-auto md:overflow-visible pb-1 md:pb-0 [-webkit-overflow-scrolling:touch]">
             <Filter size={16} className="text-gray-300 mr-2 hidden lg:block shrink-0" />
-            {articleCategories.map((cat) => (
+            {articleCategories.map((tab) => (
               <button 
-                key={cat} onClick={() => { setActiveCategory(cat); setVisibleCount(6); }}
+                key={tab.canonical} onClick={() => { setActiveCategory(tab.canonical); setVisibleCount(6); }}
                 className={`px-5 py-2 text-[13px] transition-all duration-300 rounded-full whitespace-nowrap border ${
-                  activeCategory === cat ? 'bg-[#1A1A1A] text-white border-[#1A1A1A] shadow-md' : 'bg-transparent text-gray-500 hover:text-[#111111] border-gray-200 hover:border-gray-300'
+                  activeCategory === tab.canonical ? 'bg-[#1A1A1A] text-white border-[#1A1A1A] shadow-md' : 'bg-transparent text-gray-500 hover:text-[#111111] border-gray-200 hover:border-gray-300'
                 }`}
               >
-                {formatCategoryTabLabel(cat, t)}
+                {labelArticleCategoryTab(tab, locale, t)}
               </button>
             ))}
           </div>
@@ -1766,7 +1767,7 @@ const NewsPage = () => {
 
         {/* 文章列表 */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-          {filteredArticles.slice(activeCategory === "全部" && searchQuery === "" ? 1 : 0, visibleCount).map(article => (
+          {filteredArticles.slice(activeCategory === CATEGORY_ALL && searchQuery === "" ? 1 : 0, visibleCount).map(article => (
             <article 
               key={article.id} 
               onClick={() => navigate(`/news/${article.id}`)}
@@ -2371,7 +2372,7 @@ function SiteShell() {
                     <li className="flex items-start gap-3 pt-1 group">
                       <MapPin size={16} className="mt-0.5 flex-shrink-0 text-white/50 group-hover:text-white transition-colors" />
                       <span className="leading-relaxed hover:text-white transition-colors cursor-default">
-                        {siteSettings?.address ? (
+                        {locale === 'zh' && siteSettings?.address ? (
                           siteSettings.address
                         ) : (
                           <>

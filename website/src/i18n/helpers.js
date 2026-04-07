@@ -81,17 +81,18 @@ export function localizePost(article, locale) {
         })
         .filter((f) => f.q || f.a)
     : article.faqs;
-  if (locale === 'zh') {
-    return { ...article, faqs };
-  }
-  const localizedContent = Array.isArray(article.content_en) || Array.isArray(article.content_es)
-    ? ((locale === 'en' ? article.content_en : article.content_es) || article.content)
-    : article.content;
+
+  const pickField = (base, zh, en, es) => {
+    if (locale === 'zh') return zh || base;
+    if (locale === 'en') return en || base;
+    return es || base;
+  };
+
   return {
     ...article,
-    title: (locale === 'en' ? article.title_en : article.title_es) || article.title,
-    summary: (locale === 'en' ? article.summary_en : article.summary_es) || article.summary,
-    content: localizedContent,
+    title: pickField(article.title, article.title_zh, article.title_en, article.title_es),
+    summary: pickField(article.summary, article.summary_zh, article.summary_en, article.summary_es),
+    category: pickField(article.category, article.category_zh, article.category_en, article.category_es),
     faqs,
   };
 }
@@ -116,6 +117,15 @@ export const CATEGORY_ALL = '全部';
 
 export function formatCategoryTabLabel(cat, t) {
   return cat === CATEGORY_ALL ? t('common.all') : cat;
+}
+
+/** 文章分类 Tab（canonical + 可选 titleEn/titleEs/titleZh） */
+export function labelArticleCategoryTab(tab, locale, t) {
+  if (!tab?.canonical || tab.canonical === CATEGORY_ALL) return t('common.all');
+  if (locale === 'zh' && tab.titleZh?.trim()) return tab.titleZh.trim();
+  if (locale === 'en' && tab.titleEn?.trim()) return tab.titleEn.trim();
+  if (locale === 'es' && tab.titleEs?.trim()) return tab.titleEs.trim();
+  return tab.canonical;
 }
 
 /** 产品分类 Tab（canonical + 可选 titleEn/titleEs） */

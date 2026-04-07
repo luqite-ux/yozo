@@ -305,9 +305,13 @@ export function mapSanityPost(raw) {
     sanityId: raw._id,
     slug: raw.slug || null,
     category,
+    category_en: coalescePlain(raw.category_en),
+    category_es: coalescePlain(raw.category_es),
+    category_zh: coalescePlain(raw.category_zh),
     title: coalescePlain(raw.title, raw.headline),
     title_en: coalescePlain(raw.title_en),
     title_es: coalescePlain(raw.title_es),
+    title_zh: coalescePlain(raw.title_zh),
     date: dateStr || new Date().toISOString().slice(0, 10),
     readTime: coalescePlain(raw.readTime, raw.readingTime, '5 min') || '5 min',
     views: coalescePlain(raw.views, raw.viewCount, '—'),
@@ -315,6 +319,7 @@ export function mapSanityPost(raw) {
     summary: summary || (content[0]?.text ?? ''),
     summary_en: coalescePlain(raw.summary_en),
     summary_es: coalescePlain(raw.summary_es),
+    summary_zh: coalescePlain(raw.summary_zh),
     content,
     faqs,
   };
@@ -373,12 +378,24 @@ export function buildArticleCategoryTabs(settings, articles) {
     const labels = fromSettings
       .map((x) => (typeof x === 'string' ? x : x?.title || x?.name || ''))
       .filter(Boolean)
-      .filter((x) => x !== '全部');
-    return ['全部', ...labels];
+      .filter((x) => x !== TAB_ALL);
+    return [{ canonical: TAB_ALL }, ...labels.map((s) => ({ canonical: s }))];
   }
-  const unique = [...new Set(articles.map((a) => a.category).filter(Boolean))];
-  unique.sort();
-  return ['全部', ...unique];
+  const seen = new Set();
+  const rows = [];
+  for (const a of articles) {
+    const cat = a.category;
+    if (!cat || cat === TAB_ALL || seen.has(cat)) continue;
+    seen.add(cat);
+    rows.push({
+      canonical: cat,
+      titleEn: a.category_en || '',
+      titleEs: a.category_es || '',
+      titleZh: a.category_zh || '',
+    });
+  }
+  rows.sort((a, b) => a.canonical.localeCompare(b.canonical));
+  return [{ canonical: TAB_ALL }, ...rows];
 }
 
 /**

@@ -361,18 +361,24 @@ async function processFaq(doc) {
   return { success: true, _id, type: 'faq' };
 }
 
+function detectSourceLang(text) {
+  const chinese = (text.match(/[\u4e00-\u9fff]/g) || []).length;
+  return chinese > text.length * 0.1 ? 'zh-CN' : 'en';
+}
+
 async function processPost(doc) {
   const { _id, _type } = doc;
   if (_type !== 'post') return { skipped: true, reason: 'not a post' };
 
   const title   = String(doc.title   || '').trim();
   const summary = String(doc.summary || '').trim();
+  const category = String(doc.category || '').trim();
   const faqKey  = serializeRelatedFaqsForHash(doc.relatedFaqs);
   const hasFaqs = Array.isArray(doc.relatedFaqs) && doc.relatedFaqs.length > 0;
   if (!title && !summary && !hasFaqs) return { skipped: true, reason: 'empty content' };
 
   const currentHash = crypto.createHash('md5')
-    .update([title, summary, faqKey].join('|'))
+    .update([title, summary, category, faqKey].join('|'))
     .digest('hex');
 
   if (doc.translationSourceHash && doc.translationSourceHash === currentHash) {
@@ -380,28 +386,65 @@ async function processPost(doc) {
     return { skipped: true, reason: 'already translated' };
   }
 
-  console.log(`[${_id}] Translating post…`);
+  const srcLang = detectSourceLang(title + summary);
+  console.log(`[${_id}] Translating post (source: ${srcLang})…`);
   const patch = { translationSourceHash: currentHash };
 
   if (title) {
-    const [title_en, title_es] = await Promise.all([
-      translateText(title, 'zh-CN', 'en'),
-      translateText(title, 'zh-CN', 'es'),
-    ]);
-    patch.title_en = title_en;
-    patch.title_es = title_es;
+    if (srcLang === 'zh-CN') {
+      const [title_en, title_es] = await Promise.all([
+        translateText(title, 'zh-CN', 'en'),
+        translateText(title, 'zh-CN', 'es'),
+      ]);
+      patch.title_en = title_en;
+      patch.title_es = title_es;
+    } else {
+      const [title_zh, title_es] = await Promise.all([
+        translateText(title, 'en', 'zh-CN'),
+        translateText(title, 'en', 'es'),
+      ]);
+      patch.title_zh = title_zh;
+      patch.title_es = title_es;
+    }
   }
   if (summary) {
-    const [summary_en, summary_es] = await Promise.all([
-      translateText(summary, 'zh-CN', 'en'),
-      translateText(summary, 'zh-CN', 'es'),
-    ]);
-    patch.summary_en = summary_en;
-    patch.summary_es = summary_es;
+    if (srcLang === 'zh-CN') {
+      const [summary_en, summary_es] = await Promise.all([
+        translateText(summary, 'zh-CN', 'en'),
+        translateText(summary, 'zh-CN', 'es'),
+      ]);
+      patch.summary_en = summary_en;
+      patch.summary_es = summary_es;
+    } else {
+      const [summary_zh, summary_es] = await Promise.all([
+        translateText(summary, 'en', 'zh-CN'),
+        translateText(summary, 'en', 'es'),
+      ]);
+      patch.summary_zh = summary_zh;
+      patch.summary_es = summary_es;
+    }
+  }
+  if (category) {
+    const catLang = detectSourceLang(category);
+    if (catLang === 'zh-CN') {
+      const [category_en, category_es] = await Promise.all([
+        translateText(category, 'zh-CN', 'en'),
+        translateText(category, 'zh-CN', 'es'),
+      ]);
+      patch.category_en = category_en;
+      patch.category_es = category_es;
+    } else {
+      const [category_zh, category_es] = await Promise.all([
+        translateText(category, 'en', 'zh-CN'),
+        translateText(category, 'en', 'es'),
+      ]);
+      patch.category_zh = category_zh;
+      patch.category_es = category_es;
+    }
   }
 
   if (hasFaqs) {
-    console.log(`  relatedFaqs[] → en/es`);
+    console.log(`  relatedFaqs[] → translations`);
     const rows = [];
     for (const item of doc.relatedFaqs) {
       const q = String(item.question || '').trim();

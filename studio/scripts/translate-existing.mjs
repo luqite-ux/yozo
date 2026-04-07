@@ -203,6 +203,7 @@ function hashPost(doc) {
       [
         String(doc.title || '').trim(),
         String(doc.summary || '').trim(),
+        String(doc.category || '').trim(),
         serializeRelatedFaqsForHash(doc.relatedFaqs),
       ].join('|'),
     )
@@ -346,7 +347,7 @@ async function main() {
       _id, question, answer, translationSourceHash
     }`),
     client.fetch(`*[_type == "post" && !(_id in path("drafts.**"))]{
-      _id, title, summary, translationSourceHash,
+      _id, title, summary, category, translationSourceHash,
       relatedFaqs[]{ _key, question, answer }
     }`),
   ]);
@@ -391,10 +392,16 @@ async function main() {
     }
   }
 
+  function detectLang(text) {
+    const cn = (text.match(/[\u4e00-\u9fff]/g) || []).length;
+    return cn > text.length * 0.1 ? 'zh-CN' : 'en';
+  }
+
   console.log('\n── 翻译文章 ──────────────────────────────────────────────────');
   for (const doc of posts) {
     const title = String(doc.title || '').trim();
     const summary = String(doc.summary || '').trim();
+    const category = String(doc.category || '').trim();
     const hasFaqs =
       Array.isArray(doc.relatedFaqs) &&
       doc.relatedFaqs.some(
@@ -413,30 +420,49 @@ async function main() {
       continue;
     }
 
-    const faqText = (doc.relatedFaqs || [])
-      .map((i) => (i?.question || '') + (i?.answer || ''))
-      .join('');
-    const hasChinese = /[\u4e00-\u9fff]/.test(title + summary + faqText);
-    if (!hasChinese) {
-      postSkipped++;
-      console.log(`  [skip] ${doc._id} — no Chinese content`);
-      continue;
-    }
-
-    console.log(`  [post] ${doc._id}  "${title.slice(0, 40)}…"`);
+    const srcLang = detectLang(title + summary);
+    console.log(`  [post] ${doc._id}  "${title.slice(0, 40)}…" (src: ${srcLang})`);
     try {
       const patch = { translationSourceHash: hash };
       if (title) {
-        console.log(`    title → en…`);
-        patch.title_en = await translateText(title, 'zh-CN', 'en');
-        console.log(`    title → es…`);
-        patch.title_es = await translateText(title, 'zh-CN', 'es');
+        if (srcLang === 'zh-CN') {
+          console.log(`    title → en…`);
+          patch.title_en = await translateText(title, 'zh-CN', 'en');
+          console.log(`    title → es…`);
+          patch.title_es = await translateText(title, 'zh-CN', 'es');
+        } else {
+          console.log(`    title → zh…`);
+          patch.title_zh = await translateText(title, 'en', 'zh-CN');
+          console.log(`    title → es…`);
+          patch.title_es = await translateText(title, 'en', 'es');
+        }
       }
       if (summary) {
-        console.log(`    summary → en…`);
-        patch.summary_en = await translateText(summary, 'zh-CN', 'en');
-        console.log(`    summary → es…`);
-        patch.summary_es = await translateText(summary, 'zh-CN', 'es');
+        if (srcLang === 'zh-CN') {
+          console.log(`    summary → en…`);
+          patch.summary_en = await translateText(summary, 'zh-CN', 'en');
+          console.log(`    summary → es…`);
+          patch.summary_es = await translateText(summary, 'zh-CN', 'es');
+        } else {
+          console.log(`    summary → zh…`);
+          patch.summary_zh = await translateText(summary, 'en', 'zh-CN');
+          console.log(`    summary → es…`);
+          patch.summary_es = await translateText(summary, 'en', 'es');
+        }
+      }
+      if (category) {
+        const catLang = detectLang(category);
+        if (catLang === 'zh-CN') {
+          console.log(`    category → en…`);
+          patch.category_en = await translateText(category, 'zh-CN', 'en');
+          console.log(`    category → es…`);
+          patch.category_es = await translateText(category, 'zh-CN', 'es');
+        } else {
+          console.log(`    category → zh…`);
+          patch.category_zh = await translateText(category, 'en', 'zh-CN');
+          console.log(`    category → es…`);
+          patch.category_es = await translateText(category, 'en', 'es');
+        }
       }
       if (hasFaqs) {
         console.log(`    relatedFaqs[] → en/es…`);

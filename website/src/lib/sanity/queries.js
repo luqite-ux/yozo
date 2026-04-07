@@ -177,11 +177,11 @@ export const faqsQuery = `*[_type == "faq" && ${published}] | order(coalesce(sor
 /** @type {string} */
 export const postsQuery = `*[_type == "post" && ${published}] | order(coalesce(publishedAt, _createdAt) desc) {
   _id,
-  title, title_en, title_es,
+  title, title_en, title_es, title_zh,
   slug,
   headline,
   excerpt,
-  summary, summary_en, summary_es,
+  summary, summary_en, summary_es, summary_zh,
   blurb,
   readTime,
   readingTime,
@@ -211,6 +211,9 @@ export const postsQuery = `*[_type == "post" && ${published}] | order(coalesce(p
     articleCategory->title,
     articleCategory->name
   ),
+  category_en,
+  category_es,
+  category_zh,
   "articleFaqs": coalesce(
     relatedFaqs[]{ question, answer, question_en, question_es, answer_en, answer_es },
     relatedFaqs
