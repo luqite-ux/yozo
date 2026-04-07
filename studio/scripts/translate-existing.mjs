@@ -79,7 +79,7 @@ const client = createClient({
 });
 
 // ── 翻译工具 ──────────────────────────────────────────────────────────────────
-const DELAY_MS = 600;           // 每次 API 调用之间的间隔
+const DELAY_MS = 1500;          // 每次 API 调用之间的间隔（避免触发 429 限速）
 const MAX_CHARS = 500;          // MyMemory 单次请求上限
 
 function sleep(ms) {
