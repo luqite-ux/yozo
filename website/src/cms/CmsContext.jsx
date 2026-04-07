@@ -3,18 +3,36 @@ import { isSanityConfigured, readCmsPayloadFromSanity } from '../lib/sanity/inde
 
 const CmsContext = createContext(null);
 
-export function CmsProvider({ children }) {
-  const [loading, setLoading] = useState(true);
+export function CmsProvider({ children, initialPayload }) {
+  /** 有完整 SSR / hydration 数据；null 表示服务端已失败，客户端需再拉取 */
+  const hasServerPayload = initialPayload != null && typeof initialPayload === 'object';
+  const [loading, setLoading] = useState(() => !hasServerPayload);
   const [error, setError] = useState(null);
-  const [products, setProducts] = useState([]);
-  const [articles, setArticles] = useState([]);
-  const [faqs, setFaqs] = useState([]);
-  const [caseStudies, setCaseStudies] = useState([]);
-  const [simplePages, setSimplePages] = useState([]);
-  const [productCategories, setProductCategories] = useState([]);
-  const [articleCategories, setArticleCategories] = useState([]);
-  const [siteSettings, setSiteSettings] = useState(null);
-  const [aboutPage, setAboutPage] = useState(null);
+  const [products, setProducts] = useState(() =>
+    hasServerPayload ? initialPayload.products : [],
+  );
+  const [articles, setArticles] = useState(() =>
+    hasServerPayload ? initialPayload.articles : [],
+  );
+  const [faqs, setFaqs] = useState(() => (hasServerPayload ? initialPayload.faqs : []));
+  const [caseStudies, setCaseStudies] = useState(() =>
+    hasServerPayload ? initialPayload.caseStudies : [],
+  );
+  const [simplePages, setSimplePages] = useState(() =>
+    hasServerPayload ? initialPayload.simplePages : [],
+  );
+  const [productCategories, setProductCategories] = useState(() =>
+    hasServerPayload ? initialPayload.productCategories : [],
+  );
+  const [articleCategories, setArticleCategories] = useState(() =>
+    hasServerPayload ? initialPayload.articleCategories : [],
+  );
+  const [siteSettings, setSiteSettings] = useState(() =>
+    hasServerPayload ? initialPayload.siteSettings : null,
+  );
+  const [aboutPage, setAboutPage] = useState(() =>
+    hasServerPayload ? initialPayload.aboutPage : null,
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -43,8 +61,12 @@ export function CmsProvider({ children }) {
   }, []);
 
   useEffect(() => {
+    if (hasServerPayload) {
+      setLoading(false);
+      return;
+    }
     load();
-  }, [load]);
+  }, [hasServerPayload, load]);
 
   const value = useMemo(
     () => ({

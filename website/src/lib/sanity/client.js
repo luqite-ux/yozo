@@ -31,6 +31,19 @@ export function getSanityClient() {
     );
   }
 
+  /** Node / SSR：直连 apicdn，不走浏览器本地代理 */
+  if (typeof window === 'undefined') {
+    const token = import.meta.env.VITE_SANITY_READ_TOKEN?.trim() || undefined;
+    const apiVersion = import.meta.env.VITE_SANITY_API_VERSION?.trim() || '2024-01-01';
+    return createClient({
+      projectId,
+      dataset: import.meta.env.VITE_SANITY_DATASET?.trim() || 'production',
+      apiVersion,
+      useCdn: import.meta.env.VITE_SANITY_USE_CDN !== 'false',
+      token,
+    });
+  }
+
   const viaLocalProxy = isBrowserLocalhost();
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const configKey = `${projectId}|${viaLocalProxy}|${origin}`;

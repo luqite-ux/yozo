@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Routes, Route, Outlet, useNavigate, useLocation, useParams } from 'react-router-dom';
+import { Routes, Route, Outlet, useLocation, useParams } from 'react-router-dom';
 import {
   Menu, X, ArrowRight, MessageCircle,
   MapPin, Mail, Phone, ArrowUpRight, CheckCircle2, Beaker, Settings, Box,
@@ -8,7 +8,11 @@ import {
   Calendar, Clock, ChevronRight, Hexagon
 } from 'lucide-react';
 import { useCms } from './cms/CmsContext.jsx';
-import { useLocale } from './i18n/LocaleContext.jsx';
+import {
+  useLocale,
+  useLocalizedNavigate,
+  useLocaleSwitcherNavigate,
+} from './i18n/LocaleContext.jsx';
 import {
   cmsZhElseT,
   formatCategoryTabLabel,
@@ -19,6 +23,7 @@ import {
   navLabelForItem,
   pickFaqLocale,
 } from './i18n/helpers.js';
+import { alternatePathsForBare, bareToLocalized } from './i18n/routing.js';
 import { getDefaultAboutPage } from './lib/sanity/index.js';
 import { submitInquiry } from './lib/inquiry/submitInquiry.js';
 
@@ -86,6 +91,41 @@ function navItemActive(pathname, item) {
   if (pathname === p) return true;
   if (p.length > 1 && pathname.startsWith(`${p}/`)) return true;
   return false;
+}
+
+/** hreflang：与当前「裸路径」对应的各语言 URL */
+function SeoAlternateLinks() {
+  const { barePathname, locale } = useLocale();
+  useEffect(() => {
+    const origin = window.location.origin;
+    const alts = alternatePathsForBare(barePathname);
+    const spec = [
+      ['hreflang-zh', 'zh-CN', alts.zh],
+      ['hreflang-en', 'en', alts.en],
+      ['hreflang-es', 'es', alts.es],
+      ['hreflang-x', 'x-default', alts.zh],
+    ];
+    for (const [id] of spec) {
+      document.getElementById(id)?.remove();
+    }
+    for (const [id, hreflang, href] of spec) {
+      const el = document.createElement('link');
+      el.id = id;
+      el.rel = 'alternate';
+      el.hreflang = hreflang;
+      el.href = `${origin}${href}`;
+      document.head.appendChild(el);
+    }
+    let canon = document.getElementById('canonical-link');
+    if (!canon) {
+      canon = document.createElement('link');
+      canon.id = 'canonical-link';
+      canon.rel = 'canonical';
+      document.head.appendChild(canon);
+    }
+    canon.href = `${origin}${bareToLocalized(barePathname, locale)}`;
+  }, [barePathname, locale]);
+  return null;
 }
 
 // ==========================================
@@ -260,7 +300,7 @@ const SharedContactCTA = ({ source = 'cta', sourceProductId }) => {
 
 // --- 首页 (HomePage) ---
 const HomePage = () => {
-  const navigate = useNavigate();
+  const navigate = useLocalizedNavigate();
   const { locale, t } = useLocale();
   const { products, faqs, loading, error, reload, siteSettings } = useCms();
   const [openFaq, setOpenFaq] = useState(0);
@@ -729,7 +769,7 @@ function aboutCertIcon(icon) {
 
 // --- About Us 品牌探索（Sanity aboutPage，缺省见 getDefaultAboutPage）---
 const AboutPage = () => {
-  const navigate = useNavigate();
+  const navigate = useLocalizedNavigate();
   const { t, locale } = useLocale();
   const { aboutPage, loading, error, reload } = useCms();
   const a = aboutPage ?? getDefaultAboutPage();
@@ -892,7 +932,7 @@ const AboutPage = () => {
 
 // --- OEM/ODM Services ---
 const ServicesPage = () => {
-  const navigate = useNavigate();
+  const navigate = useLocalizedNavigate();
   const { t } = useLocale();
   return (
     <div className="yozo-animate-page-in pt-28 md:pt-36 lg:pt-40 bg-white min-h-screen">
@@ -1039,7 +1079,7 @@ const ServicesPage = () => {
 
 // --- Products Center ---
 const ProductsPage = () => {
-  const navigate = useNavigate();
+  const navigate = useLocalizedNavigate();
   const { locale, t } = useLocale();
   const { products, productCategories, loading, error, reload } = useCms();
   const [activeCategory, setActiveCategory] = useState("全部");
@@ -1154,14 +1194,29 @@ const ProductsPage = () => {
 
 // --- 产品详情页 ---
 const ProductDetailPage = () => {
-  const navigate = useNavigate();
+  const navigate = useLocalizedNavigate();
   const { productId } = useParams();
   const { locale, t } = useLocale();
   const { products, loading, error, reload } = useCms();
   const [openFaq, setOpenFaq] = useState(0);
 
   const resolvedProduct = resolveProductByRouteParam(products, productId);
-  const product = localizeProduct(resolvedProduct ?? products[0], locale);
+  const baseProduct = resolvedProduct ?? products[0];
+  const product = baseProduct ? localizeProduct(baseProduct, locale) : null;
+
+  const productFaqs = useMemo(
+    () => [
+      {
+        q: t('products.faq1q').replace(/\{\{name\}\}/g, product?.name ?? ''),
+        a: t('products.faq1a')
+          .replace(/\{\{name\}\}/g, product?.name ?? '')
+          .replace(/\{\{oem\}\}/g, product?.oemDesc || ''),
+      },
+      { q: t('products.faq2q'), a: t('products.faq2a') },
+      { q: t('products.faq3q'), a: t('products.faq3a') },
+    ],
+    [t, product?.name, product?.oemDesc],
+  );
 
   useEffect(() => {
     if (!loading && products.length && !resolvedProduct) {
@@ -1181,21 +1236,9 @@ const ProductDetailPage = () => {
     );
   }
 
-  const relatedProducts = products.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 3);
+  if (!product) return null;
 
-  const productFaqs = useMemo(
-    () => [
-      {
-        q: t('products.faq1q').replace(/\{\{name\}\}/g, product.name),
-        a: t('products.faq1a')
-          .replace(/\{\{name\}\}/g, product.name)
-          .replace(/\{\{oem\}\}/g, product.oemDesc || ''),
-      },
-      { q: t('products.faq2q'), a: t('products.faq2a') },
-      { q: t('products.faq3q'), a: t('products.faq3a') },
-    ],
-    [t, product.name, product.oemDesc],
-  );
+  const relatedProducts = products.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 3);
 
   return (
     <div className="yozo-animate-page-in bg-white min-h-screen">
@@ -1616,7 +1659,7 @@ const ContactPage = () => {
 
 // --- 资讯中心列表页 ---
 const NewsPage = () => {
-  const navigate = useNavigate();
+  const navigate = useLocalizedNavigate();
   const { t, locale } = useLocale();
   const { articles, articleCategories, loading, error, reload } = useCms();
   const [activeCategory, setActiveCategory] = useState("全部");
@@ -1766,7 +1809,7 @@ const NewsPage = () => {
 
 // --- 资讯详情页 ---
 const NewsDetailPage = () => {
-  const navigate = useNavigate();
+  const navigate = useLocalizedNavigate();
   const { articleId } = useParams();
   const { t, locale } = useLocale();
   const { articles, loading, error, reload } = useCms();
@@ -1926,7 +1969,7 @@ const NewsDetailPage = () => {
 // --- 案例详情（路由 /cases/:slug）---
 const CaseStudyDetailPage = () => {
   const { slug } = useParams();
-  const navigate = useNavigate();
+  const navigate = useLocalizedNavigate();
   const { t } = useLocale();
   const { caseStudies, loading, error, reload } = useCms();
   const study = slug ? resolveCaseStudyBySlug(caseStudies, slug) : null;
@@ -1984,7 +2027,7 @@ const CaseStudyDetailPage = () => {
 // --- 通用页面（路由 /p/:slug，与 Studio simplePage 对齐）---
 const SimplePageView = () => {
   const { slug } = useParams();
-  const navigate = useNavigate();
+  const navigate = useLocalizedNavigate();
   const { t } = useLocale();
   const { simplePages, loading, error, reload } = useCms();
   const page = slug ? resolveSimplePageBySlug(simplePages, slug) : null;
@@ -2048,7 +2091,9 @@ const SimplePageView = () => {
 // ==========================================
 
 function LanguageSwitcher({ navOnLight }) {
-  const { locale, setLocale, t } = useLocale();
+  const { locale, t } = useLocale();
+  const location = useLocation();
+  const switchLocale = useLocaleSwitcherNavigate();
   const opts = [
     { id: 'zh', label: '中文' },
     { id: 'en', label: 'EN' },
@@ -2068,7 +2113,7 @@ function LanguageSwitcher({ navOnLight }) {
           <button
             key={o.id}
             type="button"
-            onClick={() => setLocale(o.id)}
+            onClick={() => switchLocale(location.pathname, location.search, o.id)}
             className={`text-[11px] font-medium tracking-wide px-2.5 py-1 rounded-full transition-colors ${
               active
                 ? navOnLight
@@ -2088,9 +2133,9 @@ function LanguageSwitcher({ navOnLight }) {
 }
 
 function SiteShell() {
-  const navigate = useNavigate();
+  const navigate = useLocalizedNavigate();
   const location = useLocation();
-  const { locale, t } = useLocale();
+  const { locale, t, barePathname } = useLocale();
   const { siteSettings, products } = useCms();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -2101,7 +2146,7 @@ function SiteShell() {
   const [floatHint, setFloatHint] = useState('');
   const [floatSending, setFloatSending] = useState(false);
 
-  const isHome = location.pathname === '/';
+  const isHome = barePathname === '/';
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -2135,7 +2180,7 @@ function SiteShell() {
 
   return (
     <div className="min-h-screen min-w-0 bg-[#FDFDFD] font-sans text-[#222222] selection:bg-gray-200 relative overflow-x-clip">
-      
+      <SeoAlternateLinks />
       {/* 现代化高端导航栏 */}
       <nav className={`fixed w-full z-50 transition-all duration-700 ${
         navOnLight
@@ -2156,7 +2201,7 @@ function SiteShell() {
           
           <div className={`hidden xl:flex absolute left-1/2 -translate-x-1/2 items-center gap-5 2xl:gap-8 transition-colors duration-500 ${navOnLight ? 'text-gray-500' : 'text-white/80'}`}>
             {navItems.map((item) => {
-              const isActive = navItemActive(location.pathname, item);
+              const isActive = navItemActive(barePathname, item);
               return (
                 <button
                   type="button"
@@ -2375,7 +2420,7 @@ function SiteShell() {
               setFloatSending(true);
               try {
                 const path = location.pathname;
-                const m = path.match(/^\/products\/([^/]+)/);
+                const m = path.match(/^(?:\/(?:en|es))?\/products\/([^/]+)/);
                 const fromProduct = m ? resolveProductByRouteParam(products, m[1]) : null;
                 await submitInquiry({
                   name: floatName.trim(),
@@ -2419,9 +2464,9 @@ function SiteShell() {
   );
 }
 
-export default function App() {
+export default function App({ routesLocation } = {}) {
   return (
-    <Routes>
+    <Routes {...(routesLocation ? { location: routesLocation } : {})}>
       <Route element={<SiteShell />}>
         <Route index element={<HomePage />} />
         <Route path="about" element={<AboutPage />} />

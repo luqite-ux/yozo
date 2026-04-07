@@ -3,6 +3,7 @@ node_modules/
 
 # Build output
 dist/
+dist-ssr/
 **/dist/
 
 # Environment & secrets（示例文件保留）

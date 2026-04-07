@@ -5,12 +5,17 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:ssr": "node server.mjs",
     "build": "vite build",
+    "build:ssr": "vite build --ssr src/entry-server.jsx --outDir dist-ssr --emptyOutDir false",
+    "build:all": "npm run build && npm run build:ssr",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start:ssr": "node server.mjs"
   },
   "dependencies": {
     "@sanity/client": "^7.20.0",
+    "express": "^4.22.1",
     "lucide-react": "^1.7.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",

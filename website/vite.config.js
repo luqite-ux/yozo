@@ -28,6 +28,10 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react(), tailwindcss(), inquiryApiDevPlugin()],
+    /** SSR：避免把 react-router 等打成外部裸 import（Node 需打包进 server bundle） */
+    ssr: {
+      noExternal: ['react-router', 'react-router-dom', 'lucide-react'],
+    },
     server: {
       proxy: { ...sanityProxy },
       // 询盘 POST /api/inquiries 由 inquiryApiDevPlugin 处理；生产环境见 Vercel api/inquiries.js

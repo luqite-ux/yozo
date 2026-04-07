@@ -1,12 +1,12 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import zh from './translations/zh.js';
 import en from './translations/en.js';
 import es from './translations/es.js';
 import uiExtraZh from './translations/uiExtra.zh.js';
 import uiExtraEn from './translations/uiExtra.en.js';
 import uiExtraEs from './translations/uiExtra.es.js';
-
-const STORAGE_KEY = 'yozo.locale';
+import { bareToLocalized, normalizeAppLocale, splitLocalePrefix } from './routing.js';
 
 function deepMerge(base, extra) {
   if (!base) return extra || {};
@@ -68,42 +68,39 @@ function createT(dict, fallbackDict) {
 
 const LocaleContext = createContext(null);
 
-export function LocaleProvider({ children, defaultLocale }) {
-  const [locale, setLocaleState] = useState(() => {
-    const fromStorage = normalizeLocale(window.localStorage.getItem(STORAGE_KEY));
-    if (fromStorage) return fromStorage;
-    return normalizeLocale(defaultLocale);
-  });
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(STORAGE_KEY, locale);
-    } catch {
-      // ignore
-    }
-  }, [locale]);
-
-  useEffect(() => {
-    document.documentElement.lang =
-      locale === 'zh' ? 'zh-CN' : locale === 'es' ? 'es' : 'en';
-  }, [locale]);
-
-  const setLocale = useCallback((next) => {
-    setLocaleState(normalizeLocale(next));
-  }, []);
+/**
+ * @param {{ children: import('react').ReactNode, routeLocale: string, barePathname: string }} props
+ */
+export function LocaleProvider({ children, routeLocale, barePathname }) {
+  const locale = normalizeLocale(routeLocale);
+  const bare = barePathname && barePathname !== '' ? barePathname : '/';
 
   const dict = dictionaries[locale] || zh;
   const t = useMemo(() => createT(dict, zh), [dict]);
 
+  const withLocalePath = useCallback(
+    (path) => {
+      const raw = path && path.startsWith('/') ? path : `/${path || ''}`;
+      const { pathname: bareDest } = splitLocalePrefix(raw);
+      return bareToLocalized(bareDest, locale);
+    },
+    [locale],
+  );
+
   const value = useMemo(
     () => ({
       locale,
-      setLocale,
+      barePathname: bare,
+      withLocalePath,
       t,
       dictionaries,
     }),
-    [locale, setLocale, t],
+    [locale, bare, withLocalePath, t],
   );
+
+  useEffect(() => {
+    document.documentElement.lang = locale === 'zh' ? 'zh-CN' : locale === 'es' ? 'es' : 'en';
+  }, [locale]);
 
   return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;
 }
@@ -114,3 +111,29 @@ export function useLocale() {
   return ctx;
 }
 
+/** 将裸路径或已带前缀的路径转为当前语言下的 path 再 navigate */
+export function useLocalizedNavigate() {
+  const navigate = useNavigate();
+  const { withLocalePath } = useLocale();
+  return useCallback(
+    (to, options) => {
+      if (typeof to === 'number') return navigate(to);
+      if (typeof to === 'string' && to.startsWith('/') && !/^https?:\/\//i.test(to)) {
+        return navigate(withLocalePath(to), options);
+      }
+      return navigate(to, options);
+    },
+    [navigate, withLocalePath],
+  );
+}
+
+/** 语言切换（保留当前「裸路径」） */
+export function useLocaleSwitcherNavigate() {
+  const navigate = useNavigate();
+  return useCallback((fullPathname, search, targetLocale) => {
+    const loc = normalizeAppLocale(targetLocale);
+    const { pathname: bare } = splitLocalePrefix(fullPathname);
+    const qs = search || '';
+    navigate(bareToLocalized(bare, loc) + qs);
+  }, [navigate]);
+}
