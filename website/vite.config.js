@@ -33,6 +33,7 @@ export default defineConfig(({ mode }) => {
       noExternal: ['react-router', 'react-router-dom', 'lucide-react'],
     },
     server: {
+      host: true,
       proxy: { ...sanityProxy },
       // 询盘 POST /api/inquiries 由 inquiryApiDevPlugin 处理；生产环境见 Vercel api/inquiries.js
     },
