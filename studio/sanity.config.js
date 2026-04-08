@@ -1,10 +1,17 @@
 import { defineConfig } from 'sanity';
 import { structureTool } from 'sanity/structure';
 import { visionTool } from '@sanity/vision';
+import { dashboardTool } from '@sanity/dashboard';
 import { schemaTypes } from './schemaTypes/index.js';
 import { deskStructure } from './deskStructure.js';
 import { StudioBrandLogo } from './components/StudioBrandLogo.jsx';
 import { STUDIO_PROJECT_ID_FALLBACK } from './sanity.project.constants.js';
+import {
+  welcomeWidget,
+  overviewWidget,
+  recentInquiriesWidget,
+  recentEditsWidget,
+} from './components/dashboard/index.js';
 
 /** 与 Vercel / .env 导入一致：去掉 BOM、首尾空白与成对引号（避免批量导入把引号写进值里） */
 function studioEnv(name, fallback = '') {
@@ -38,6 +45,14 @@ export default defineConfig({
     },
   },
   plugins: [
+    dashboardTool({
+      widgets: [
+        welcomeWidget(),
+        overviewWidget(),
+        recentInquiriesWidget(),
+        recentEditsWidget(),
+      ],
+    }),
     structureTool({ structure: deskStructure }),
     visionTool({ defaultApiVersion: '2024-01-01' }),
   ],
