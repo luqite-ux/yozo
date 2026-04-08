@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useClient } from 'sanity';
+import { useRouter } from 'sanity/router';
 import { DashboardWidgetContainer } from '@sanity/dashboard';
 
 const QUERY = `*[_type in ["product","post","caseStudy","faq","simplePage"] && !(_id in path("drafts.**"))]
@@ -33,6 +34,7 @@ function timeAgo(dateStr) {
 
 export function RecentEditsWidget() {
   const client = useClient({ apiVersion: '2024-01-01' });
+  const router = useRouter();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -42,6 +44,10 @@ export function RecentEditsWidget() {
       setLoading(false);
     });
   }, [client]);
+
+  const openDoc = (id, type) => {
+    router.navigateIntent('edit', { id, type });
+  };
 
   return (
     <DashboardWidgetContainer header="最近更新">
@@ -61,13 +67,18 @@ export function RecentEditsWidget() {
               return (
                 <div
                   key={item._id}
+                  onClick={() => openDoc(item._id, item._type)}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: 12,
                     padding: '10px 20px',
                     borderBottom: idx < items.length - 1 ? '1px solid #f3f4f6' : 'none',
+                    cursor: 'pointer',
+                    transition: 'background 0.15s',
                   }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = '#f9fafb'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
                 >
                   <span style={{ fontSize: 18, flexShrink: 0 }}>{meta.icon}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -97,6 +108,7 @@ export function RecentEditsWidget() {
                       {timeAgo(item._updatedAt)}
                     </div>
                   </div>
+                  <span style={{ fontSize: 14, color: '#ccc', flexShrink: 0 }}>›</span>
                 </div>
               );
             })}

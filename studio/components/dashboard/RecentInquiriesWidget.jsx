@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useClient } from 'sanity';
+import { useRouter } from 'sanity/router';
 import { DashboardWidgetContainer } from '@sanity/dashboard';
 
 const QUERY = `*[_type == "inquiry" && !(_id in path("drafts.**"))]
@@ -48,6 +49,7 @@ function timeAgo(dateStr) {
 
 export function RecentInquiriesWidget() {
   const client = useClient({ apiVersion: '2024-01-01' });
+  const router = useRouter();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -57,6 +59,10 @@ export function RecentInquiriesWidget() {
       setLoading(false);
     });
   }, [client]);
+
+  const openDoc = (id) => {
+    router.navigateIntent('edit', { id, type: 'inquiry' });
+  };
 
   return (
     <DashboardWidgetContainer header="最近询盘 (10条)">
@@ -74,13 +80,18 @@ export function RecentInquiriesWidget() {
             {items.map((item, idx) => (
               <div
                 key={item._id}
+                onClick={() => openDoc(item._id)}
                 style={{
                   display: 'flex',
                   alignItems: 'flex-start',
                   gap: 12,
                   padding: '12px 20px',
                   borderBottom: idx < items.length - 1 ? '1px solid #f3f4f6' : 'none',
+                  cursor: 'pointer',
+                  transition: 'background 0.15s',
                 }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = '#f9fafb'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
               >
                 <div style={{
                   width: 36,
