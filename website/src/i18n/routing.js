@@ -1,23 +1,28 @@
-/** @typedef {'zh'|'en'|'es'} AppLocale */
+/** @typedef {'zh'|'en'|'es'|'pt'|'ar'|'ru'} AppLocale */
+
+const LOCALE_PREFIXES = ['en', 'es', 'pt', 'ar', 'ru'];
 
 export function normalizeAppLocale(input) {
   const raw = String(input || '').trim().toLowerCase();
-  if (raw.startsWith('en')) return /** @type {AppLocale} */ ('en');
-  if (raw.startsWith('es')) return /** @type {AppLocale} */ ('es');
+  for (const prefix of LOCALE_PREFIXES) {
+    if (raw.startsWith(prefix)) return /** @type {AppLocale} */ (prefix);
+  }
   return /** @type {AppLocale} */ ('zh');
 }
 
 /**
- * 从完整 URL path 解析语言前缀与「站内裸路径」（不含 /en、/es）。
+ * 从完整 URL path 解析语言前缀与「站内裸路径」（不含 /en、/es 等）。
  * 中文默认无前缀：/products → zh + /products
  */
 export function splitLocalePrefix(pathname) {
   const p = pathname && pathname !== '' ? pathname : '/';
-  if (p === '/en' || p.startsWith('/en/')) {
-    return { locale: /** @type {AppLocale} */ ('en'), pathname: p === '/en' ? '/' : p.slice(3) || '/' };
-  }
-  if (p === '/es' || p.startsWith('/es/')) {
-    return { locale: /** @type {AppLocale} */ ('es'), pathname: p === '/es' ? '/' : p.slice(3) || '/' };
+  for (const prefix of LOCALE_PREFIXES) {
+    if (p === `/${prefix}` || p.startsWith(`/${prefix}/`)) {
+      return {
+        locale: /** @type {AppLocale} */ (prefix),
+        pathname: p === `/${prefix}` ? '/' : p.slice(prefix.length + 1) || '/',
+      };
+    }
   }
   return { locale: /** @type {AppLocale} */ ('zh'), pathname: p };
 }
@@ -46,9 +51,9 @@ export function pathForLocaleFromFullPath(fullPathname, search, targetLocale) {
  */
 export function alternatePathsForBare(barePathname) {
   const bare = !barePathname || barePathname === '' ? '/' : barePathname.startsWith('/') ? barePathname : `/${barePathname}`;
-  return {
-    zh: bare,
-    en: bareToLocalized(bare, 'en'),
-    es: bareToLocalized(bare, 'es'),
-  };
+  const result = { zh: bare };
+  for (const prefix of LOCALE_PREFIXES) {
+    result[prefix] = bareToLocalized(bare, prefix);
+  }
+  return result;
 }

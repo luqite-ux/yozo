@@ -3,9 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import zh from './translations/zh.js';
 import en from './translations/en.js';
 import es from './translations/es.js';
+import pt from './translations/pt.js';
+import ar from './translations/ar.js';
+import ru from './translations/ru.js';
 import uiExtraZh from './translations/uiExtra.zh.js';
 import uiExtraEn from './translations/uiExtra.en.js';
 import uiExtraEs from './translations/uiExtra.es.js';
+import uiExtraPt from './translations/uiExtra.pt.js';
+import uiExtraAr from './translations/uiExtra.ar.js';
+import uiExtraRu from './translations/uiExtra.ru.js';
 import { bareToLocalized, normalizeAppLocale, splitLocalePrefix } from './routing.js';
 
 function deepMerge(base, extra) {
@@ -35,12 +41,18 @@ const dictionaries = {
   zh: deepMerge(zh, uiExtraZh),
   en: deepMerge(en, uiExtraEn),
   es: deepMerge(es, uiExtraEs),
+  pt: deepMerge(pt, uiExtraPt),
+  ar: deepMerge(ar, uiExtraAr),
+  ru: deepMerge(ru, uiExtraRu),
 };
+
+const SUPPORTED_LOCALES = ['zh', 'en', 'es', 'pt', 'ar', 'ru'];
 
 function normalizeLocale(input) {
   const raw = String(input || '').trim().toLowerCase();
-  if (raw.startsWith('en')) return 'en';
-  if (raw.startsWith('es')) return 'es';
+  for (const loc of SUPPORTED_LOCALES) {
+    if (raw.startsWith(loc)) return loc;
+  }
   return 'zh';
 }
 
@@ -75,8 +87,8 @@ export function LocaleProvider({ children, routeLocale, barePathname }) {
   const locale = normalizeLocale(routeLocale);
   const bare = barePathname && barePathname !== '' ? barePathname : '/';
 
-  const dict = dictionaries[locale] || zh;
-  const t = useMemo(() => createT(dict, zh), [dict]);
+  const dict = dictionaries[locale] || dictionaries.zh;
+  const t = useMemo(() => createT(dict, dictionaries.zh), [dict]);
 
   const withLocalePath = useCallback(
     (path) => {
@@ -99,7 +111,9 @@ export function LocaleProvider({ children, routeLocale, barePathname }) {
   );
 
   useEffect(() => {
-    document.documentElement.lang = locale === 'zh' ? 'zh-CN' : locale === 'es' ? 'es' : 'en';
+    const langMap = { zh: 'zh-CN', en: 'en', es: 'es', pt: 'pt', ar: 'ar', ru: 'ru' };
+    document.documentElement.lang = langMap[locale] || locale;
+    document.documentElement.dir = locale === 'ar' ? 'rtl' : 'ltr';
   }, [locale]);
 
   return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;

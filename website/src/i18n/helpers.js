@@ -1,109 +1,110 @@
 /**
- * 按 locale 选 FAQ 的问题或答案，有翻译则用翻译，否则降级到中文原文。
- * @param {object} faq  mapSanityFaq 的输出
- * @param {'zh'|'en'|'es'} locale
- * @returns {{ q: string, a: string }}
+ * Generic locale field picker: given a base (Chinese) value and a map of
+ * locale-suffixed values, return the best match for the active locale.
+ * Falls back to base value.
  */
+function pickLocale(locale, base, translations) {
+  if (locale === 'zh') return base || '';
+  return translations[locale] || base || '';
+}
+function pickLocaleArr(locale, base, translations) {
+  if (locale === 'zh') return base || [];
+  const arr = translations[locale];
+  return Array.isArray(arr) && arr.length ? arr : (base || []);
+}
+
 /**
  * 按 locale 选产品的文本字段，有翻译则用翻译，否则降级到中文原文。
- * @param {object} product  mapSanityProduct 的输出
- * @param {'zh'|'en'|'es'} locale
  */
 export function localizeProduct(product, locale) {
   if (!product || locale === 'zh') return product;
-  const pick = (zh, en, es) => (locale === 'en' ? en : es) || zh || '';
-  const pickArr = (zh, en, es) => {
-    const arr = locale === 'en' ? en : es;
-    return Array.isArray(arr) && arr.length ? arr : (zh || []);
-  };
+  const p = (field) => pickLocale(locale, product[field], {
+    en: product[`${field}_en`], es: product[`${field}_es`],
+    pt: product[`${field}_pt`], ar: product[`${field}_ar`], ru: product[`${field}_ru`],
+  });
+  const pArr = (field) => pickLocaleArr(locale, product[field], {
+    en: product[`${field}_en`], es: product[`${field}_es`],
+    pt: product[`${field}_pt`], ar: product[`${field}_ar`], ru: product[`${field}_ru`],
+  });
   const pickSpecs = (specs) => {
     if (!Array.isArray(specs) || specs.length === 0) return [];
     return specs.map((r) => ({
       ...r,
-      label: pick(r?.label, r?.label_en, r?.label_es),
-      value: pick(r?.value, r?.value_en, r?.value_es),
+      label: pickLocale(locale, r?.label, {
+        en: r?.label_en, es: r?.label_es, pt: r?.label_pt, ar: r?.label_ar, ru: r?.label_ru,
+      }),
+      value: pickLocale(locale, r?.value, {
+        en: r?.value_en, es: r?.value_es, pt: r?.value_pt, ar: r?.value_ar, ru: r?.value_ru,
+      }),
     }));
   };
   const pickIngredients = (ings) => {
     if (!Array.isArray(ings) || ings.length === 0) return [];
     return ings.map((ing) => ({
       ...ing,
-      name: pick(ing?.name, ing?.name_en, ing?.name_es),
-      desc: pick(ing?.desc, ing?.desc_en, ing?.desc_es),
+      name: pickLocale(locale, ing?.name, {
+        en: ing?.name_en, es: ing?.name_es, pt: ing?.name_pt, ar: ing?.name_ar, ru: ing?.name_ru,
+      }),
+      desc: pickLocale(locale, ing?.desc, {
+        en: ing?.desc_en, es: ing?.desc_es, pt: ing?.desc_pt, ar: ing?.desc_ar, ru: ing?.desc_ru,
+      }),
     }));
   };
   return {
     ...product,
-    name: pick(product.name, product.name_en, product.name_es),
-    desc: pick(product.desc, product.desc_en, product.desc_es),
-    packaging: pick(product.packaging, product.packaging_en, product.packaging_es),
-    skinType: pick(product.skinType, product.skinType_en, product.skinType_es),
-    oemDesc: pick(product.oemDesc, product.oemDesc_en, product.oemDesc_es),
-    applicationScenarios: pick(
-      product.applicationScenarios,
-      product.applicationScenarios_en,
-      product.applicationScenarios_es,
-    ),
-    efficacy: pickArr(product.efficacy, product.efficacy_en, product.efficacy_es),
-    tags: pickArr(product.tags, product.tags_en, product.tags_es),
+    name: p('name'),
+    desc: p('desc'),
+    packaging: p('packaging'),
+    skinType: p('skinType'),
+    oemDesc: p('oemDesc'),
+    applicationScenarios: p('applicationScenarios'),
+    efficacy: pArr('efficacy'),
+    tags: pArr('tags'),
     specifications: pickSpecs(product.specifications),
     ingredients: pickIngredients(product.ingredients),
-    detailContent: pickArr(
-      product.detailContent,
-      product.detailContent_en,
-      product.detailContent_es,
-    ),
+    detailContent: pArr('detailContent'),
   };
 }
 
 /**
- * 按 locale 选文章的标题和摘要。
- * @param {object} article  mapSanityPost 的输出
- * @param {'zh'|'en'|'es'} locale
+ * 按 locale 选文章的标题、摘要和分类。支持双向翻译（EN 原文 → ZH，ZH 原文 → EN 等）。
  */
 export function localizePost(article, locale) {
   if (!article) return article;
   const faqs = Array.isArray(article.faqs)
     ? article.faqs
         .map((f) => {
-          const picked = pickFaqLocale(
-            {
-              q: f.q,
-              a: f.a,
-              q_en: f.q_en,
-              q_es: f.q_es,
-              a_en: f.a_en,
-              a_es: f.a_es,
-            },
-            locale,
-          );
+          const picked = pickFaqLocale(f, locale);
           return { ...f, q: picked.q, a: picked.a };
         })
         .filter((f) => f.q || f.a)
     : article.faqs;
 
-  const pickField = (base, zh, en, es) => {
-    if (locale === 'zh') return zh || base;
-    if (locale === 'en') return en || base;
-    return es || base;
-  };
+  const pf = (field) => pickLocale(locale, article[field], {
+    zh: article[`${field}_zh`], en: article[`${field}_en`], es: article[`${field}_es`],
+    pt: article[`${field}_pt`], ar: article[`${field}_ar`], ru: article[`${field}_ru`],
+  });
 
   return {
     ...article,
-    title: pickField(article.title, article.title_zh, article.title_en, article.title_es),
-    summary: pickField(article.summary, article.summary_zh, article.summary_en, article.summary_es),
-    category: pickField(article.category, article.category_zh, article.category_en, article.category_es),
+    title: pf('title'),
+    summary: pf('summary'),
+    category: pf('category'),
     faqs,
   };
 }
 
 export function pickFaqLocale(faq, locale) {
-  const q = (locale === 'en' && faq.q_en) || (locale === 'es' && faq.q_es) || faq.q || '';
-  const a = (locale === 'en' && faq.a_en) || (locale === 'es' && faq.a_es) || faq.a || '';
+  const q = pickLocale(locale, faq.q, {
+    en: faq.q_en, es: faq.q_es, pt: faq.q_pt, ar: faq.q_ar, ru: faq.q_ru,
+  });
+  const a = pickLocale(locale, faq.a, {
+    en: faq.a_en, es: faq.a_es, pt: faq.a_pt, ar: faq.a_ar, ru: faq.a_ru,
+  });
   return { q, a };
 }
 
-/** CMS 文案仅在中文界面优先展示；英文/西语使用翻译键，避免整站仍显示中文。 */
+/** CMS 文案仅在中文界面优先展示；其他语言使用翻译键。 */
 export function cmsZhElseT(locale, cmsValue, tKey, t) {
   if (locale === 'zh') {
     const s = typeof cmsValue === 'string' ? cmsValue.trim() : '';
@@ -119,28 +120,27 @@ export function formatCategoryTabLabel(cat, t) {
   return cat === CATEGORY_ALL ? t('common.all') : cat;
 }
 
-/** 文章分类 Tab（canonical + 可选 titleEn/titleEs/titleZh） */
+/** 文章分类 Tab */
 export function labelArticleCategoryTab(tab, locale, t) {
   if (!tab?.canonical || tab.canonical === CATEGORY_ALL) return t('common.all');
-  if (locale === 'zh' && tab.titleZh?.trim()) return tab.titleZh.trim();
-  if (locale === 'en' && tab.titleEn?.trim()) return tab.titleEn.trim();
-  if (locale === 'es' && tab.titleEs?.trim()) return tab.titleEs.trim();
+  const localeKey = `title${locale.charAt(0).toUpperCase()}${locale.slice(1)}`;
+  if (tab[localeKey]?.trim()) return tab[localeKey].trim();
   return tab.canonical;
 }
 
-/** 产品分类 Tab（canonical + 可选 titleEn/titleEs） */
+/** 产品分类 Tab */
 export function labelProductCategoryTab(tab, locale, t) {
   if (!tab?.canonical || tab.canonical === CATEGORY_ALL) return t('common.all');
-  if (locale === 'en' && tab.titleEn?.trim()) return tab.titleEn.trim();
-  if (locale === 'es' && tab.titleEs?.trim()) return tab.titleEs.trim();
+  const localeKey = `title${locale.charAt(0).toUpperCase()}${locale.slice(1)}`;
+  if (tab[localeKey]?.trim()) return tab[localeKey].trim();
   return tab.canonical;
 }
 
 /** 产品卡片/详情上的分类文案 */
 export function labelProductCategory(product, locale) {
   if (!product) return '';
-  if (locale === 'en' && product.categoryTitleEn?.trim()) return product.categoryTitleEn.trim();
-  if (locale === 'es' && product.categoryTitleEs?.trim()) return product.categoryTitleEs.trim();
+  const localeKey = `categoryTitle${locale.charAt(0).toUpperCase()}${locale.slice(1)}`;
+  if (product[localeKey]?.trim()) return product[localeKey].trim();
   return product.category || '';
 }
 

@@ -104,6 +104,9 @@ function SeoAlternateLinks() {
       ['hreflang-zh', 'zh-CN', alts.zh],
       ['hreflang-en', 'en', alts.en],
       ['hreflang-es', 'es', alts.es],
+      ['hreflang-pt', 'pt', alts.pt],
+      ['hreflang-ar', 'ar', alts.ar],
+      ['hreflang-ru', 'ru', alts.ru],
       ['hreflang-x', 'x-default', alts.zh],
     ];
     for (const [id] of spec) {
@@ -2099,6 +2102,9 @@ function LanguageSwitcher({ navOnLight }) {
     { id: 'zh', label: '中文' },
     { id: 'en', label: 'EN' },
     { id: 'es', label: 'ES' },
+    { id: 'pt', label: 'PT' },
+    { id: 'ar', label: 'AR' },
+    { id: 'ru', label: 'RU' },
   ];
   return (
     <div
