@@ -2094,47 +2094,74 @@ const SimplePageView = () => {
 // 主应用渲染 (Main App & Layout)
 // ==========================================
 
+const LANG_OPTIONS = [
+  { id: 'zh', flag: '🇨🇳', label: '中文', short: '中文' },
+  { id: 'en', flag: '🇬🇧', label: 'English', short: 'EN' },
+  { id: 'es', flag: '🇪🇸', label: 'Español', short: 'ES' },
+  { id: 'pt', flag: '🇧🇷', label: 'Português', short: 'PT' },
+  { id: 'ar', flag: '🇸🇦', label: 'العربية', short: 'AR' },
+  { id: 'ru', flag: '🇷🇺', label: 'Русский', short: 'RU' },
+];
+
 function LanguageSwitcher({ navOnLight }) {
   const { locale, t } = useLocale();
   const location = useLocation();
   const switchLocale = useLocaleSwitcherNavigate();
-  const opts = [
-    { id: 'zh', label: '中文' },
-    { id: 'en', label: 'EN' },
-    { id: 'es', label: 'ES' },
-    { id: 'pt', label: 'PT' },
-    { id: 'ar', label: 'AR' },
-    { id: 'ru', label: 'RU' },
-  ];
+  const [open, setOpen] = useState(false);
+  const current = LANG_OPTIONS.find((o) => o.id === locale) || LANG_OPTIONS[0];
+
+  useEffect(() => {
+    if (!open) return;
+    const close = () => setOpen(false);
+    document.addEventListener('click', close);
+    return () => document.removeEventListener('click', close);
+  }, [open]);
+
   return (
-    <div
-      role="group"
-      aria-label={t('shell.ariaLang')}
-      className={`inline-flex shrink-0 items-center rounded-full border p-0.5 gap-0.5 ${
-        navOnLight ? 'border-gray-200/80 bg-white/70' : 'border-white/30 bg-black/25'
-      }`}
-    >
-      {opts.map((o) => {
-        const active = locale === o.id;
-        return (
-          <button
-            key={o.id}
-            type="button"
-            onClick={() => switchLocale(location.pathname, location.search, o.id)}
-            className={`text-[11px] font-medium tracking-wide px-2.5 py-1 rounded-full transition-colors ${
-              active
-                ? navOnLight
-                  ? 'bg-[#111111] text-white'
-                  : 'bg-white text-[#111111]'
-                : navOnLight
-                  ? 'text-gray-600 hover:text-[#111111]'
-                  : 'text-white/80 hover:text-white'
-            }`}
-          >
-            {o.label}
-          </button>
-        );
-      })}
+    <div className="relative shrink-0" role="group" aria-label={t('shell.ariaLang')}>
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[12px] font-medium tracking-wide transition-all duration-300 ${
+          navOnLight
+            ? 'border-gray-200/80 bg-white/70 text-gray-700 hover:border-gray-400'
+            : 'border-white/30 bg-black/25 text-white/90 hover:border-white/50'
+        }`}
+      >
+        <span className="text-[15px] leading-none">{current.flag}</span>
+        <span>{current.short}</span>
+        <ChevronRight size={12} className={`transition-transform duration-200 ${open ? 'rotate-90' : ''}`} />
+      </button>
+
+      {open && (
+        <div
+          className="absolute right-0 top-[calc(100%+6px)] bg-white rounded-xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] border border-gray-100 py-1.5 min-w-[160px] z-[100] overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {LANG_OPTIONS.map((o) => {
+            const active = locale === o.id;
+            return (
+              <button
+                key={o.id}
+                type="button"
+                onClick={() => {
+                  switchLocale(location.pathname, location.search, o.id);
+                  setOpen(false);
+                }}
+                className={`w-full flex items-center gap-3 px-4 py-2.5 text-[13px] transition-colors ${
+                  active
+                    ? 'bg-gray-50 text-[#111] font-medium'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-[#111]'
+                }`}
+              >
+                <span className="text-[18px] leading-none">{o.flag}</span>
+                <span className="flex-1 text-left">{o.label}</span>
+                {active && <span className="text-[10px] text-gray-400">✓</span>}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
