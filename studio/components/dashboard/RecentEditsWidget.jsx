@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useClient } from 'sanity';
-import { useRouter } from 'sanity/router';
 import { DashboardWidgetContainer } from '@sanity/dashboard';
 
 const QUERY = `*[_type in ["product","post","caseStudy","faq","simplePage"] && !(_id in path("drafts.**"))]
@@ -34,7 +33,6 @@ function timeAgo(dateStr) {
 
 export function RecentEditsWidget() {
   const client = useClient({ apiVersion: '2024-01-01' });
-  const router = useRouter();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -45,8 +43,17 @@ export function RecentEditsWidget() {
     });
   }, [client]);
 
+  const TYPE_TO_STRUCTURE = {
+    product: 'itemProducts',
+    post: 'itemPosts',
+    caseStudy: 'itemCaseStudies',
+    faq: 'itemFaqs',
+    simplePage: 'itemSimplePages',
+  };
+
   const openDoc = (id, type) => {
-    router.navigateIntent('edit', { id, type });
+    const structureId = TYPE_TO_STRUCTURE[type] || 'itemProducts';
+    window.location.href = `/structure/${structureId};${id}`;
   };
 
   return (

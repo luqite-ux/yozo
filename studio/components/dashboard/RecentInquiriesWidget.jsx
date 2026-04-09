@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useClient } from 'sanity';
-import { useRouter } from 'sanity/router';
 import { DashboardWidgetContainer } from '@sanity/dashboard';
 
 const QUERY = `*[_type == "inquiry" && !(_id in path("drafts.**"))]
@@ -49,7 +48,6 @@ function timeAgo(dateStr) {
 
 export function RecentInquiriesWidget() {
   const client = useClient({ apiVersion: '2024-01-01' });
-  const router = useRouter();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -61,7 +59,7 @@ export function RecentInquiriesWidget() {
   }, [client]);
 
   const openDoc = (id) => {
-    router.navigateIntent('edit', { id, type: 'inquiry' });
+    window.location.href = `/structure/itemInquiries;${id}`;
   };
 
   return (

@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useClient } from 'sanity';
-import { useRouter } from 'sanity/router';
 import { DashboardWidgetContainer } from '@sanity/dashboard';
 
 const STAT_QUERY = `{
@@ -14,18 +13,17 @@ const STAT_QUERY = `{
 }`;
 
 const cards = [
-  { key: 'products',       label: '产品',     icon: '📦', color: '#6366f1', intent: { type: 'product' } },
-  { key: 'categories',     label: '分类',     icon: '🏷️', color: '#8b5cf6', intent: { type: 'productCategory' } },
-  { key: 'posts',          label: '文章',     icon: '📝', color: '#0ea5e9', intent: { type: 'post' } },
-  { key: 'faqs',           label: 'FAQ',      icon: '❓', color: '#14b8a6', intent: { type: 'faq' } },
-  { key: 'cases',          label: '案例',     icon: '💼', color: '#f59e0b', intent: { type: 'caseStudy' } },
-  { key: 'inquiriesTotal', label: '询盘总数',  icon: '📬', color: '#64748b', intent: { type: 'inquiry' } },
-  { key: 'inquiriesNew',   label: '待处理询盘', icon: '🔔', color: '#ef4444', highlight: true, intent: { type: 'inquiry' } },
+  { key: 'products',       label: '产品',     icon: '📦', color: '#6366f1', structureId: 'itemProducts' },
+  { key: 'categories',     label: '分类',     icon: '🏷️', color: '#8b5cf6', structureId: 'itemProductCategories' },
+  { key: 'posts',          label: '文章',     icon: '📝', color: '#0ea5e9', structureId: 'itemPosts' },
+  { key: 'faqs',           label: 'FAQ',      icon: '❓', color: '#14b8a6', structureId: 'itemFaqs' },
+  { key: 'cases',          label: '案例',     icon: '💼', color: '#f59e0b', structureId: 'itemCaseStudies' },
+  { key: 'inquiriesTotal', label: '询盘总数',  icon: '📬', color: '#64748b', structureId: 'itemInquiries' },
+  { key: 'inquiriesNew',   label: '待处理询盘', icon: '🔔', color: '#ef4444', highlight: true, structureId: 'itemInquiries' },
 ];
 
 export function OverviewWidget() {
   const client = useClient({ apiVersion: '2024-01-01' });
-  const router = useRouter();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -39,9 +37,9 @@ export function OverviewWidget() {
 
   useEffect(() => { load(); }, [load]);
 
-  const navigateTo = (intent) => {
-    if (!intent) return;
-    router.navigateIntent('edit', { type: intent.type });
+  const navigateTo = (structureId) => {
+    if (!structureId) return;
+    window.location.href = `/structure/${structureId}`;
   };
 
   return (
@@ -60,7 +58,7 @@ export function OverviewWidget() {
             {cards.map((c) => (
               <div
                 key={c.key}
-                onClick={() => navigateTo(c.intent)}
+                onClick={() => navigateTo(c.structureId)}
                 style={{
                   background: c.highlight && stats?.[c.key] > 0
                     ? 'linear-gradient(135deg, #fef2f2, #fee2e2)'
