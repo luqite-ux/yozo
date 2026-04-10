@@ -212,7 +212,7 @@ export default {
     card3p: '索取专属代工报价、产品图册或预约实地验厂，请发送邮件至：',
   },
   news: {
-    eyebrow: 'News & Insights',
+    eyebrow: '行业动态',
     title: '资讯与洞察',
     lead: '获取美妆制造前沿动态、行业趋势研究与品牌孵化指南。',
     searchPh: '搜索资讯...',
@@ -220,6 +220,7 @@ export default {
     shareArticle: '分享文章',
     articleFaqTitle: '本文相关问答',
     readMoreTitle: '延伸阅读',
+    readTimeMinutes: '约 {{n}} 分钟阅读',
   },
   inquiry: {
     badge: "Let's Build Together",

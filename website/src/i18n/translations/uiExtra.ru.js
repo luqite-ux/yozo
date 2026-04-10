@@ -254,6 +254,7 @@ export default {
     shareArticle: 'Поделиться статьёй',
     articleFaqTitle: 'FAQ статьи',
     readMoreTitle: 'Дополнительное чтение',
+    readTimeMinutes: '{{n}} мин чтения',
   },
   inquiry: {
     badge: 'Давайте строить вместе',

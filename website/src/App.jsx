@@ -16,6 +16,7 @@ import {
 import {
   cmsZhElseT,
   CATEGORY_ALL,
+  formatArticleReadTime,
   labelArticleCategoryTab,
   labelProductCategory,
   labelProductCategoryTab,
@@ -1730,7 +1731,7 @@ const NewsPage = () => {
             </div>
             <div className="w-full lg:w-2/5 p-10 lg:p-16 flex flex-col justify-center">
               <div className="flex items-center gap-4 text-[11px] font-bold tracking-widest text-gray-400 uppercase mb-4">
-                <span className="text-[#111111]">{featuredArticle.category}</span>
+                <span className="text-[#111111]">{featuredArticle.categoryDisplay}</span>
                 <span className="w-1 h-1 rounded-full bg-gray-300"></span>
                 <span>{featuredArticle.date}</span>
               </div>
@@ -1784,7 +1785,7 @@ const NewsPage = () => {
               </div>
               <div className="p-8 flex flex-col flex-grow">
                 <div className="flex justify-between items-center text-[10px] tracking-widest text-gray-400 uppercase mb-4">
-                  <span className="text-[#1A1A1A] font-bold bg-gray-100 px-3 py-1 rounded-full">{article.category}</span>
+                  <span className="text-[#1A1A1A] font-bold bg-gray-100 px-3 py-1 rounded-full">{article.categoryDisplay}</span>
                   <span className="flex items-center gap-1.5"><Calendar size={12}/> {article.date}</span>
                 </div>
                 <h3 className="text-xl font-light mb-4 group-hover:text-gray-500 transition-colors line-clamp-2 leading-snug text-[#111111]">
@@ -1794,7 +1795,7 @@ const NewsPage = () => {
                   {article.summary}
                 </p>
                 <div className="mt-auto pt-4 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-400 font-light uppercase tracking-widest">
-                  <span className="flex items-center gap-1.5"><Clock size={12}/> {article.readTime} {t('common.readTimeSuffix')}</span>
+                  <span className="flex items-center gap-1.5"><Clock size={12}/> {formatArticleReadTime(article.readTime, locale, t)}</span>
                   <span className="text-[#111111] font-medium flex items-center gap-1 group-hover:gap-2 transition-all">{t('common.read')} <ChevronRight size={14}/></span>
                 </div>
               </div>
@@ -1859,10 +1860,10 @@ const NewsDetailPage = () => {
             <ArrowRight size={14} className="rotate-180 transition-transform group-hover:-translate-x-1" /> {t('common.backToNews')}
           </button>
           <div className="flex items-center gap-4 text-[11px] font-bold tracking-widest text-gray-400 uppercase mb-6">
-             <span className="bg-[#111111] text-white px-3 py-1 rounded-full">{article.category}</span>
+             <span className="bg-[#111111] text-white px-3 py-1 rounded-full">{article.categoryDisplay}</span>
              <time dateTime={article.date}>{article.date}</time>
              <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-             <span className="flex items-center gap-1.5"><Clock size={12}/> {article.readTime} {t('common.readTimeSuffix')}</span>
+             <span className="flex items-center gap-1.5"><Clock size={12}/> {formatArticleReadTime(article.readTime, locale, t)}</span>
           </div>
           <h1 className="text-3xl md:text-5xl lg:text-6xl font-light tracking-tight mb-8 leading-[1.2] text-[#111111]" itemProp="headline">
             {article.title}
@@ -1901,7 +1902,7 @@ const NewsDetailPage = () => {
           
           <div className="mt-16 pt-8 border-t border-gray-100 flex justify-between items-center">
              <div className="flex gap-2">
-                <span className="text-[11px] font-medium tracking-widest text-gray-400 uppercase bg-gray-50 px-3 py-1.5 rounded-full">{article.category}</span>
+                <span className="text-[11px] font-medium tracking-widest text-gray-400 uppercase bg-gray-50 px-3 py-1.5 rounded-full">{article.categoryDisplay}</span>
                 <span className="text-[11px] font-medium tracking-widest text-gray-400 uppercase bg-gray-50 px-3 py-1.5 rounded-full">{t('news.insightsTag')}</span>
              </div>
              <div className="text-[12px] font-medium tracking-widest text-gray-400 uppercase cursor-pointer hover:text-[#111111] transition-colors">

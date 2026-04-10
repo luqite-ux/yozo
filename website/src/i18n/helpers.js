@@ -76,14 +76,16 @@ export function localizePost(article, locale) {
     const arr = locale === 'en' ? en : es;
     return Array.isArray(arr) && arr.length ? arr : zh || [];
   };
+  const categoryDisplay = pickArticleCategoryDisplay(article.category, locale);
   if (locale === 'zh') {
-    return { ...article, faqs };
+    return { ...article, faqs, categoryDisplay };
   }
   return {
     ...article,
     title: (locale === 'en' ? article.title_en : article.title_es) || article.title,
     summary: (locale === 'en' ? article.summary_en : article.summary_es) || article.summary,
     content: pickArr(article.content, article.content_en, article.content_es),
+    categoryDisplay,
     faqs,
   };
 }
@@ -106,8 +108,73 @@ export function cmsZhElseT(locale, cmsValue, tKey, t) {
 /** 与 Sanity buildProductCategoryTabs 首项一致，用于筛选逻辑 */
 export const CATEGORY_ALL = '全部';
 
+/** CMS 常用英文栏目 slug → 中文界面展示（筛选仍用英文 canonical 与文档一致） */
+const ARTICLE_CATEGORY_EN_TO_ZH = {
+  'COMPLIANCE AND QUALITY': '合规与质量',
+  'BRAND LAUNCH GUIDE': '品牌发布指南',
+  'SKINCARE KNOWLEDGE BASE': '护肤知识库',
+  'OEM/ODM GUIDE': 'OEM/ODM 指南',
+  'INDUSTRY INSIGHTS': '行业洞察',
+  'COMPANY NEWS': '公司新闻',
+};
+
+const ARTICLE_CATEGORY_EN_TO_ES = {
+  'COMPLIANCE AND QUALITY': 'Cumplimiento y calidad',
+  'BRAND LAUNCH GUIDE': 'Guía de lanzamiento de marca',
+  'SKINCARE KNOWLEDGE BASE': 'Base de conocimiento de cuidado de la piel',
+  'OEM/ODM GUIDE': 'Guía OEM/ODM',
+  'INDUSTRY INSIGHTS': 'Perspectivas del sector',
+  'COMPANY NEWS': 'Noticias de la empresa',
+};
+
+/**
+ * 资讯栏目：界面展示文案（zh/es 下将常见英文 canonical 映射为本地化）
+ * @param {string} category mapSanityPost 的 category（与筛选一致）
+ * @param {'zh'|'en'|'es'|'pt'|'ar'|'ru'} locale
+ */
+export function pickArticleCategoryDisplay(category, locale) {
+  const c = String(category || '').trim();
+  if (!c) return '';
+  const key = c.toUpperCase();
+  if (locale === 'zh') return ARTICLE_CATEGORY_EN_TO_ZH[key] || c;
+  if (locale === 'es') return ARTICLE_CATEGORY_EN_TO_ES[key] || c;
+  return c;
+}
+
+/**
+ * 阅读时长：避免中文站出现「5 min 阅读」混排
+ * @param {string} raw Sanity readTime，如 "5 min"
+ */
+export function formatArticleReadTime(raw, locale, t) {
+  const s = String(raw ?? '').trim();
+  const m = s.match(/^(\d+)\s*min(?:utes?)?$/i);
+  if (m) {
+    const n = m[1];
+    const tpl = t('news.readTimeMinutes');
+    if (typeof tpl === 'string' && tpl.includes('{{n}}')) return tpl.replace(/\{\{n\}\}/g, n);
+    if (locale === 'zh') return `约 ${n} 分钟阅读`;
+    if (locale === 'es') return `${n} min de lectura`;
+    return `${n} min read`;
+  }
+  if (locale === 'zh' && /\d/.test(s)) {
+    return s
+      .replace(/\s*min(?:utes?)?/gi, ' 分钟')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+  return s ? `${s} ${t('common.readTimeSuffix')}`.trim() : '';
+}
+
 export function formatCategoryTabLabel(cat, t) {
   return cat === CATEGORY_ALL ? t('common.all') : cat;
+}
+
+/** 资讯筛选 Tab（canonical 与文章 category 字段一致） */
+export function labelArticleCategoryTab(tab, locale, t) {
+  if (!tab?.canonical || tab.canonical === CATEGORY_ALL) return t('common.all');
+  if (locale === 'en' && tab.titleEn?.trim()) return tab.titleEn.trim();
+  if (locale === 'es' && tab.titleEs?.trim()) return tab.titleEs.trim();
+  return pickArticleCategoryDisplay(tab.canonical, locale);
 }
 
 /** 产品分类 Tab（canonical + 可选 titleEn/titleEs） */

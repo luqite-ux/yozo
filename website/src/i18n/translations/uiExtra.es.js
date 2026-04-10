@@ -254,6 +254,7 @@ export default {
     shareArticle: 'Compartir artículo',
     articleFaqTitle: 'Preguntas frecuentes',
     readMoreTitle: 'Para seguir leyendo',
+    readTimeMinutes: '{{n}} min de lectura',
   },
   inquiry: {
     badge: "Let's Build Together",

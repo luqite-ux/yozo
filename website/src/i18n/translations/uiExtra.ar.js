@@ -254,6 +254,7 @@ export default {
     shareArticle: 'مشاركة المقال',
     articleFaqTitle: 'الأسئلة الشائعة للمقال',
     readMoreTitle: 'قراءة إضافية',
+    readTimeMinutes: '{{n}} دقيقة قراءة',
   },
   inquiry: {
     badge: 'لنبني معاً',

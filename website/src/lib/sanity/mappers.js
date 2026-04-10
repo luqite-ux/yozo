@@ -369,17 +369,23 @@ export function buildProductCategoryTabs(settings, rawPcatDocs) {
  * @param {{ category: string }[]} articles 已映射文章
  */
 export function buildArticleCategoryTabs(settings, articles) {
+  const unique = [...new Set(articles.map((a) => a.category).filter(Boolean))];
   const fromSettings = settings?.articleCategories ?? settings?.articleCategoriesLabels;
+  let ordered = unique;
   if (Array.isArray(fromSettings) && fromSettings.length) {
-    const labels = fromSettings
+    const order = fromSettings
       .map((x) => (typeof x === 'string' ? x : x?.title || x?.name || ''))
       .filter(Boolean)
-      .filter((x) => x !== '全部');
-    return ['全部', ...labels];
+      .filter((x) => x !== TAB_ALL);
+    ordered = [
+      ...order.filter((c) => unique.includes(c)),
+      ...unique.filter((c) => !order.includes(c)).sort(),
+    ];
+  } else {
+    unique.sort();
+    ordered = unique;
   }
-  const unique = [...new Set(articles.map((a) => a.category).filter(Boolean))];
-  unique.sort();
-  return ['全部', ...unique];
+  return [{ canonical: TAB_ALL }, ...ordered.map((canonical) => ({ canonical }))];
 }
 
 /**
