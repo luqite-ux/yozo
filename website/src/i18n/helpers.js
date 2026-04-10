@@ -1,21 +1,48 @@
 /**
  * 按 locale 选 FAQ 的问题或答案，有翻译则用翻译，否则降级到中文原文。
  * @param {object} faq  mapSanityFaq 的输出
- * @param {'zh'|'en'|'es'} locale
+ * @param {string} locale
  * @returns {{ q: string, a: string }}
  */
 /**
+ * Sanity 仅有 zh / en / es 三套字段时：pt、ar、ru 等优先英文再西语，最后中文，避免界面落回纯中文。
+ */
+function trimStr(v) {
+  if (v == null) return '';
+  return String(v).trim();
+}
+
+export function pickCmsI18nString(zh, en, es, locale) {
+  const z = trimStr(zh);
+  const e = trimStr(en);
+  const s = trimStr(es);
+  const loc = locale || 'zh';
+  if (loc === 'zh') return z || e || s;
+  if (loc === 'en') return e || z || s;
+  if (loc === 'es') return s || e || z;
+  return e || s || z;
+}
+
+export function pickCmsI18nArray(zhArr, enArr, esArr, locale) {
+  const z = Array.isArray(zhArr) && zhArr.length ? zhArr : null;
+  const e = Array.isArray(enArr) && enArr.length ? enArr : null;
+  const s = Array.isArray(esArr) && esArr.length ? esArr : null;
+  const loc = locale || 'zh';
+  if (loc === 'zh') return z || e || s || [];
+  if (loc === 'en') return e || z || s || [];
+  if (loc === 'es') return s || e || z || [];
+  return e || s || z || [];
+}
+
+/**
  * 按 locale 选产品的文本字段，有翻译则用翻译，否则降级到中文原文。
  * @param {object} product  mapSanityProduct 的输出
- * @param {'zh'|'en'|'es'} locale
+ * @param {string} locale
  */
 export function localizeProduct(product, locale) {
   if (!product || locale === 'zh') return product;
-  const pick = (zh, en, es) => (locale === 'en' ? en : es) || zh || '';
-  const pickArr = (zh, en, es) => {
-    const arr = locale === 'en' ? en : es;
-    return Array.isArray(arr) && arr.length ? arr : (zh || []);
-  };
+  const pick = (zh, en, es) => pickCmsI18nString(zh, en, es, locale);
+  const pickArr = (zh, en, es) => pickCmsI18nArray(zh, en, es, locale);
   const pickSpecs = (specs) => {
     if (!Array.isArray(specs) || specs.length === 0) return [];
     return specs.map((r) => ({
@@ -50,7 +77,7 @@ export function localizeProduct(product, locale) {
 /**
  * 按 locale 选文章的标题和摘要。
  * @param {object} article  mapSanityPost 的输出
- * @param {'zh'|'en'|'es'} locale
+ * @param {string} locale
  */
 export function localizePost(article, locale) {
   if (!article) return article;
@@ -72,18 +99,15 @@ export function localizePost(article, locale) {
         })
         .filter((f) => f.q || f.a)
     : article.faqs;
-  const pickArr = (zh, en, es) => {
-    const arr = locale === 'en' ? en : es;
-    return Array.isArray(arr) && arr.length ? arr : zh || [];
-  };
+  const pickArr = (zh, en, es) => pickCmsI18nArray(zh, en, es, locale);
   const categoryDisplay = pickArticleCategoryDisplay(article.category, locale);
   if (locale === 'zh') {
     return { ...article, faqs, categoryDisplay };
   }
   return {
     ...article,
-    title: (locale === 'en' ? article.title_en : article.title_es) || article.title,
-    summary: (locale === 'en' ? article.summary_en : article.summary_es) || article.summary,
+    title: pickCmsI18nString(article.title, article.title_en, article.title_es, locale),
+    summary: pickCmsI18nString(article.summary, article.summary_en, article.summary_es, locale),
     content: pickArr(article.content, article.content_en, article.content_es),
     categoryDisplay,
     faqs,
@@ -91,9 +115,24 @@ export function localizePost(article, locale) {
 }
 
 export function pickFaqLocale(faq, locale) {
-  const q = (locale === 'en' && faq.q_en) || (locale === 'es' && faq.q_es) || faq.q || '';
-  const a = (locale === 'en' && faq.a_en) || (locale === 'es' && faq.a_es) || faq.a || '';
-  return { q, a };
+  if (!faq) return { q: '', a: '' };
+  const loc = locale || 'zh';
+  if (loc === 'zh') {
+    return { q: trimStr(faq.q), a: trimStr(faq.a) };
+  }
+  if (loc === 'en') {
+    return { q: trimStr(faq.q_en) || trimStr(faq.q), a: trimStr(faq.a_en) || trimStr(faq.a) };
+  }
+  if (loc === 'es') {
+    return {
+      q: trimStr(faq.q_es) || trimStr(faq.q_en) || trimStr(faq.q),
+      a: trimStr(faq.a_es) || trimStr(faq.a_en) || trimStr(faq.a),
+    };
+  }
+  return {
+    q: trimStr(faq.q_en) || trimStr(faq.q_es) || trimStr(faq.q),
+    a: trimStr(faq.a_en) || trimStr(faq.a_es) || trimStr(faq.a),
+  };
 }
 
 /** CMS 文案仅在中文界面优先展示；英文/西语使用翻译键，避免整站仍显示中文。 */
@@ -182,6 +221,10 @@ export function labelProductCategoryTab(tab, locale, t) {
   if (!tab?.canonical || tab.canonical === CATEGORY_ALL) return t('common.all');
   if (locale === 'en' && tab.titleEn?.trim()) return tab.titleEn.trim();
   if (locale === 'es' && tab.titleEs?.trim()) return tab.titleEs.trim();
+  if (locale !== 'zh' && locale !== 'en' && locale !== 'es') {
+    if (tab.titleEn?.trim()) return tab.titleEn.trim();
+    if (tab.titleEs?.trim()) return tab.titleEs.trim();
+  }
   return tab.canonical;
 }
 
@@ -190,6 +233,10 @@ export function labelProductCategory(product, locale) {
   if (!product) return '';
   if (locale === 'en' && product.categoryTitleEn?.trim()) return product.categoryTitleEn.trim();
   if (locale === 'es' && product.categoryTitleEs?.trim()) return product.categoryTitleEs.trim();
+  if (locale !== 'zh' && locale !== 'en' && locale !== 'es') {
+    if (product.categoryTitleEn?.trim()) return product.categoryTitleEn.trim();
+    if (product.categoryTitleEs?.trim()) return product.categoryTitleEs.trim();
+  }
   return product.category || '';
 }
 
