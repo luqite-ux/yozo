@@ -31,21 +31,22 @@ export const siteSettingsQuery = `*[_type == "siteSettings"][0]{
 
 const productProjection = `
   _id,
-  name, name_en, name_es, name_pt, name_ar, name_ru,
-  description, description_en, description_es, description_pt, description_ar, description_ru,
-  excerpt, excerpt_en, excerpt_es, excerpt_pt, excerpt_ar, excerpt_ru,
-  packaging, packaging_en, packaging_es, packaging_pt, packaging_ar, packaging_ru,
+  name, name_en, name_es,
+  description, description_en, description_es,
+  excerpt, excerpt_en, excerpt_es,
+  packaging, packaging_en, packaging_es,
   supportOem,
-  skinType, skinType_en, skinType_es, skinType_pt, skinType_ar, skinType_ru,
-  efficacy, efficacy_en, efficacy_es, efficacy_pt, efficacy_ar, efficacy_ru,
-  oemDesc, oemDesc_en, oemDesc_es, oemDesc_pt, oemDesc_ar, oemDesc_ru,
-  applicationScenarios, applicationScenarios_en, applicationScenarios_es, applicationScenarios_pt, applicationScenarios_ar, applicationScenarios_ru,
+  skinType, skinType_en, skinType_es,
+  efficacy, efficacy_en, efficacy_es,
+  oemDesc, oemDesc_en, oemDesc_es,
+  applicationScenarios, applicationScenarios_en, applicationScenarios_es,
   ingredients,
-  tags, tags_en, tags_es, tags_pt, tags_ar, tags_ru,
+  tags, tags_en, tags_es,
   sortOrder,
   isFeatured,
   body,
-  bodyPlain_en, bodyPlain_es, bodyPlain_pt, bodyPlain_ar, bodyPlain_ru,
+  bodyPlain_en,
+  bodyPlain_es,
   specifications,
   gallery,
   "slug": slug.current,
@@ -54,13 +55,14 @@ const productProjection = `
   "category": category->{
     _id,
     title,
-    titleEn, titleEs, titlePt, titleAr, titleRu,
+    titleEn,
+    titleEs,
     "slug": slug.current
   },
   "ingredientsList": ingredients[]{
-    name, name_en, name_es, name_pt, name_ar, name_ru,
+    name,
     "desc": description,
-    description, description_en, description_es, description_pt, description_ar, description_ru,
+    description,
     text,
     detail
   },
@@ -103,8 +105,12 @@ export const homePageQuery = `*[_type == "homePage"][0]{
   },
   featuredFaqs[]->{
     _id,
-    question, question_en, question_es, question_pt, question_ar, question_ru,
-    answer, answer_en, answer_es, answer_pt, answer_ar, answer_ru,
+    question,
+    question_en,
+    question_es,
+    answer,
+    answer_en,
+    answer_es,
     sortOrder,
     showOnHome,
     category
@@ -153,8 +159,12 @@ export const productsQuery = `*[_type == "product" && ${published}] | order(coal
 export const faqsQuery = `*[_type == "faq" && ${published}] | order(coalesce(sortOrder, 0) asc, _createdAt asc) {
   _id,
   "slug": slug.current,
-  question, question_en, question_es, question_pt, question_ar, question_ru,
-  answer, answer_en, answer_es, answer_pt, answer_ar, answer_ru,
+  question,
+  question_en,
+  question_es,
+  answer,
+  answer_en,
+  answer_es,
   category,
   isFeatured,
   showOnHome
@@ -163,11 +173,13 @@ export const faqsQuery = `*[_type == "faq" && ${published}] | order(coalesce(sor
 /** @type {string} */
 export const postsQuery = `*[_type == "post" && ${published}] | order(coalesce(publishedAt, _createdAt) desc) {
   _id,
-  title, title_en, title_es, title_pt, title_ar, title_ru, title_zh,
+  title, title_en, title_es,
   slug,
   headline,
   excerpt,
-  summary, summary_en, summary_es, summary_pt, summary_ar, summary_ru, summary_zh,
+  summary, summary_en, summary_es,
+  bodyPlain_en,
+  bodyPlain_es,
   blurb,
   readTime,
   readingTime,
@@ -197,9 +209,8 @@ export const postsQuery = `*[_type == "post" && ${published}] | order(coalesce(p
     articleCategory->title,
     articleCategory->name
   ),
-  category_en, category_es, category_pt, category_ar, category_ru, category_zh,
   "articleFaqs": coalesce(
-    relatedFaqs[]{ question, answer, question_en, question_es, question_pt, question_ar, question_ru, answer_en, answer_es, answer_pt, answer_ar, answer_ru },
+    relatedFaqs[]{ question, answer, question_en, question_es, answer_en, answer_es },
     relatedFaqs
   ),
   seo,

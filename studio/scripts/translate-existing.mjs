@@ -79,7 +79,7 @@ const client = createClient({
 });
 
 // ── 翻译工具 ──────────────────────────────────────────────────────────────────
-const DELAY_MS = 1500;          // 每次 API 调用之间的间隔（避免触发 429 限速）
+const DELAY_MS = 600;           // 每次 API 调用之间的间隔
 const MAX_CHARS = 500;          // MyMemory 单次请求上限
 
 function sleep(ms) {
@@ -197,14 +197,16 @@ function hashFaq(doc) {
 }
 
 function hashPost(doc) {
+  const bodyPlain =
+    portableBlocksToPlain(doc.body) || String(doc.plainBody || '').trim();
   return crypto
     .createHash('md5')
     .update(
       [
         String(doc.title || '').trim(),
         String(doc.summary || '').trim(),
-        String(doc.category || '').trim(),
         serializeRelatedFaqsForHash(doc.relatedFaqs),
+        bodyPlain,
       ].join('|'),
     )
     .digest('hex');
@@ -279,21 +281,6 @@ async function processProduct(doc) {
       patch.bodyPlain_es = await translateText(bodyPlain, 'zh-CN', 'es');
     }
 
-    if (Array.isArray(doc.ingredients) && doc.ingredients.length > 0) {
-      console.log(`    ingredients[] → en/es…`);
-      const ingRows = [];
-      for (const ing of doc.ingredients) {
-        const name = ing?.name ? String(ing.name) : '';
-        const desc = ing?.description ? String(ing.description) : '';
-        const name_en = await translateText(name, 'zh-CN', 'en');
-        const name_es = await translateText(name, 'zh-CN', 'es');
-        const description_en = await translateText(desc, 'zh-CN', 'en');
-        const description_es = await translateText(desc, 'zh-CN', 'es');
-        ingRows.push({ ...ing, name_en, name_es, description_en, description_es });
-      }
-      patch.ingredients = ingRows;
-    }
-
     await client.patch(doc._id).set(patch).commit();
     console.log(`    ✓ done`);
     return { success: true };
@@ -341,13 +328,14 @@ async function main() {
     client.fetch(`*[_type == "product" && !(_id in path("drafts.**"))]{
       _id, name, excerpt, description, applicationScenarios,
       packaging, skinType, oemDesc, efficacy, tags, specifications, translationSourceHash,
-      body, ingredients
+      body
     }`),
     client.fetch(`*[_type == "faq" && !(_id in path("drafts.**"))]{
       _id, question, answer, translationSourceHash
     }`),
     client.fetch(`*[_type == "post" && !(_id in path("drafts.**"))]{
-      _id, title, summary, category, translationSourceHash,
+      _id, title, summary, translationSourceHash,
+      body, plainBody,
       relatedFaqs[]{ _key, question, answer }
     }`),
   ]);
@@ -392,22 +380,19 @@ async function main() {
     }
   }
 
-  function detectLang(text) {
-    const cn = (text.match(/[\u4e00-\u9fff]/g) || []).length;
-    return cn > text.length * 0.1 ? 'zh-CN' : 'en';
-  }
-
   console.log('\n── 翻译文章 ──────────────────────────────────────────────────');
   for (const doc of posts) {
     const title = String(doc.title || '').trim();
     const summary = String(doc.summary || '').trim();
-    const category = String(doc.category || '').trim();
     const hasFaqs =
       Array.isArray(doc.relatedFaqs) &&
       doc.relatedFaqs.some(
         (i) => String(i?.question || '').trim() || String(i?.answer || '').trim(),
       );
-    if (!title && !summary && !hasFaqs) {
+    const bodyPlain =
+      portableBlocksToPlain(doc.body) || String(doc.plainBody || '').trim();
+    const hasBody = Boolean(bodyPlain);
+    if (!title && !summary && !hasFaqs && !hasBody) {
       postSkipped++;
       console.log(`  [skip] ${doc._id} — empty`);
       continue;
@@ -420,49 +405,36 @@ async function main() {
       continue;
     }
 
-    const srcLang = detectLang(title + summary);
-    console.log(`  [post] ${doc._id}  "${title.slice(0, 40)}…" (src: ${srcLang})`);
+    const faqText = (doc.relatedFaqs || [])
+      .map((i) => (i?.question || '') + (i?.answer || ''))
+      .join('');
+    const hasChinese = /[\u4e00-\u9fff]/.test(title + summary + faqText + bodyPlain);
+    if (!hasChinese) {
+      postSkipped++;
+      console.log(`  [skip] ${doc._id} — no Chinese content`);
+      continue;
+    }
+
+    console.log(`  [post] ${doc._id}  "${title.slice(0, 40)}…"`);
     try {
       const patch = { translationSourceHash: hash };
       if (title) {
-        if (srcLang === 'zh-CN') {
-          console.log(`    title → en…`);
-          patch.title_en = await translateText(title, 'zh-CN', 'en');
-          console.log(`    title → es…`);
-          patch.title_es = await translateText(title, 'zh-CN', 'es');
-        } else {
-          console.log(`    title → zh…`);
-          patch.title_zh = await translateText(title, 'en', 'zh-CN');
-          console.log(`    title → es…`);
-          patch.title_es = await translateText(title, 'en', 'es');
-        }
+        console.log(`    title → en…`);
+        patch.title_en = await translateText(title, 'zh-CN', 'en');
+        console.log(`    title → es…`);
+        patch.title_es = await translateText(title, 'zh-CN', 'es');
       }
       if (summary) {
-        if (srcLang === 'zh-CN') {
-          console.log(`    summary → en…`);
-          patch.summary_en = await translateText(summary, 'zh-CN', 'en');
-          console.log(`    summary → es…`);
-          patch.summary_es = await translateText(summary, 'zh-CN', 'es');
-        } else {
-          console.log(`    summary → zh…`);
-          patch.summary_zh = await translateText(summary, 'en', 'zh-CN');
-          console.log(`    summary → es…`);
-          patch.summary_es = await translateText(summary, 'en', 'es');
-        }
+        console.log(`    summary → en…`);
+        patch.summary_en = await translateText(summary, 'zh-CN', 'en');
+        console.log(`    summary → es…`);
+        patch.summary_es = await translateText(summary, 'zh-CN', 'es');
       }
-      if (category) {
-        const catLang = detectLang(category);
-        if (catLang === 'zh-CN') {
-          console.log(`    category → en…`);
-          patch.category_en = await translateText(category, 'zh-CN', 'en');
-          console.log(`    category → es…`);
-          patch.category_es = await translateText(category, 'zh-CN', 'es');
-        } else {
-          console.log(`    category → zh…`);
-          patch.category_zh = await translateText(category, 'en', 'zh-CN');
-          console.log(`    category → es…`);
-          patch.category_es = await translateText(category, 'en', 'es');
-        }
+      if (hasBody) {
+        console.log(`    body (plain) → en…`);
+        patch.bodyPlain_en = await translateText(bodyPlain, 'zh-CN', 'en');
+        console.log(`    body (plain) → es…`);
+        patch.bodyPlain_es = await translateText(bodyPlain, 'zh-CN', 'es');
       }
       if (hasFaqs) {
         console.log(`    relatedFaqs[] → en/es…`);

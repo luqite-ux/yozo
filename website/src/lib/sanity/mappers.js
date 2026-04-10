@@ -69,21 +69,12 @@ function normalizeTags(tags) {
   return [];
 }
 
-const EXTRA_LANGS = ['en', 'es', 'pt', 'ar', 'ru'];
-
 function normalizeIngredients(list) {
   if (!Array.isArray(list) || !list.length) return [];
-  return list.map((ing) => {
-    const out = {
-      name: coalescePlain(ing?.name, ing?.title, ing?.ingredient),
-      desc: coalescePlain(ing?.desc, ing?.description, ing?.text, ing?.detail),
-    };
-    for (const l of EXTRA_LANGS) {
-      out[`name_${l}`] = coalescePlain(ing?.[`name_${l}`]);
-      out[`desc_${l}`] = coalescePlain(ing?.[`description_${l}`], ing?.[`desc_${l}`]);
-    }
-    return out;
-  });
+  return list.map((ing) => ({
+    name: coalescePlain(ing?.name, ing?.title, ing?.ingredient),
+    desc: coalescePlain(ing?.desc, ing?.description, ing?.text, ing?.detail),
+  }));
 }
 
 function normalizeEfficacy(raw) {
@@ -127,47 +118,53 @@ export function mapSanityProduct(raw) {
   );
 
   const bodyContent = portableTextToLegacyContent(raw.body);
+  const detailEn = legacyContentFromPlain(coalescePlain(raw.bodyPlain_en));
+  const detailEs = legacyContentFromPlain(coalescePlain(raw.bodyPlain_es));
   const desc = coalescePlain(raw.desc, raw.description, raw.excerpt, raw.summary);
   const applicationScenarios = coalescePlain(raw.applicationScenarios, raw.applications);
   const specs = normalizeSpecs(raw.specifications);
 
-  const out = {
+  return {
     id: sanityRefToLegacyId(String(raw._id)),
     sanityId: raw._id,
     slug: raw.slug || null,
     category: categoryTitle,
+    categoryTitleEn: coalescePlain(catObj?.titleEn),
+    categoryTitleEs: coalescePlain(catObj?.titleEs),
     name: coalescePlain(raw.name, raw.title),
+    name_en: coalescePlain(raw.name_en),
+    name_es: coalescePlain(raw.name_es),
     img,
     desc: desc || (bodyContent[0]?.text ?? ''),
+    desc_en: coalescePlain(raw.description_en, raw.excerpt_en),
+    desc_es: coalescePlain(raw.description_es, raw.excerpt_es),
     galleryUrls: Array.isArray(raw.galleryUrls) ? raw.galleryUrls.filter(Boolean) : [],
     detailContent: bodyContent,
+    detailContent_en: detailEn,
+    detailContent_es: detailEs,
     applicationScenarios,
+    applicationScenarios_en: coalescePlain(raw.applicationScenarios_en),
+    applicationScenarios_es: coalescePlain(raw.applicationScenarios_es),
     specifications: specs,
     tags,
+    tags_en: normalizeTags(raw.tags_en),
+    tags_es: normalizeTags(raw.tags_es),
     packaging: coalescePlain(raw.packaging, raw.packagingSuggestion, raw.packagingType),
+    packaging_en: coalescePlain(raw.packaging_en),
+    packaging_es: coalescePlain(raw.packaging_es),
     supportOem: Boolean(raw.supportOem ?? raw.supportOEM ?? raw.oem),
     skinType: coalescePlain(raw.skinType, raw.skinTypes, raw.targetSkin, raw.audience),
+    skinType_en: coalescePlain(raw.skinType_en),
+    skinType_es: coalescePlain(raw.skinType_es),
     ingredients,
     efficacy,
+    efficacy_en: normalizeEfficacy(raw.efficacy_en),
+    efficacy_es: normalizeEfficacy(raw.efficacy_es),
     oemDesc: coalescePlain(raw.oemDesc, raw.customization, raw.odmNote, raw.customNotes),
+    oemDesc_en: coalescePlain(raw.oemDesc_en),
+    oemDesc_es: coalescePlain(raw.oemDesc_es),
     isFeatured: Boolean(raw.isFeatured),
   };
-
-  for (const l of EXTRA_LANGS) {
-    const cap = l.charAt(0).toUpperCase() + l.slice(1);
-    out[`categoryTitle${cap}`] = coalescePlain(catObj?.[`title${cap}`]);
-    out[`name_${l}`] = coalescePlain(raw[`name_${l}`]);
-    out[`desc_${l}`] = coalescePlain(raw[`description_${l}`], raw[`excerpt_${l}`]);
-    out[`detailContent_${l}`] = legacyContentFromPlain(coalescePlain(raw[`bodyPlain_${l}`]));
-    out[`applicationScenarios_${l}`] = coalescePlain(raw[`applicationScenarios_${l}`]);
-    out[`tags_${l}`] = normalizeTags(raw[`tags_${l}`]);
-    out[`packaging_${l}`] = coalescePlain(raw[`packaging_${l}`]);
-    out[`skinType_${l}`] = coalescePlain(raw[`skinType_${l}`]);
-    out[`efficacy_${l}`] = normalizeEfficacy(raw[`efficacy_${l}`]);
-    out[`oemDesc_${l}`] = coalescePlain(raw[`oemDesc_${l}`]);
-  }
-
-  return out;
 }
 
 function normalizeSpecs(raw) {
@@ -188,34 +185,30 @@ function normalizeSpecs(raw) {
  * @param {Record<string, unknown>} raw
  */
 export function mapSanityFaq(raw) {
-  const out = {
+  return {
     id: sanityRefToLegacyId(String(raw._id)),
     sanityId: raw._id,
     q: coalescePlain(raw.question, raw.q, raw.title),
     a: coalescePlain(raw.answer, raw.a, raw.body, typeof raw.content === 'string' ? raw.content : ''),
+    q_en: coalescePlain(raw.question_en),
+    q_es: coalescePlain(raw.question_es),
+    a_en: coalescePlain(raw.answer_en),
+    a_es: coalescePlain(raw.answer_es),
     showOnHome: Boolean(raw.showOnHome),
   };
-  for (const l of EXTRA_LANGS) {
-    out[`q_${l}`] = coalescePlain(raw[`question_${l}`]);
-    out[`a_${l}`] = coalescePlain(raw[`answer_${l}`]);
-  }
-  return out;
 }
 
 function mapArticleFaqs(rawList) {
   if (!Array.isArray(rawList)) return [];
   return rawList
-    .map((item) => {
-      const out = {
-        q: coalescePlain(item?.question, item?.q, item?.title),
-        a: coalescePlain(item?.answer, item?.a, item?.body),
-      };
-      for (const l of EXTRA_LANGS) {
-        out[`q_${l}`] = coalescePlain(item?.[`question_${l}`]);
-        out[`a_${l}`] = coalescePlain(item?.[`answer_${l}`]);
-      }
-      return out;
-    })
+    .map((item) => ({
+      q: coalescePlain(item?.question, item?.q, item?.title),
+      a: coalescePlain(item?.answer, item?.a, item?.body),
+      q_en: coalescePlain(item?.question_en),
+      q_es: coalescePlain(item?.question_es),
+      a_en: coalescePlain(item?.answer_en),
+      a_es: coalescePlain(item?.answer_es),
+    }))
     .filter((x) => x.q || x.a);
 }
 
@@ -303,26 +296,29 @@ export function mapSanityPost(raw) {
 
   const faqs = mapArticleFaqs(raw.articleFaqs || raw.faqs || raw.relatedFaqs);
 
-  const postOut = {
+  const content_en = legacyContentFromPlain(coalescePlain(raw.bodyPlain_en));
+  const content_es = legacyContentFromPlain(coalescePlain(raw.bodyPlain_es));
+
+  return {
     id: sanityRefToLegacyId(String(raw._id)),
     sanityId: raw._id,
     slug: raw.slug || null,
     category,
     title: coalescePlain(raw.title, raw.headline),
+    title_en: coalescePlain(raw.title_en),
+    title_es: coalescePlain(raw.title_es),
     date: dateStr || new Date().toISOString().slice(0, 10),
     readTime: coalescePlain(raw.readTime, raw.readingTime, '5 min') || '5 min',
     views: coalescePlain(raw.views, raw.viewCount, '—'),
     img,
     summary: summary || (content[0]?.text ?? ''),
+    summary_en: coalescePlain(raw.summary_en),
+    summary_es: coalescePlain(raw.summary_es),
     content,
+    content_en,
+    content_es,
     faqs,
   };
-  for (const l of [...EXTRA_LANGS, 'zh']) {
-    postOut[`category_${l}`] = coalescePlain(raw[`category_${l}`]);
-    postOut[`title_${l}`] = coalescePlain(raw[`title_${l}`]);
-    postOut[`summary_${l}`] = coalescePlain(raw[`summary_${l}`]);
-  }
-  return postOut;
 }
 
 /**
@@ -358,11 +354,11 @@ export function buildProductCategoryTabs(settings, rawPcatDocs) {
     .map((d) => {
       const canonical = coalescePlain(d.title, d.name, d.label);
       if (!canonical || canonical === TAB_ALL) return null;
-      const tab = { canonical };
-      for (const l of EXTRA_LANGS) {
-        tab[`title${l.charAt(0).toUpperCase()}${l.slice(1)}`] = coalescePlain(d[`title${l.charAt(0).toUpperCase()}${l.slice(1)}`]);
-      }
-      return tab;
+      return {
+        canonical,
+        titleEn: coalescePlain(d.titleEn),
+        titleEs: coalescePlain(d.titleEs),
+      };
     })
     .filter(Boolean);
   return [{ canonical: TAB_ALL }, ...rows];
@@ -378,23 +374,12 @@ export function buildArticleCategoryTabs(settings, articles) {
     const labels = fromSettings
       .map((x) => (typeof x === 'string' ? x : x?.title || x?.name || ''))
       .filter(Boolean)
-      .filter((x) => x !== TAB_ALL);
-    return [{ canonical: TAB_ALL }, ...labels.map((s) => ({ canonical: s }))];
+      .filter((x) => x !== '全部');
+    return ['全部', ...labels];
   }
-  const seen = new Set();
-  const rows = [];
-  for (const a of articles) {
-    const cat = a.category;
-    if (!cat || cat === TAB_ALL || seen.has(cat)) continue;
-    seen.add(cat);
-    const tab = { canonical: cat };
-    for (const l of [...EXTRA_LANGS, 'zh']) {
-      tab[`title${l.charAt(0).toUpperCase()}${l.slice(1)}`] = a[`category_${l}`] || '';
-    }
-    rows.push(tab);
-  }
-  rows.sort((a, b) => a.canonical.localeCompare(b.canonical));
-  return [{ canonical: TAB_ALL }, ...rows];
+  const unique = [...new Set(articles.map((a) => a.category).filter(Boolean))];
+  unique.sort();
+  return ['全部', ...unique];
 }
 
 /**

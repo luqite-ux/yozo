@@ -1,9 +1,9 @@
 /**
- * Vercel Serverless Function — 产品 / 产品分类 自动翻译（ZH → EN / ES）
+ * Vercel Serverless Function — 产品 / 分类 / 资讯 / FAQ 自动翻译（ZH → EN / ES）
  * 路由：POST /api/webhook/translate
  *
- * Sanity → Webhooks → 本 URL 的 GROQ Filter 请设为（类型名是 productCategory，不是 category）：
- *   _type == "product" || _type == "productCategory"
+ * Sanity → Webhooks → GROQ Filter 示例（按需增减）：
+ *   _type == "product" || _type == "productCategory" || _type == "post" || _type == "faq"
  *
  * 环境变量（在 Vercel 项目设置 → Environment Variables 里添加）：
  *   SANITY_PROJECT_ID       来自 website/.env.local 的 VITE_SANITY_PROJECT_ID
@@ -59,10 +59,47 @@ const TEXT_FIELDS  = ['name', 'excerpt', 'description', 'applicationScenarios',
                       'packaging', 'skinType', 'oemDesc'];
 const ARRAY_FIELDS = ['efficacy'];
 
+function serializeSpecs(specs) {
+  if (!Array.isArray(specs) || specs.length === 0) return '';
+  return specs
+    .map((r) => {
+      const l = (r && typeof r === 'object' ? String(r.label || r.name || '').trim() : '').trim();
+      const v = (r && typeof r === 'object' ? String(r.value || r.text || '').trim() : '').trim();
+      return `${l}:${v}`;
+    })
+    .filter(Boolean)
+    .join('‖');
+}
+
+/** Portable Text block[] → 纯文本（双换行分段） */
+function portableBlocksToPlain(blocks) {
+  if (!blocks || !Array.isArray(blocks)) return '';
+  const parts = [];
+  for (const block of blocks) {
+    if (!block || block._type !== 'block') continue;
+    const text = (block.children || []).map((c) => (c && c.text) || '').join('');
+    if (text.trim()) parts.push(text.trim());
+  }
+  return parts.join('\n\n');
+}
+
+function serializeRelatedFaqsForHash(list) {
+  if (!Array.isArray(list) || list.length === 0) return '';
+  return list
+    .map((item) => {
+      const q = String(item?.question ?? '').trim();
+      const a = String(item?.answer ?? '').trim();
+      return `${q}‖${a}`;
+    })
+    .join('¶');
+}
+
 function computeContentHash(doc) {
   const parts = [
     ...TEXT_FIELDS.map(f => doc[f] || ''),
     ...ARRAY_FIELDS.map(f => (doc[f] || []).join('‖')),
+    serializeSpecs(doc.specifications),
+    portableBlocksToPlain(doc.body),
   ].join('|');
   return crypto.createHash('md5').update(parts).digest('hex');
 }
@@ -108,6 +145,16 @@ async function translateArray(arr, from, to) {
   return Promise.all(arr.map(item => translateText(String(item), from, to)));
 }
 
+function createWriteClient() {
+  return createClient({
+    projectId: process.env.SANITY_PROJECT_ID || process.env.VITE_SANITY_PROJECT_ID,
+    dataset: process.env.SANITY_DATASET || 'production',
+    token: process.env.SANITY_API_WRITE_TOKEN,
+    apiVersion: '2024-01-01',
+    useCdn: false,
+  });
+}
+
 // ── 主处理逻辑 ────────────────────────────────────────────────────────────────
 
 async function processProduct(doc) {
@@ -120,13 +167,7 @@ async function processProduct(doc) {
     return;
   }
 
-  const client = createClient({
-    projectId: process.env.SANITY_PROJECT_ID || process.env.VITE_SANITY_PROJECT_ID,
-    dataset:   process.env.SANITY_DATASET || 'production',
-    token:     process.env.SANITY_API_WRITE_TOKEN,
-    apiVersion: '2024-01-01',
-    useCdn:    false,
-  });
+  const client = createWriteClient();
 
   console.log(`[translate] ${_id} translating…`);
   const patch = { translationSourceHash: currentHash };
@@ -153,6 +194,32 @@ async function processProduct(doc) {
     patch[`${field}_es`] = es;
   }
 
+  const bodyPlain = portableBlocksToPlain(doc.body);
+  if (bodyPlain) {
+    const [bodyPlain_en, bodyPlain_es] = await Promise.all([
+      translateText(bodyPlain, 'zh-CN', 'en'),
+      translateText(bodyPlain, 'zh-CN', 'es'),
+    ]);
+    patch.bodyPlain_en = bodyPlain_en;
+    patch.bodyPlain_es = bodyPlain_es;
+  }
+
+  if (Array.isArray(doc.specifications) && doc.specifications.length > 0) {
+    const rows = [];
+    for (const row of doc.specifications) {
+      const label = row?.label ? String(row.label) : '';
+      const value = row?.value ? String(row.value) : '';
+      const [label_en, label_es, value_en, value_es] = await Promise.all([
+        translateText(label, 'zh-CN', 'en'),
+        translateText(label, 'zh-CN', 'es'),
+        translateText(value, 'zh-CN', 'en'),
+        translateText(value, 'zh-CN', 'es'),
+      ]);
+      rows.push({ ...row, label_en, label_es, value_en, value_es });
+    }
+    patch.specifications = rows;
+  }
+
   await client.patch(_id).set(patch).commit();
   console.log(`[translate] ${_id} done`);
 }
@@ -173,13 +240,7 @@ async function processProductCategory(doc) {
     return;
   }
 
-  const client = createClient({
-    projectId: process.env.SANITY_PROJECT_ID || process.env.VITE_SANITY_PROJECT_ID,
-    dataset: process.env.SANITY_DATASET || 'production',
-    token: process.env.SANITY_API_WRITE_TOKEN,
-    apiVersion: '2024-01-01',
-    useCdn: false,
-  });
+  const client = createWriteClient();
 
   console.log(`[translate] productCategory ${_id} translating title…`);
   const [titleEn, titleEs] = await Promise.all([
@@ -198,9 +259,141 @@ async function processProductCategory(doc) {
   console.log(`[translate] productCategory ${_id} done`);
 }
 
+async function processPost(doc) {
+  const { _id, _type } = doc;
+  if (_type !== 'post') return;
+
+  const title = String(doc.title || '').trim();
+  const summary = String(doc.summary || '').trim();
+  const faqKey = serializeRelatedFaqsForHash(doc.relatedFaqs);
+  const hasFaqs = Array.isArray(doc.relatedFaqs) && doc.relatedFaqs.length > 0;
+  const bodyPlain =
+    portableBlocksToPlain(doc.body) || String(doc.plainBody || '').trim();
+  const hasBody = Boolean(bodyPlain);
+
+  if (!title && !summary && !hasFaqs && !hasBody) {
+    console.log(`[translate] post ${_id} skipped — empty content`);
+    return;
+  }
+
+  const currentHash = crypto
+    .createHash('md5')
+    .update([title, summary, faqKey, bodyPlain].join('|'))
+    .digest('hex');
+
+  if (doc.translationSourceHash === currentHash) {
+    console.log(`[translate] post ${_id} skipped — already translated`);
+    return;
+  }
+
+  const client = createWriteClient();
+  console.log(`[translate] post ${_id} translating…`);
+  const patch = { translationSourceHash: currentHash };
+
+  if (title) {
+    const [title_en, title_es] = await Promise.all([
+      translateText(title, 'zh-CN', 'en'),
+      translateText(title, 'zh-CN', 'es'),
+    ]);
+    patch.title_en = title_en;
+    patch.title_es = title_es;
+  }
+  if (summary) {
+    const [summary_en, summary_es] = await Promise.all([
+      translateText(summary, 'zh-CN', 'en'),
+      translateText(summary, 'zh-CN', 'es'),
+    ]);
+    patch.summary_en = summary_en;
+    patch.summary_es = summary_es;
+  }
+  if (hasBody) {
+    const [bodyPlain_en, bodyPlain_es] = await Promise.all([
+      translateText(bodyPlain, 'zh-CN', 'en'),
+      translateText(bodyPlain, 'zh-CN', 'es'),
+    ]);
+    patch.bodyPlain_en = bodyPlain_en;
+    patch.bodyPlain_es = bodyPlain_es;
+  }
+  if (hasFaqs) {
+    const rows = [];
+    for (const item of doc.relatedFaqs) {
+      const q = String(item.question || '').trim();
+      const a = String(item.answer || '').trim();
+      const row = { ...item };
+      if (q) {
+        const [question_en, question_es] = await Promise.all([
+          translateText(q, 'zh-CN', 'en'),
+          translateText(q, 'zh-CN', 'es'),
+        ]);
+        row.question_en = question_en;
+        row.question_es = question_es;
+      }
+      if (a) {
+        const [answer_en, answer_es] = await Promise.all([
+          translateText(a, 'zh-CN', 'en'),
+          translateText(a, 'zh-CN', 'es'),
+        ]);
+        row.answer_en = answer_en;
+        row.answer_es = answer_es;
+      }
+      rows.push(row);
+    }
+    patch.relatedFaqs = rows;
+  }
+
+  await client.patch(_id).set(patch).commit();
+  console.log(`[translate] post ${_id} done`);
+}
+
+async function processFaq(doc) {
+  const { _id, _type } = doc;
+  if (_type !== 'faq') return;
+
+  const question = String(doc.question || '').trim();
+  const answer = String(doc.answer || '').trim();
+  if (!question && !answer) {
+    console.log(`[translate] faq ${_id} skipped — empty`);
+    return;
+  }
+
+  const currentHash = crypto
+    .createHash('md5')
+    .update([question, answer].join('|'))
+    .digest('hex');
+
+  if (doc.translationSourceHash === currentHash) {
+    console.log(`[translate] faq ${_id} skipped — already translated`);
+    return;
+  }
+
+  const client = createWriteClient();
+  const patch = { translationSourceHash: currentHash };
+  if (question) {
+    const [question_en, question_es] = await Promise.all([
+      translateText(question, 'zh-CN', 'en'),
+      translateText(question, 'zh-CN', 'es'),
+    ]);
+    patch.question_en = question_en;
+    patch.question_es = question_es;
+  }
+  if (answer) {
+    const [answer_en, answer_es] = await Promise.all([
+      translateText(answer, 'zh-CN', 'en'),
+      translateText(answer, 'zh-CN', 'es'),
+    ]);
+    patch.answer_en = answer_en;
+    patch.answer_es = answer_es;
+  }
+
+  await client.patch(_id).set(patch).commit();
+  console.log(`[translate] faq ${_id} done`);
+}
+
 function routeTranslation(doc) {
   if (doc._type === 'product') return processProduct(doc);
   if (doc._type === 'productCategory') return processProductCategory(doc);
+  if (doc._type === 'post') return processPost(doc);
+  if (doc._type === 'faq') return processFaq(doc);
   return Promise.resolve();
 }
 

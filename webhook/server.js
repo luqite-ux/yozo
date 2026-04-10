@@ -2,7 +2,7 @@
  * Sanity Webhook Handler — 产品 / 产品分类 自动翻译（ZH → EN / ES）
  *
  * Sanity Webhook GROQ Filter（文档类型名为 productCategory，不是 category）：
- *   _type == "product" || _type == "productCategory"
+ *   _type == "product" || _type == "productCategory" || _type == "post" || _type == "faq"
  *
  * 使用 MyMemory 免费翻译 API，无需付费账号。
  * 通过内容哈希防止翻译循环触发：
@@ -198,68 +198,65 @@ async function processProduct(doc) {
 
   const patch = { translationSourceHash: currentHash };
 
-  const TARGET_LANGS = ['en', 'es', 'pt', 'ar', 'ru'];
-
   // 文本字段
   for (const field of TEXT_FIELDS) {
     const val = doc[field];
     if (!val) continue;
-    console.log(`  ${field} → ${TARGET_LANGS.join('/')}`);
-    const results = await Promise.all(
-      TARGET_LANGS.map((lang) => translateText(val, 'zh-CN', lang)),
-    );
-    TARGET_LANGS.forEach((lang, i) => { patch[`${field}_${lang}`] = results[i]; });
+    console.log(`  ${field} → en/es`);
+    const [en, es] = await Promise.all([
+      translateText(val, 'zh-CN', 'en'),
+      translateText(val, 'zh-CN', 'es'),
+    ]);
+    patch[`${field}_en`] = en;
+    patch[`${field}_es`] = es;
   }
 
   // 数组字段
   for (const field of ARRAY_FIELDS) {
     const arr = doc[field];
     if (!arr || arr.length === 0) continue;
-    console.log(`  ${field}[] → ${TARGET_LANGS.join('/')}`);
-    const results = await Promise.all(
-      TARGET_LANGS.map((lang) => translateArray(arr, 'zh-CN', lang)),
-    );
-    TARGET_LANGS.forEach((lang, i) => { patch[`${field}_${lang}`] = results[i]; });
+    console.log(`  ${field}[] → en/es`);
+    const [en, es] = await Promise.all([
+      translateArray(arr, 'zh-CN', 'en'),
+      translateArray(arr, 'zh-CN', 'es'),
+    ]);
+    patch[`${field}_en`] = en;
+    patch[`${field}_es`] = es;
   }
 
   // 参数/规格：逐行翻译 label/value，写回 label_en/value_en/label_es/value_es
   const bodyPlain = portableBlocksToPlain(doc.body);
   if (bodyPlain) {
-    console.log(`  body (plain) → ${TARGET_LANGS.join('/')}`);
-    const results = await Promise.all(
-      TARGET_LANGS.map((l) => translateText(bodyPlain, 'zh-CN', l)),
-    );
-    TARGET_LANGS.forEach((l, i) => { patch[`bodyPlain_${l}`] = results[i]; });
+    console.log(`  body (plain) → en/es`);
+    const [bodyPlain_en, bodyPlain_es] = await Promise.all([
+      translateText(bodyPlain, 'zh-CN', 'en'),
+      translateText(bodyPlain, 'zh-CN', 'es'),
+    ]);
+    patch.bodyPlain_en = bodyPlain_en;
+    patch.bodyPlain_es = bodyPlain_es;
   }
 
   if (Array.isArray(doc.specifications) && doc.specifications.length > 0) {
-    console.log(`  specifications[] → ${TARGET_LANGS.join('/')}`);
+    console.log(`  specifications[] → en/es`);
     const rows = [];
     for (const row of doc.specifications) {
       const label = row?.label ? String(row.label) : '';
       const value = row?.value ? String(row.value) : '';
-      const newRow = { ...row };
-      const labResults = await Promise.all(TARGET_LANGS.map((l) => translateText(label, 'zh-CN', l)));
-      const valResults = await Promise.all(TARGET_LANGS.map((l) => translateText(value, 'zh-CN', l)));
-      TARGET_LANGS.forEach((l, i) => { newRow[`label_${l}`] = labResults[i]; newRow[`value_${l}`] = valResults[i]; });
-      rows.push(newRow);
+      const [label_en, label_es, value_en, value_es] = await Promise.all([
+        translateText(label, 'zh-CN', 'en'),
+        translateText(label, 'zh-CN', 'es'),
+        translateText(value, 'zh-CN', 'en'),
+        translateText(value, 'zh-CN', 'es'),
+      ]);
+      rows.push({
+        ...row,
+        label_en,
+        label_es,
+        value_en,
+        value_es,
+      });
     }
     patch.specifications = rows;
-  }
-
-  if (Array.isArray(doc.ingredients) && doc.ingredients.length > 0) {
-    console.log(`  ingredients[] → ${TARGET_LANGS.join('/')}`);
-    const ingRows = [];
-    for (const ing of doc.ingredients) {
-      const name = ing?.name ? String(ing.name) : '';
-      const desc = ing?.description ? String(ing.description) : '';
-      const newIng = { ...ing };
-      const nameResults = await Promise.all(TARGET_LANGS.map((l) => translateText(name, 'zh-CN', l)));
-      const descResults = await Promise.all(TARGET_LANGS.map((l) => translateText(desc, 'zh-CN', l)));
-      TARGET_LANGS.forEach((l, i) => { newIng[`name_${l}`] = nameResults[i]; newIng[`description_${l}`] = descResults[i]; });
-      ingRows.push(newIng);
-    }
-    patch.ingredients = ingRows;
   }
 
   await client.patch(_id).set(patch).commit();
@@ -284,12 +281,19 @@ async function processProductCategory(doc) {
   }
 
   console.log(`[${_id}] Translating productCategory title…`);
-  const langs = ['en', 'es', 'pt', 'ar', 'ru'];
-  const results = await Promise.all(langs.map((l) => translateText(title, 'zh-CN', l)));
-  const catPatch = { translationSourceHash: currentHash };
-  langs.forEach((l, i) => { catPatch[`title${l.charAt(0).toUpperCase()}${l.slice(1)}`] = results[i]; });
+  const [titleEn, titleEs] = await Promise.all([
+    translateText(title, 'zh-CN', 'en'),
+    translateText(title, 'zh-CN', 'es'),
+  ]);
 
-  await client.patch(_id).set(catPatch).commit();
+  await client
+    .patch(_id)
+    .set({
+      titleEn,
+      titleEs,
+      translationSourceHash: currentHash,
+    })
+    .commit();
   console.log(`[${_id}] Done (productCategory)`);
   return { success: true, _id, type: 'productCategory' };
 }
@@ -318,24 +322,26 @@ async function processFaq(doc) {
   console.log(`[${_id}] Translating faq…`);
   const patch = { translationSourceHash: currentHash };
 
-  const faqLangs = ['en', 'es', 'pt', 'ar', 'ru'];
   if (question) {
-    const results = await Promise.all(faqLangs.map((l) => translateText(question, 'zh-CN', l)));
-    faqLangs.forEach((l, i) => { patch[`question_${l}`] = results[i]; });
+    const [question_en, question_es] = await Promise.all([
+      translateText(question, 'zh-CN', 'en'),
+      translateText(question, 'zh-CN', 'es'),
+    ]);
+    patch.question_en = question_en;
+    patch.question_es = question_es;
   }
   if (answer) {
-    const results = await Promise.all(faqLangs.map((l) => translateText(answer, 'zh-CN', l)));
-    faqLangs.forEach((l, i) => { patch[`answer_${l}`] = results[i]; });
+    const [answer_en, answer_es] = await Promise.all([
+      translateText(answer, 'zh-CN', 'en'),
+      translateText(answer, 'zh-CN', 'es'),
+    ]);
+    patch.answer_en = answer_en;
+    patch.answer_es = answer_es;
   }
 
   await client.patch(_id).set(patch).commit();
   console.log(`[${_id}] Done (faq)`);
   return { success: true, _id, type: 'faq' };
-}
-
-function detectSourceLang(text) {
-  const chinese = (text.match(/[\u4e00-\u9fff]/g) || []).length;
-  return chinese > text.length * 0.1 ? 'zh-CN' : 'en';
 }
 
 async function processPost(doc) {
@@ -344,13 +350,18 @@ async function processPost(doc) {
 
   const title   = String(doc.title   || '').trim();
   const summary = String(doc.summary || '').trim();
-  const category = String(doc.category || '').trim();
   const faqKey  = serializeRelatedFaqsForHash(doc.relatedFaqs);
   const hasFaqs = Array.isArray(doc.relatedFaqs) && doc.relatedFaqs.length > 0;
-  if (!title && !summary && !hasFaqs) return { skipped: true, reason: 'empty content' };
+  const bodyPlain =
+    portableBlocksToPlain(doc.body) || String(doc.plainBody || '').trim();
+  const hasBody = Boolean(bodyPlain);
+
+  if (!title && !summary && !hasFaqs && !hasBody) {
+    return { skipped: true, reason: 'empty content' };
+  }
 
   const currentHash = crypto.createHash('md5')
-    .update([title, summary, category, faqKey].join('|'))
+    .update([title, summary, faqKey, bodyPlain].join('|'))
     .digest('hex');
 
   if (doc.translationSourceHash && doc.translationSourceHash === currentHash) {
@@ -358,46 +369,58 @@ async function processPost(doc) {
     return { skipped: true, reason: 'already translated' };
   }
 
-  const srcLang = detectSourceLang(title + summary);
-  console.log(`[${_id}] Translating post (source: ${srcLang})…`);
+  console.log(`[${_id}] Translating post…`);
   const patch = { translationSourceHash: currentHash };
 
-  const allLangs = ['zh', 'en', 'es', 'pt', 'ar', 'ru'];
-  const targetLangs = allLangs.filter((l) => (srcLang === 'zh-CN' ? l !== 'zh' : l !== 'en'));
-  const fromLang = srcLang === 'zh-CN' ? 'zh-CN' : 'en';
-
-  for (const field of ['title', 'summary']) {
-    const val = field === 'title' ? title : summary;
-    if (!val) continue;
-    const results = await Promise.all(
-      targetLangs.map((l) => translateText(val, fromLang, l === 'zh' ? 'zh-CN' : l)),
-    );
-    targetLangs.forEach((l, i) => { patch[`${field}_${l}`] = results[i]; });
+  if (title) {
+    const [title_en, title_es] = await Promise.all([
+      translateText(title, 'zh-CN', 'en'),
+      translateText(title, 'zh-CN', 'es'),
+    ]);
+    patch.title_en = title_en;
+    patch.title_es = title_es;
   }
-  if (category) {
-    const catFrom = detectSourceLang(category) === 'zh-CN' ? 'zh-CN' : 'en';
-    const catTargets = allLangs.filter((l) => (catFrom === 'zh-CN' ? l !== 'zh' : l !== 'en'));
-    const catResults = await Promise.all(
-      catTargets.map((l) => translateText(category, catFrom, l === 'zh' ? 'zh-CN' : l)),
-    );
-    catTargets.forEach((l, i) => { patch[`category_${l}`] = catResults[i]; });
+  if (summary) {
+    const [summary_en, summary_es] = await Promise.all([
+      translateText(summary, 'zh-CN', 'en'),
+      translateText(summary, 'zh-CN', 'es'),
+    ]);
+    patch.summary_en = summary_en;
+    patch.summary_es = summary_es;
+  }
+
+  if (hasBody) {
+    console.log(`  post body (plain) → en/es`);
+    const [bodyPlain_en, bodyPlain_es] = await Promise.all([
+      translateText(bodyPlain, 'zh-CN', 'en'),
+      translateText(bodyPlain, 'zh-CN', 'es'),
+    ]);
+    patch.bodyPlain_en = bodyPlain_en;
+    patch.bodyPlain_es = bodyPlain_es;
   }
 
   if (hasFaqs) {
-    console.log(`  relatedFaqs[] → translations`);
-    const faqTargets = ['en', 'es', 'pt', 'ar', 'ru'];
+    console.log(`  relatedFaqs[] → en/es`);
     const rows = [];
     for (const item of doc.relatedFaqs) {
       const q = String(item.question || '').trim();
       const a = String(item.answer || '').trim();
       const row = { ...item };
       if (q) {
-        const qr = await Promise.all(faqTargets.map((l) => translateText(q, 'zh-CN', l)));
-        faqTargets.forEach((l, i) => { row[`question_${l}`] = qr[i]; });
+        const [question_en, question_es] = await Promise.all([
+          translateText(q, 'zh-CN', 'en'),
+          translateText(q, 'zh-CN', 'es'),
+        ]);
+        row.question_en = question_en;
+        row.question_es = question_es;
       }
       if (a) {
-        const ar = await Promise.all(faqTargets.map((l) => translateText(a, 'zh-CN', l)));
-        faqTargets.forEach((l, i) => { row[`answer_${l}`] = ar[i]; });
+        const [answer_en, answer_es] = await Promise.all([
+          translateText(a, 'zh-CN', 'en'),
+          translateText(a, 'zh-CN', 'es'),
+        ]);
+        row.answer_en = answer_en;
+        row.answer_es = answer_es;
       }
       rows.push(row);
     }

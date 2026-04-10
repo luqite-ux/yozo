@@ -1242,7 +1242,10 @@ const ProductDetailPage = () => {
 
   if (!product) return null;
 
-  const relatedProducts = products.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 3);
+  const relatedProducts = products
+    .filter((p) => p.category === baseProduct.category && p.id !== baseProduct.id)
+    .slice(0, 3)
+    .map((p) => localizeProduct(p, locale));
 
   return (
     <div className="yozo-animate-page-in bg-white min-h-screen">
@@ -1820,7 +1823,8 @@ const NewsDetailPage = () => {
   const [openFaq, setOpenFaq] = useState(0);
 
   const resolvedArticle = resolveArticleByRouteParam(articles, articleId);
-  const article = localizePost(resolvedArticle ?? articles[0], locale);
+  const baseArticle = resolvedArticle ?? articles[0];
+  const article = localizePost(baseArticle, locale);
 
   useEffect(() => {
     if (!loading && articles.length && !resolvedArticle) {
@@ -1840,7 +1844,10 @@ const NewsDetailPage = () => {
     );
   }
 
-  const relatedArticles = articles.filter((a) => a.id !== article.id && a.category === article.category).slice(0, 2);
+  const relatedArticles = articles
+    .filter((a) => a.id !== baseArticle.id && a.category === baseArticle.category)
+    .slice(0, 2)
+    .map((a) => localizePost(a, locale));
 
   return (
     <div className="yozo-animate-page-in bg-white min-h-screen">
