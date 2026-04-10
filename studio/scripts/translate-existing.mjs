@@ -182,6 +182,11 @@ function hashProduct(doc) {
     ...ARRAY_FIELDS.map((f) => (doc[f] || []).join('‖')),
     serializeSpecs(doc.specifications),
     portableBlocksToPlain(doc.body),
+    Array.isArray(doc.ingredients)
+      ? doc.ingredients
+          .map((ing) => `${String(ing?.name ?? '').trim()}::${String(ing?.description ?? '').trim()}`)
+          .join('¶')
+      : '',
   ].join('|');
   return crypto.createHash('md5').update(parts).digest('hex');
 }
@@ -209,6 +214,14 @@ function hashPost(doc) {
         bodyPlain,
       ].join('|'),
     )
+    .digest('hex');
+}
+
+function hashCaseStudy(doc) {
+  const bodyPlain = portableBlocksToPlain(doc.body);
+  return crypto
+    .createHash('md5')
+    .update([String(doc.title || '').trim(), String(doc.excerpt || '').trim(), bodyPlain].join('|'))
     .digest('hex');
 }
 
@@ -273,6 +286,33 @@ async function processProduct(doc) {
     patch.specifications = rows;
   }
 
+  // ingredients：逐条翻译（内嵌对象）
+  if (Array.isArray(doc.ingredients) && doc.ingredients.length > 0) {
+    console.log(`    ingredients[] → en/es/pt/ar/ru…`);
+    const rows = [];
+    for (const ing of doc.ingredients) {
+      const name = String(ing?.name ?? '').trim();
+      const desc = String(ing?.description ?? '').trim();
+      const row = { ...ing };
+      if (name) {
+        row.name_en = await translateText(name, 'zh-CN', 'en');
+        row.name_es = await translateText(name, 'zh-CN', 'es');
+        row.name_pt = await translateText(name, 'zh-CN', 'pt');
+        row.name_ar = await translateText(name, 'zh-CN', 'ar');
+        row.name_ru = await translateText(name, 'zh-CN', 'ru');
+      }
+      if (desc) {
+        row.description_en = await translateText(desc, 'zh-CN', 'en');
+        row.description_es = await translateText(desc, 'zh-CN', 'es');
+        row.description_pt = await translateText(desc, 'zh-CN', 'pt');
+        row.description_ar = await translateText(desc, 'zh-CN', 'ar');
+        row.description_ru = await translateText(desc, 'zh-CN', 'ru');
+      }
+      rows.push(row);
+    }
+    patch.ingredients = rows;
+  }
+
     const bodyPlain = portableBlocksToPlain(doc.body);
     if (bodyPlain) {
       console.log(`    body (plain) → en…`);
@@ -321,14 +361,15 @@ async function processFaq(doc) {
 async function main() {
   console.log(`\nproject=${projectId}  dataset=${dataset}  force=${FORCE}\n`);
 
-  const [categories, products, faqs, posts] = await Promise.all([
+  const [categories, products, faqs, posts, caseStudies] = await Promise.all([
     client.fetch(`*[_type == "productCategory" && !(_id in path("drafts.**"))]{
       _id, title, titleEn, titleEs, translationSourceHash
     }`),
     client.fetch(`*[_type == "product" && !(_id in path("drafts.**"))]{
       _id, name, excerpt, description, applicationScenarios,
       packaging, skinType, oemDesc, efficacy, tags, specifications, translationSourceHash,
-      body
+      body,
+      ingredients
     }`),
     client.fetch(`*[_type == "faq" && !(_id in path("drafts.**"))]{
       _id, question, answer, translationSourceHash
@@ -338,14 +379,18 @@ async function main() {
       body, plainBody,
       relatedFaqs[]{ _key, question, answer }
     }`),
+    client.fetch(`*[_type == "caseStudy" && !(_id in path("drafts.**"))]{
+      _id, title, excerpt, translationSourceHash, body
+    }`),
   ]);
 
-  console.log(`找到 ${categories.length} 个分类，${products.length} 个产品，${faqs.length} 条 FAQ，${posts.length} 篇文章\n`);
+  console.log(`找到 ${categories.length} 个分类，${products.length} 个产品，${faqs.length} 条 FAQ，${posts.length} 篇文章，${caseStudies.length} 个案例\n`);
 
   let catDone = 0, catSkipped = 0;
   let prodDone = 0, prodSkipped = 0;
   let faqDone = 0, faqSkipped = 0;
   let postDone = 0, postSkipped = 0;
+  let caseDone = 0, caseSkipped = 0;
 
   console.log('── 翻译分类 ──────────────────────────────────────────────────');
   for (const doc of categories) {
@@ -463,12 +508,58 @@ async function main() {
     }
   }
 
+  console.log('\n── 翻译案例 ──────────────────────────────────────────────────');
+  for (const doc of caseStudies) {
+    const title = String(doc.title || '').trim();
+    const excerpt = String(doc.excerpt || '').trim();
+    const bodyPlain = portableBlocksToPlain(doc.body);
+    if (!title && !excerpt && !bodyPlain) {
+      caseSkipped++;
+      console.log(`  [skip] ${doc._id} — empty`);
+      continue;
+    }
+    const hash = hashCaseStudy(doc);
+    if (!FORCE && doc.translationSourceHash === hash) {
+      caseSkipped++;
+      console.log(`  [skip] ${doc._id} — already translated`);
+      continue;
+    }
+    const hasChinese = /[\u4e00-\u9fff]/.test(title + excerpt + bodyPlain);
+    if (!hasChinese) {
+      caseSkipped++;
+      console.log(`  [skip] ${doc._id} — no Chinese content`);
+      continue;
+    }
+    console.log(`  [case] ${doc._id}  "${title.slice(0, 40)}…"`);
+    try {
+      const patch = { translationSourceHash: hash };
+      if (title) {
+        patch.title_en = await translateText(title, 'zh-CN', 'en');
+        patch.title_es = await translateText(title, 'zh-CN', 'es');
+      }
+      if (excerpt) {
+        patch.excerpt_en = await translateText(excerpt, 'zh-CN', 'en');
+        patch.excerpt_es = await translateText(excerpt, 'zh-CN', 'es');
+      }
+      if (bodyPlain) {
+        patch.bodyPlain_en = await translateText(bodyPlain, 'zh-CN', 'en');
+        patch.bodyPlain_es = await translateText(bodyPlain, 'zh-CN', 'es');
+      }
+      await client.patch(doc._id).set(patch).commit();
+      console.log(`    ✓ done`);
+      caseDone++;
+    } catch (e) {
+      console.error(`  [ERROR] ${doc._id}: ${e.message}`);
+    }
+  }
+
   console.log('\n══════════════════════════════════════════════════════════════');
   console.log(`分类：翻译 ${catDone} 条，跳过 ${catSkipped} 条`);
   console.log(`产品：翻译 ${prodDone} 条，跳过 ${prodSkipped} 条`);
   console.log(`FAQ：翻译 ${faqDone} 条，跳过 ${faqSkipped} 条`);
   console.log(`文章：翻译 ${postDone} 条，跳过 ${postSkipped} 条`);
-  console.log(`合计：翻译 ${catDone + prodDone + faqDone + postDone} 条`);
+  console.log(`案例：翻译 ${caseDone} 条，跳过 ${caseSkipped} 条`);
+  console.log(`合计：翻译 ${catDone + prodDone + faqDone + postDone + caseDone} 条`);
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

@@ -17,6 +17,7 @@ import {
   cmsZhElseT,
   CATEGORY_ALL,
   formatArticleReadTime,
+  localizeCaseStudy,
   labelArticleCategoryTab,
   labelProductCategory,
   labelProductCategoryTab,
@@ -326,8 +327,9 @@ const HomePage = () => {
 
   const homeCases = useMemo(() => {
     const list = siteSettings?.homeFeaturedCaseStudies;
-    return Array.isArray(list) && list.length > 0 ? list : [];
-  }, [siteSettings?.homeFeaturedCaseStudies]);
+    const rows = Array.isArray(list) && list.length > 0 ? list : [];
+    return rows.map((c) => localizeCaseStudy(c, locale));
+  }, [siteSettings?.homeFeaturedCaseStudies, locale]);
 
   const trustBadgeText = cmsZhElseT(locale, siteSettings?.trustBadge, 'home.trustBadgeFallback', t);
   const heroTitleText = cmsZhElseT(locale, siteSettings?.heroTitle, 'home.heroTitle', t);
@@ -1982,9 +1984,10 @@ const NewsDetailPage = () => {
 const CaseStudyDetailPage = () => {
   const { slug } = useParams();
   const navigate = useLocalizedNavigate();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { caseStudies, loading, error, reload } = useCms();
-  const study = slug ? resolveCaseStudyBySlug(caseStudies, slug) : null;
+  const resolved = slug ? resolveCaseStudyBySlug(caseStudies, slug) : null;
+  const study = localizeCaseStudy(resolved, locale);
 
   if (loading) return <CmsLoadingScreen />;
   if (error) {

@@ -35,6 +35,22 @@ export function pickCmsI18nArray(zhArr, enArr, esArr, locale) {
 }
 
 /**
+ * 案例：按 locale 选择 title/excerpt/content（Sanity 仅提供 zh/en/es 字段时其余语种回退到 en/es）
+ * @param {object} study mapSanityCaseStudy 输出
+ * @param {string} locale
+ */
+export function localizeCaseStudy(study, locale) {
+  if (!study) return study;
+  if (locale === 'zh') return study;
+  return {
+    ...study,
+    title: pickCmsI18nString(study.title, study.title_en, study.title_es, locale),
+    excerpt: pickCmsI18nString(study.excerpt, study.excerpt_en, study.excerpt_es, locale),
+    content: pickCmsI18nArray(study.content, study.content_en, study.content_es, locale),
+  };
+}
+
+/**
  * 按 locale 选产品的文本字段，有翻译则用翻译，否则降级到中文原文。
  * @param {object} product  mapSanityProduct 的输出
  * @param {string} locale
@@ -71,6 +87,21 @@ export function localizeProduct(product, locale) {
       product.detailContent_en,
       product.detailContent_es,
     ),
+    ingredients: Array.isArray(product.ingredients)
+      ? product.ingredients.map((ing) => ({
+          ...ing,
+          name:
+            (locale === 'pt' && trimStr(ing?.name_pt)) ||
+            (locale === 'ar' && trimStr(ing?.name_ar)) ||
+            (locale === 'ru' && trimStr(ing?.name_ru)) ||
+            pickCmsI18nString(ing?.name, ing?.name_en, ing?.name_es, locale),
+          desc:
+            (locale === 'pt' && trimStr(ing?.desc_pt)) ||
+            (locale === 'ar' && trimStr(ing?.desc_ar)) ||
+            (locale === 'ru' && trimStr(ing?.desc_ru)) ||
+            pickCmsI18nString(ing?.desc, ing?.desc_en, ing?.desc_es, locale),
+        }))
+      : product.ingredients,
   };
 }
 

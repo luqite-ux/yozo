@@ -73,7 +73,17 @@ function normalizeIngredients(list) {
   if (!Array.isArray(list) || !list.length) return [];
   return list.map((ing) => ({
     name: coalescePlain(ing?.name, ing?.title, ing?.ingredient),
+    name_en: coalescePlain(ing?.name_en),
+    name_es: coalescePlain(ing?.name_es),
+    name_pt: coalescePlain(ing?.name_pt),
+    name_ar: coalescePlain(ing?.name_ar),
+    name_ru: coalescePlain(ing?.name_ru),
     desc: coalescePlain(ing?.desc, ing?.description, ing?.text, ing?.detail),
+    desc_en: coalescePlain(ing?.desc_en, ing?.description_en),
+    desc_es: coalescePlain(ing?.desc_es, ing?.description_es),
+    desc_pt: coalescePlain(ing?.desc_pt, ing?.description_pt),
+    desc_ar: coalescePlain(ing?.desc_ar, ing?.description_ar),
+    desc_ru: coalescePlain(ing?.desc_ru, ing?.description_ru),
   }));
 }
 
@@ -224,18 +234,26 @@ export function mapSanityCaseStudy(raw) {
   if (!content.length && raw.excerpt) {
     content = [{ type: 'p', text: String(raw.excerpt) }];
   }
+  const content_en = legacyContentFromPlain(coalescePlain(raw.bodyPlain_en));
+  const content_es = legacyContentFromPlain(coalescePlain(raw.bodyPlain_es));
   const tags = normalizeTags(raw.tags);
   return {
     id: sanityRefToLegacyId(String(raw._id)),
     sanityId: raw._id,
     slug: raw.slug || null,
     title: coalescePlain(raw.title),
+    title_en: coalescePlain(raw.title_en),
+    title_es: coalescePlain(raw.title_es),
     excerpt: coalescePlain(raw.excerpt),
+    excerpt_en: coalescePlain(raw.excerpt_en),
+    excerpt_es: coalescePlain(raw.excerpt_es),
     industry: coalescePlain(raw.industry),
     tags,
     img,
     galleryUrls: Array.isArray(raw.galleryUrls) ? raw.galleryUrls.filter(Boolean) : [],
     content,
+    content_en,
+    content_es,
     isFeatured: Boolean(raw.isFeatured),
   };
 }

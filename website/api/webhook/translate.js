@@ -71,6 +71,17 @@ function serializeSpecs(specs) {
     .join('‖');
 }
 
+function serializeIngredientsForHash(list) {
+  if (!Array.isArray(list) || list.length === 0) return '';
+  return list
+    .map((ing) => {
+      const n = String(ing?.name ?? '').trim();
+      const d = String(ing?.description ?? ing?.desc ?? '').trim();
+      return `${n}::${d}`;
+    })
+    .join('¶');
+}
+
 /** Portable Text block[] → 纯文本（双换行分段） */
 function portableBlocksToPlain(blocks) {
   if (!blocks || !Array.isArray(blocks)) return '';
@@ -100,6 +111,7 @@ function computeContentHash(doc) {
     ...ARRAY_FIELDS.map(f => (doc[f] || []).join('‖')),
     serializeSpecs(doc.specifications),
     portableBlocksToPlain(doc.body),
+    serializeIngredientsForHash(doc.ingredients),
   ].join('|');
   return crypto.createHash('md5').update(parts).digest('hex');
 }
@@ -218,6 +230,45 @@ async function processProduct(doc) {
       rows.push({ ...row, label_en, label_es, value_en, value_es });
     }
     patch.specifications = rows;
+  }
+
+  if (Array.isArray(doc.ingredients) && doc.ingredients.length > 0) {
+    const rows = [];
+    for (const ing of doc.ingredients) {
+      const name = String(ing?.name ?? '').trim();
+      const desc = String(ing?.description ?? '').trim();
+      const row = { ...ing };
+      if (name) {
+        const [en, es, pt, ar, ru] = await Promise.all([
+          translateText(name, 'zh-CN', 'en'),
+          translateText(name, 'zh-CN', 'es'),
+          translateText(name, 'zh-CN', 'pt'),
+          translateText(name, 'zh-CN', 'ar'),
+          translateText(name, 'zh-CN', 'ru'),
+        ]);
+        row.name_en = en;
+        row.name_es = es;
+        row.name_pt = pt;
+        row.name_ar = ar;
+        row.name_ru = ru;
+      }
+      if (desc) {
+        const [en, es, pt, ar, ru] = await Promise.all([
+          translateText(desc, 'zh-CN', 'en'),
+          translateText(desc, 'zh-CN', 'es'),
+          translateText(desc, 'zh-CN', 'pt'),
+          translateText(desc, 'zh-CN', 'ar'),
+          translateText(desc, 'zh-CN', 'ru'),
+        ]);
+        row.description_en = en;
+        row.description_es = es;
+        row.description_pt = pt;
+        row.description_ar = ar;
+        row.description_ru = ru;
+      }
+      rows.push(row);
+    }
+    patch.ingredients = rows;
   }
 
   await client.patch(_id).set(patch).commit();
@@ -389,11 +440,66 @@ async function processFaq(doc) {
   console.log(`[translate] faq ${_id} done`);
 }
 
+async function processCaseStudy(doc) {
+  const { _id, _type } = doc;
+  if (_type !== 'caseStudy') return;
+
+  const title = String(doc.title || '').trim();
+  const excerpt = String(doc.excerpt || '').trim();
+  const bodyPlain = portableBlocksToPlain(doc.body);
+  if (!title && !excerpt && !bodyPlain) {
+    console.log(`[translate] caseStudy ${_id} skipped — empty`);
+    return;
+  }
+
+  const currentHash = crypto
+    .createHash('md5')
+    .update([title, excerpt, bodyPlain].join('|'))
+    .digest('hex');
+
+  if (doc.translationSourceHash === currentHash) {
+    console.log(`[translate] caseStudy ${_id} skipped — already translated`);
+    return;
+  }
+
+  const client = createWriteClient();
+  const patch = { translationSourceHash: currentHash };
+
+  if (title) {
+    const [title_en, title_es] = await Promise.all([
+      translateText(title, 'zh-CN', 'en'),
+      translateText(title, 'zh-CN', 'es'),
+    ]);
+    patch.title_en = title_en;
+    patch.title_es = title_es;
+  }
+  if (excerpt) {
+    const [excerpt_en, excerpt_es] = await Promise.all([
+      translateText(excerpt, 'zh-CN', 'en'),
+      translateText(excerpt, 'zh-CN', 'es'),
+    ]);
+    patch.excerpt_en = excerpt_en;
+    patch.excerpt_es = excerpt_es;
+  }
+  if (bodyPlain) {
+    const [bodyPlain_en, bodyPlain_es] = await Promise.all([
+      translateText(bodyPlain, 'zh-CN', 'en'),
+      translateText(bodyPlain, 'zh-CN', 'es'),
+    ]);
+    patch.bodyPlain_en = bodyPlain_en;
+    patch.bodyPlain_es = bodyPlain_es;
+  }
+
+  await client.patch(_id).set(patch).commit();
+  console.log(`[translate] caseStudy ${_id} done`);
+}
+
 function routeTranslation(doc) {
   if (doc._type === 'product') return processProduct(doc);
   if (doc._type === 'productCategory') return processProductCategory(doc);
   if (doc._type === 'post') return processPost(doc);
   if (doc._type === 'faq') return processFaq(doc);
+  if (doc._type === 'caseStudy') return processCaseStudy(doc);
   return Promise.resolve();
 }
 

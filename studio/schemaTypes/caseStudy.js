@@ -88,6 +88,40 @@ export default defineType({
       group: 'meta',
     }),
     defineField({ name: 'locale', title: '语言（预留）', type: 'string', group: 'meta' }),
+
+    // ── 自动翻译字段（由翻译 Webhook 自动填充）───────────────────────────────
+    defineField({
+      name: 'title_en',
+      title: 'Title (EN)',
+      type: 'string',
+      readOnly: true,
+      description: '由翻译 Webhook 自动填充',
+    }),
+    defineField({ name: 'title_es', title: 'Title (ES)', type: 'string', readOnly: true }),
+    defineField({ name: 'excerpt_en', title: 'Excerpt (EN)', type: 'text', rows: 3, readOnly: true }),
+    defineField({ name: 'excerpt_es', title: 'Excerpt (ES)', type: 'text', rows: 3, readOnly: true }),
+    defineField({
+      name: 'bodyPlain_en',
+      title: '正文（纯文本 EN，自动）',
+      type: 'text',
+      rows: 10,
+      readOnly: true,
+      description: '由翻译 Webhook 从「正文」Portable Text 抽取并翻译，前台英文站用于展示',
+    }),
+    defineField({
+      name: 'bodyPlain_es',
+      title: '正文（纯文本 ES，自动）',
+      type: 'text',
+      rows: 10,
+      readOnly: true,
+    }),
+    defineField({
+      name: 'translationSourceHash',
+      title: '翻译源哈希',
+      type: 'string',
+      readOnly: true,
+      hidden: true,
+    }),
     defineField({
       name: 'seo',
       title: 'SEO',
