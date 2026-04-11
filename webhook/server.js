@@ -4,7 +4,7 @@
  * Sanity Webhook GROQ Filter（文档类型名为 productCategory，不是 category）：
  *   _type == "product" || _type == "productCategory" || _type == "post" || _type == "faq"
  *
- * 使用 MyMemory 免费翻译 API，无需付费账号。
+ * 使用 DeepSeek Chat API 进行翻译（需配置 DEEPSEEK_API_KEY）。
  * 通过内容哈希防止翻译循环触发：
  *   - 收到 webhook → 计算源字段 hash
  *   - 若 hash == doc.translationSourceHash → 跳过（已翻译过此版本）
@@ -23,11 +23,19 @@ const PORT = process.env.PORT || 3001;
 const WEBHOOK_SECRET  = process.env.SANITY_WEBHOOK_SECRET;   // Sanity 后台配置时生成
 const SANITY_PROJECT_ID = process.env.SANITY_PROJECT_ID;
 const SANITY_DATASET    = process.env.SANITY_DATASET || 'production';
-const SANITY_TOKEN      = process.env.SANITY_WRITE_TOKEN;
-const MYMEMORY_EMAIL    = process.env.MYMEMORY_EMAIL || '';  // 可选，填后每日限额更高
+const SANITY_TOKEN      =
+  process.env.SANITY_WRITE_TOKEN ||
+  process.env.SANITY_API_WRITE_TOKEN;
+const DEEPSEEK_API_KEY  = process.env.DEEPSEEK_API_KEY?.trim() || '';
+const DEEPSEEK_BASE_URL = process.env.DEEPSEEK_BASE_URL?.trim() || 'https://api.deepseek.com';
+const DEEPSEEK_MODEL    = process.env.DEEPSEEK_MODEL?.trim() || 'deepseek-chat';
 
 if (!SANITY_PROJECT_ID || !SANITY_TOKEN) {
-  console.error('ERROR: SANITY_PROJECT_ID and SANITY_WRITE_TOKEN are required');
+  console.error('ERROR: SANITY_PROJECT_ID and SANITY_WRITE_TOKEN(or SANITY_API_WRITE_TOKEN) are required');
+  process.exit(1);
+}
+if (!DEEPSEEK_API_KEY) {
+  console.error('ERROR: DEEPSEEK_API_KEY is required');
   process.exit(1);
 }
 
@@ -81,7 +89,8 @@ function verifySignature(rawBody, signatureHeader) {
 // ── 内容哈希（防循环）────────────────────────────────────────────────────────
 const TEXT_FIELDS  = ['name', 'excerpt', 'description', 'applicationScenarios',
                       'packaging', 'skinType', 'oemDesc'];
-const ARRAY_FIELDS = ['efficacy'];
+const ARRAY_FIELDS = ['efficacy', 'tags'];
+const PRODUCT_LOCALES = ['en', 'es', 'pt', 'ar', 'ru'];
 
 function serializeSpecs(specs) {
   if (!Array.isArray(specs) || specs.length === 0) return '';
@@ -144,31 +153,77 @@ function computeProductCategoryTitleHash(doc) {
   return crypto.createHash('md5').update(String(doc.title || '').trim()).digest('hex');
 }
 
-// ── MyMemory 翻译 ─────────────────────────────────────────────────────────────
-const MYMEMORY_MAX_CHARS = 500; // 超长文本分段翻译
+// ── DeepSeek 翻译 ─────────────────────────────────────────────────────────────
+const MAX_RETRIES = 5;
+const RETRY_BASE_MS = 800;
+const MAX_TRANSLATE_CHARS = 1800; // 超长文本分段翻译
+
+function getRetryDelayMs(attempt, retryAfterHeader) {
+  const retryAfterSeconds = Number.parseInt(retryAfterHeader || '', 10);
+  if (Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0) {
+    return retryAfterSeconds * 1000;
+  }
+  const exp = RETRY_BASE_MS * (2 ** (attempt - 1));
+  const jitter = Math.floor(Math.random() * 250);
+  return exp + jitter;
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 async function translateChunk(text, from, to) {
-  const emailParam = MYMEMORY_EMAIL
-    ? `&de=${encodeURIComponent(MYMEMORY_EMAIL)}`
-    : '';
-  const url =
-    `https://api.mymemory.translated.net/get` +
-    `?q=${encodeURIComponent(text)}&langpair=${from}|${to}${emailParam}`;
+  const endpoint = `${DEEPSEEK_BASE_URL.replace(/\/$/, '')}/chat/completions`;
+  const payload = {
+    model: DEEPSEEK_MODEL,
+    temperature: 0.2,
+    messages: [
+      {
+        role: 'system',
+        content: 'You are a professional translator. Translate faithfully and naturally. Return only the translated text.',
+      },
+      {
+        role: 'user',
+        content: `Translate the following text from ${from} to ${to}. Keep formatting, punctuation, and line breaks.\n\n${text}`,
+      },
+    ],
+  };
 
-  const res = await fetch(url, { signal: AbortSignal.timeout(15_000) });
-  if (!res.ok) throw new Error(`MyMemory HTTP ${res.status}`);
-  const data = await res.json();
-  if (data.responseStatus !== 200) {
-    throw new Error(`MyMemory error: ${data.responseDetails}`);
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(120_000),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      const translated = data?.choices?.[0]?.message?.content?.trim();
+      if (!translated) throw new Error('DeepSeek empty translation result');
+      return translated;
+    }
+
+    if ((res.status === 429 || res.status >= 500) && attempt < MAX_RETRIES) {
+      await sleep(getRetryDelayMs(attempt, res.headers.get('retry-after')));
+      continue;
+    }
+
+    const errText = await res.text();
+    throw new Error(`DeepSeek HTTP ${res.status}: ${errText.slice(0, 200)}`);
   }
-  return data.responseData.translatedText;
+
+  throw new Error('DeepSeek retry exhausted');
 }
 
 async function translateText(text, from, to) {
   if (!text || !text.trim()) return '';
 
-  // 分段处理超长文本（按句分割，每块 ≤ MYMEMORY_MAX_CHARS）
-  if (text.length <= MYMEMORY_MAX_CHARS) {
+  // 分段处理超长文本（按句分割，每块 ≤ MAX_TRANSLATE_CHARS）
+  if (text.length <= MAX_TRANSLATE_CHARS) {
     return translateChunk(text, from, to);
   }
 
@@ -176,7 +231,7 @@ async function translateText(text, from, to) {
   const chunks = [];
   let buf = '';
   for (const s of sentences) {
-    if (buf.length + s.length > MYMEMORY_MAX_CHARS) {
+    if (buf.length + s.length > MAX_TRANSLATE_CHARS) {
       if (buf) chunks.push(buf);
       buf = s;
     } else {
@@ -192,6 +247,16 @@ async function translateText(text, from, to) {
 async function translateArray(arr, from, to) {
   if (!arr || arr.length === 0) return [];
   return Promise.all(arr.map(item => translateText(String(item), from, to)));
+}
+
+async function translateForLocales(text, from, locales) {
+  const translated = await Promise.all(locales.map((to) => translateText(text, from, to)));
+  return Object.fromEntries(locales.map((loc, i) => [loc, translated[i]]));
+}
+
+async function translateArrayForLocales(arr, from, locales) {
+  const translated = await Promise.all(locales.map((to) => translateArray(arr, from, to)));
+  return Object.fromEntries(locales.map((loc, i) => [loc, translated[i]]));
 }
 
 // ── 主翻译逻辑 ────────────────────────────────────────────────────────────────
@@ -214,58 +279,48 @@ async function processProduct(doc) {
   for (const field of TEXT_FIELDS) {
     const val = doc[field];
     if (!val) continue;
-    console.log(`  ${field} → en/es`);
-    const [en, es] = await Promise.all([
-      translateText(val, 'zh-CN', 'en'),
-      translateText(val, 'zh-CN', 'es'),
-    ]);
-    patch[`${field}_en`] = en;
-    patch[`${field}_es`] = es;
+    console.log(`  ${field} → ${PRODUCT_LOCALES.join('/')}`);
+    const byLocale = await translateForLocales(val, 'zh-CN', PRODUCT_LOCALES);
+    for (const loc of PRODUCT_LOCALES) {
+      patch[`${field}_${loc}`] = byLocale[loc];
+    }
   }
 
   // 数组字段
   for (const field of ARRAY_FIELDS) {
     const arr = doc[field];
     if (!arr || arr.length === 0) continue;
-    console.log(`  ${field}[] → en/es`);
-    const [en, es] = await Promise.all([
-      translateArray(arr, 'zh-CN', 'en'),
-      translateArray(arr, 'zh-CN', 'es'),
-    ]);
-    patch[`${field}_en`] = en;
-    patch[`${field}_es`] = es;
+    console.log(`  ${field}[] → ${PRODUCT_LOCALES.join('/')}`);
+    const byLocale = await translateArrayForLocales(arr, 'zh-CN', PRODUCT_LOCALES);
+    for (const loc of PRODUCT_LOCALES) {
+      patch[`${field}_${loc}`] = byLocale[loc];
+    }
   }
 
   // 参数/规格：逐行翻译 label/value，写回 label_en/value_en/label_es/value_es
   const bodyPlain = portableBlocksToPlain(doc.body);
   if (bodyPlain) {
-    console.log(`  body (plain) → en/es`);
-    const [bodyPlain_en, bodyPlain_es] = await Promise.all([
-      translateText(bodyPlain, 'zh-CN', 'en'),
-      translateText(bodyPlain, 'zh-CN', 'es'),
-    ]);
-    patch.bodyPlain_en = bodyPlain_en;
-    patch.bodyPlain_es = bodyPlain_es;
+    console.log(`  body (plain) → ${PRODUCT_LOCALES.join('/')}`);
+    const byLocale = await translateForLocales(bodyPlain, 'zh-CN', PRODUCT_LOCALES);
+    for (const loc of PRODUCT_LOCALES) {
+      patch[`bodyPlain_${loc}`] = byLocale[loc];
+    }
   }
 
   if (Array.isArray(doc.specifications) && doc.specifications.length > 0) {
-    console.log(`  specifications[] → en/es`);
+    console.log(`  specifications[] → ${PRODUCT_LOCALES.join('/')}`);
     const rows = [];
     for (const row of doc.specifications) {
       const label = row?.label ? String(row.label) : '';
       const value = row?.value ? String(row.value) : '';
-      const [label_en, label_es, value_en, value_es] = await Promise.all([
-        translateText(label, 'zh-CN', 'en'),
-        translateText(label, 'zh-CN', 'es'),
-        translateText(value, 'zh-CN', 'en'),
-        translateText(value, 'zh-CN', 'es'),
+      const [labelByLocale, valueByLocale] = await Promise.all([
+        translateForLocales(label, 'zh-CN', PRODUCT_LOCALES),
+        translateForLocales(value, 'zh-CN', PRODUCT_LOCALES),
       ]);
       rows.push({
         ...row,
-        label_en,
-        label_es,
-        value_en,
-        value_es,
+        ...Object.fromEntries(PRODUCT_LOCALES.map((loc) => [`label_${loc}`, labelByLocale[loc]])),
+        ...Object.fromEntries(PRODUCT_LOCALES.map((loc) => [`value_${loc}`, valueByLocale[loc]])),
       });
     }
     patch.specifications = rows;
@@ -428,20 +483,16 @@ async function processFaq(doc) {
   const patch = { translationSourceHash: currentHash };
 
   if (question) {
-    const [question_en, question_es] = await Promise.all([
-      translateText(question, 'zh-CN', 'en'),
-      translateText(question, 'zh-CN', 'es'),
-    ]);
-    patch.question_en = question_en;
-    patch.question_es = question_es;
+    const byLocale = await translateForLocales(question, 'zh-CN', PRODUCT_LOCALES);
+    for (const loc of PRODUCT_LOCALES) {
+      patch[`question_${loc}`] = byLocale[loc];
+    }
   }
   if (answer) {
-    const [answer_en, answer_es] = await Promise.all([
-      translateText(answer, 'zh-CN', 'en'),
-      translateText(answer, 'zh-CN', 'es'),
-    ]);
-    patch.answer_en = answer_en;
-    patch.answer_es = answer_es;
+    const byLocale = await translateForLocales(answer, 'zh-CN', PRODUCT_LOCALES);
+    for (const loc of PRODUCT_LOCALES) {
+      patch[`answer_${loc}`] = byLocale[loc];
+    }
   }
 
   await client.patch(_id).set(patch).commit();

@@ -7,8 +7,7 @@
  *   node studio/scripts/translate-existing.mjs --force   # 忽略 hash，强制重译
  *
  * 依赖：@sanity/client（studio/node_modules 已有）
- * 翻译：MyMemory 免费 API，无需 key；每天限约 5 000 词。
- *       脚本在每次 API 调用之间加 600ms 延迟，防止超额。
+ * 翻译：DeepSeek Chat API（需配置 DEEPSEEK_API_KEY）。
  */
 
 import { createClient } from '@sanity/client';
@@ -63,10 +62,17 @@ const token =
   env.SANITY_AUTH_TOKEN?.trim() ||
   env.SANITY_TOKEN?.trim() ||
   '';
-const MYMEMORY_EMAIL = env.MYMEMORY_EMAIL || '';
+const DEEPSEEK_API_KEY = env.DEEPSEEK_API_KEY?.trim() || '';
+const DEEPSEEK_BASE_URL = env.DEEPSEEK_BASE_URL?.trim() || 'https://api.deepseek.com';
+const DEEPSEEK_MODEL = env.DEEPSEEK_MODEL?.trim() || 'deepseek-chat';
 
 if (!projectId || !token) {
   console.error('缺少 projectId 或写 Token，请检查 website/.env.local 或 studio/.env.local');
+  process.exit(1);
+}
+
+if (!DEEPSEEK_API_KEY) {
+  console.error('缺少 DEEPSEEK_API_KEY，请在 website/.env.local 或 studio/.env.local 配置');
   process.exit(1);
 }
 
@@ -79,26 +85,69 @@ const client = createClient({
 });
 
 // ── 翻译工具 ──────────────────────────────────────────────────────────────────
-const DELAY_MS = 600;           // 每次 API 调用之间的间隔
-const MAX_CHARS = 500;          // MyMemory 单次请求上限
+const MAX_RETRIES = 5;
+const RETRY_BASE_MS = 800;
+const MAX_CHARS = 1800; // 过长文本按句拆分，控制单次请求长度
 
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-async function translateChunk(text, from, to) {
-  const emailParam = MYMEMORY_EMAIL ? `&de=${encodeURIComponent(MYMEMORY_EMAIL)}` : '';
-  const url =
-    `https://api.mymemory.translated.net/get` +
-    `?q=${encodeURIComponent(text)}&langpair=${from}|${to}${emailParam}`;
+function getRetryDelayMs(attempt, retryAfterHeader) {
+  const retryAfterSeconds = Number.parseInt(retryAfterHeader || '', 10);
+  if (Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0) {
+    return retryAfterSeconds * 1000;
+  }
+  const exp = RETRY_BASE_MS * (2 ** (attempt - 1));
+  const jitter = Math.floor(Math.random() * 250);
+  return exp + jitter;
+}
 
-  await sleep(DELAY_MS);
-  const res = await fetch(url, { signal: AbortSignal.timeout(20_000) });
-  if (!res.ok) throw new Error(`MyMemory HTTP ${res.status}`);
-  const data = await res.json();
-  if (data.responseStatus !== 200)
-    throw new Error(`MyMemory: ${data.responseDetails}`);
-  return data.responseData.translatedText;
+async function translateChunk(text, from, to) {
+  const endpoint = `${DEEPSEEK_BASE_URL.replace(/\/$/, '')}/chat/completions`;
+  const payload = {
+    model: DEEPSEEK_MODEL,
+    temperature: 0.2,
+    messages: [
+      {
+        role: 'system',
+        content: 'You are a professional translator. Translate faithfully and naturally. Return only the translated text.',
+      },
+      {
+        role: 'user',
+        content: `Translate the following text from ${from} to ${to}. Keep formatting, punctuation, and line breaks.\n\n${text}`,
+      },
+    ],
+  };
+
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(120_000),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      const translated = data?.choices?.[0]?.message?.content?.trim();
+      if (!translated) throw new Error('DeepSeek empty translation result');
+      return translated;
+    }
+
+    if ((res.status === 429 || res.status >= 500) && attempt < MAX_RETRIES) {
+      await sleep(getRetryDelayMs(attempt, res.headers.get('retry-after')));
+      continue;
+    }
+
+    const errText = await res.text();
+    throw new Error(`DeepSeek HTTP ${res.status}: ${errText.slice(0, 200)}`);
+  }
+
+  throw new Error('DeepSeek retry exhausted');
 }
 
 async function translateText(text, from, to) {
@@ -141,6 +190,23 @@ const TEXT_FIELDS = [
   'packaging', 'skinType', 'oemDesc',
 ];
 const ARRAY_FIELDS = ['efficacy', 'tags'];
+const PRODUCT_LOCALES = ['en', 'es', 'pt', 'ar', 'ru'];
+
+async function translateForLocales(text, from, locales) {
+  const out = {};
+  for (const loc of locales) {
+    out[loc] = await translateText(text, from, loc);
+  }
+  return out;
+}
+
+async function translateArrayForLocales(arr, from, locales) {
+  const out = {};
+  for (const loc of locales) {
+    out[loc] = await translateArray(arr, from, loc);
+  }
+  return out;
+}
 
 function serializeSpecs(specs) {
   if (!Array.isArray(specs) || specs.length === 0) return '';
@@ -255,33 +321,37 @@ async function processProduct(doc) {
   for (const field of TEXT_FIELDS) {
     const val = doc[field];
     if (!val) continue;
-    console.log(`    ${field} → en…`);
-    patch[`${field}_en`] = await translateText(val, 'zh-CN', 'en');
-    console.log(`    ${field} → es…`);
-    patch[`${field}_es`] = await translateText(val, 'zh-CN', 'es');
+    console.log(`    ${field} → ${PRODUCT_LOCALES.join('/')}…`);
+    const byLocale = await translateForLocales(val, 'zh-CN', PRODUCT_LOCALES);
+    for (const loc of PRODUCT_LOCALES) {
+      patch[`${field}_${loc}`] = byLocale[loc];
+    }
   }
 
   for (const field of ARRAY_FIELDS) {
     const arr = doc[field];
     if (!arr || arr.length === 0) continue;
-    console.log(`    ${field}[] → en…`);
-    patch[`${field}_en`] = await translateArray(arr, 'zh-CN', 'en');
-    console.log(`    ${field}[] → es…`);
-    patch[`${field}_es`] = await translateArray(arr, 'zh-CN', 'es');
+    console.log(`    ${field}[] → ${PRODUCT_LOCALES.join('/')}…`);
+    const byLocale = await translateArrayForLocales(arr, 'zh-CN', PRODUCT_LOCALES);
+    for (const loc of PRODUCT_LOCALES) {
+      patch[`${field}_${loc}`] = byLocale[loc];
+    }
   }
 
   // specifications：逐行翻译 label/value
   if (Array.isArray(doc.specifications) && doc.specifications.length > 0) {
-    console.log(`    specifications[] → en/es…`);
+    console.log(`    specifications[] → ${PRODUCT_LOCALES.join('/')}…`);
     const rows = [];
     for (const row of doc.specifications) {
       const label = row?.label ? String(row.label) : '';
       const value = row?.value ? String(row.value) : '';
-      const label_en = await translateText(label, 'zh-CN', 'en');
-      const label_es = await translateText(label, 'zh-CN', 'es');
-      const value_en = await translateText(value, 'zh-CN', 'en');
-      const value_es = await translateText(value, 'zh-CN', 'es');
-      rows.push({ ...row, label_en, label_es, value_en, value_es });
+      const labelByLocale = await translateForLocales(label, 'zh-CN', PRODUCT_LOCALES);
+      const valueByLocale = await translateForLocales(value, 'zh-CN', PRODUCT_LOCALES);
+      rows.push({
+        ...row,
+        ...Object.fromEntries(PRODUCT_LOCALES.map((loc) => [`label_${loc}`, labelByLocale[loc]])),
+        ...Object.fromEntries(PRODUCT_LOCALES.map((loc) => [`value_${loc}`, valueByLocale[loc]])),
+      });
     }
     patch.specifications = rows;
   }
@@ -315,10 +385,11 @@ async function processProduct(doc) {
 
     const bodyPlain = portableBlocksToPlain(doc.body);
     if (bodyPlain) {
-      console.log(`    body (plain) → en…`);
-      patch.bodyPlain_en = await translateText(bodyPlain, 'zh-CN', 'en');
-      console.log(`    body (plain) → es…`);
-      patch.bodyPlain_es = await translateText(bodyPlain, 'zh-CN', 'es');
+      console.log(`    body (plain) → ${PRODUCT_LOCALES.join('/')}…`);
+      const byLocale = await translateForLocales(bodyPlain, 'zh-CN', PRODUCT_LOCALES);
+      for (const loc of PRODUCT_LOCALES) {
+        patch[`bodyPlain_${loc}`] = byLocale[loc];
+      }
     }
 
     await client.patch(doc._id).set(patch).commit();
@@ -340,16 +411,18 @@ async function processFaq(doc) {
   const patch = { translationSourceHash: hash };
 
   if (question) {
-    console.log(`    question → en…`);
-    patch.question_en = await translateText(question, 'zh-CN', 'en');
-    console.log(`    question → es…`);
-    patch.question_es = await translateText(question, 'zh-CN', 'es');
+    console.log(`    question → ${PRODUCT_LOCALES.join('/')}…`);
+    const byLocale = await translateForLocales(question, 'zh-CN', PRODUCT_LOCALES);
+    for (const loc of PRODUCT_LOCALES) {
+      patch[`question_${loc}`] = byLocale[loc];
+    }
   }
   if (answer) {
-    console.log(`    answer → en…`);
-    patch.answer_en = await translateText(answer, 'zh-CN', 'en');
-    console.log(`    answer → es…`);
-    patch.answer_es = await translateText(answer, 'zh-CN', 'es');
+    console.log(`    answer → ${PRODUCT_LOCALES.join('/')}…`);
+    const byLocale = await translateForLocales(answer, 'zh-CN', PRODUCT_LOCALES);
+    for (const loc of PRODUCT_LOCALES) {
+      patch[`answer_${loc}`] = byLocale[loc];
+    }
   }
 
   await client.patch(doc._id).set(patch).commit();

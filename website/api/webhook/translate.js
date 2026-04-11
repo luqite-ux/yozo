@@ -10,7 +10,9 @@
  *   SANITY_DATASET          production
  *   SANITY_API_WRITE_TOKEN  来自 website/.env.local 的 SANITY_API_WRITE_TOKEN
  *   SANITY_WEBHOOK_SECRET   Sanity 后台生成的 Webhook 签名密钥（可选）
- *   MYMEMORY_EMAIL          可选，填后每日免费额度 5000→50000 字
+ *   DEEPSEEK_API_KEY        DeepSeek API Key（必填）
+ *   DEEPSEEK_MODEL          可选，默认 deepseek-chat
+ *   DEEPSEEK_BASE_URL       可选，默认 https://api.deepseek.com
  */
 
 import crypto from 'crypto';
@@ -57,7 +59,8 @@ function readRawBody(req) {
 
 const TEXT_FIELDS  = ['name', 'excerpt', 'description', 'applicationScenarios',
                       'packaging', 'skinType', 'oemDesc'];
-const ARRAY_FIELDS = ['efficacy'];
+const ARRAY_FIELDS = ['efficacy', 'tags'];
+const PRODUCT_LOCALES = ['en', 'es', 'pt', 'ar', 'ru'];
 
 function serializeSpecs(specs) {
   if (!Array.isArray(specs) || specs.length === 0) return '';
@@ -120,31 +123,84 @@ function computeProductCategoryTitleHash(doc) {
   return crypto.createHash('md5').update(String(doc.title || '').trim()).digest('hex');
 }
 
-const MYMEMORY_MAX_CHARS = 500;
+const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY?.trim() || '';
+const DEEPSEEK_BASE_URL = process.env.DEEPSEEK_BASE_URL?.trim() || 'https://api.deepseek.com';
+const DEEPSEEK_MODEL = process.env.DEEPSEEK_MODEL?.trim() || 'deepseek-chat';
+const MAX_RETRIES = 5;
+const RETRY_BASE_MS = 800;
+const MAX_TRANSLATE_CHARS = 1800;
+
+function getRetryDelayMs(attempt, retryAfterHeader) {
+  const retryAfterSeconds = Number.parseInt(retryAfterHeader || '', 10);
+  if (Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0) {
+    return retryAfterSeconds * 1000;
+  }
+  const exp = RETRY_BASE_MS * (2 ** (attempt - 1));
+  const jitter = Math.floor(Math.random() * 250);
+  return exp + jitter;
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 async function translateChunk(text, from, to) {
-  const emailParam = process.env.MYMEMORY_EMAIL
-    ? `&de=${encodeURIComponent(process.env.MYMEMORY_EMAIL)}`
-    : '';
-  const url =
-    `https://api.mymemory.translated.net/get` +
-    `?q=${encodeURIComponent(text)}&langpair=${from}|${to}${emailParam}`;
-  const res = await fetch(url, { signal: AbortSignal.timeout(15_000) });
-  if (!res.ok) throw new Error(`MyMemory HTTP ${res.status}`);
-  const data = await res.json();
-  if (data.responseStatus !== 200) throw new Error(`MyMemory: ${data.responseDetails}`);
-  return data.responseData.translatedText;
+  if (!DEEPSEEK_API_KEY) throw new Error('Missing DEEPSEEK_API_KEY');
+  const endpoint = `${DEEPSEEK_BASE_URL.replace(/\/$/, '')}/chat/completions`;
+  const payload = {
+    model: DEEPSEEK_MODEL,
+    temperature: 0.2,
+    messages: [
+      {
+        role: 'system',
+        content: 'You are a professional translator. Translate faithfully and naturally. Return only the translated text.',
+      },
+      {
+        role: 'user',
+        content: `Translate the following text from ${from} to ${to}. Keep formatting, punctuation, and line breaks.\n\n${text}`,
+      },
+    ],
+  };
+
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(120_000),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      const translated = data?.choices?.[0]?.message?.content?.trim();
+      if (!translated) throw new Error('DeepSeek empty translation result');
+      return translated;
+    }
+
+    if ((res.status === 429 || res.status >= 500) && attempt < MAX_RETRIES) {
+      await sleep(getRetryDelayMs(attempt, res.headers.get('retry-after')));
+      continue;
+    }
+
+    const errText = await res.text();
+    throw new Error(`DeepSeek HTTP ${res.status}: ${errText.slice(0, 200)}`);
+  }
+
+  throw new Error('DeepSeek retry exhausted');
 }
 
 async function translateText(text, from, to) {
   if (!text || !text.trim()) return '';
-  if (text.length <= MYMEMORY_MAX_CHARS) return translateChunk(text, from, to);
+  if (text.length <= MAX_TRANSLATE_CHARS) return translateChunk(text, from, to);
 
   const sentences = text.split(/(?<=[。！？.!?])\s*/);
   const chunks = [];
   let buf = '';
   for (const s of sentences) {
-    if (buf.length + s.length > MYMEMORY_MAX_CHARS) { if (buf) chunks.push(buf); buf = s; }
+    if (buf.length + s.length > MAX_TRANSLATE_CHARS) { if (buf) chunks.push(buf); buf = s; }
     else buf += (buf ? ' ' : '') + s;
   }
   if (buf) chunks.push(buf);
@@ -155,6 +211,16 @@ async function translateText(text, from, to) {
 async function translateArray(arr, from, to) {
   if (!arr || arr.length === 0) return [];
   return Promise.all(arr.map(item => translateText(String(item), from, to)));
+}
+
+async function translateForLocales(text, from, locales) {
+  const translated = await Promise.all(locales.map((to) => translateText(text, from, to)));
+  return Object.fromEntries(locales.map((loc, i) => [loc, translated[i]]));
+}
+
+async function translateArrayForLocales(arr, from, locales) {
+  const translated = await Promise.all(locales.map((to) => translateArray(arr, from, to)));
+  return Object.fromEntries(locales.map((loc, i) => [loc, translated[i]]));
 }
 
 function createWriteClient() {
@@ -187,33 +253,27 @@ async function processProduct(doc) {
   for (const field of TEXT_FIELDS) {
     const val = doc[field];
     if (!val) continue;
-    const [en, es] = await Promise.all([
-      translateText(val, 'zh-CN', 'en'),
-      translateText(val, 'zh-CN', 'es'),
-    ]);
-    patch[`${field}_en`] = en;
-    patch[`${field}_es`] = es;
+    const byLocale = await translateForLocales(val, 'zh-CN', PRODUCT_LOCALES);
+    for (const loc of PRODUCT_LOCALES) {
+      patch[`${field}_${loc}`] = byLocale[loc];
+    }
   }
 
   for (const field of ARRAY_FIELDS) {
     const arr = doc[field];
     if (!arr || arr.length === 0) continue;
-    const [en, es] = await Promise.all([
-      translateArray(arr, 'zh-CN', 'en'),
-      translateArray(arr, 'zh-CN', 'es'),
-    ]);
-    patch[`${field}_en`] = en;
-    patch[`${field}_es`] = es;
+    const byLocale = await translateArrayForLocales(arr, 'zh-CN', PRODUCT_LOCALES);
+    for (const loc of PRODUCT_LOCALES) {
+      patch[`${field}_${loc}`] = byLocale[loc];
+    }
   }
 
   const bodyPlain = portableBlocksToPlain(doc.body);
   if (bodyPlain) {
-    const [bodyPlain_en, bodyPlain_es] = await Promise.all([
-      translateText(bodyPlain, 'zh-CN', 'en'),
-      translateText(bodyPlain, 'zh-CN', 'es'),
-    ]);
-    patch.bodyPlain_en = bodyPlain_en;
-    patch.bodyPlain_es = bodyPlain_es;
+    const byLocale = await translateForLocales(bodyPlain, 'zh-CN', PRODUCT_LOCALES);
+    for (const loc of PRODUCT_LOCALES) {
+      patch[`bodyPlain_${loc}`] = byLocale[loc];
+    }
   }
 
   if (Array.isArray(doc.specifications) && doc.specifications.length > 0) {
@@ -221,13 +281,15 @@ async function processProduct(doc) {
     for (const row of doc.specifications) {
       const label = row?.label ? String(row.label) : '';
       const value = row?.value ? String(row.value) : '';
-      const [label_en, label_es, value_en, value_es] = await Promise.all([
-        translateText(label, 'zh-CN', 'en'),
-        translateText(label, 'zh-CN', 'es'),
-        translateText(value, 'zh-CN', 'en'),
-        translateText(value, 'zh-CN', 'es'),
+      const [labelByLocale, valueByLocale] = await Promise.all([
+        translateForLocales(label, 'zh-CN', PRODUCT_LOCALES),
+        translateForLocales(value, 'zh-CN', PRODUCT_LOCALES),
       ]);
-      rows.push({ ...row, label_en, label_es, value_en, value_es });
+      rows.push({
+        ...row,
+        ...Object.fromEntries(PRODUCT_LOCALES.map((loc) => [`label_${loc}`, labelByLocale[loc]])),
+        ...Object.fromEntries(PRODUCT_LOCALES.map((loc) => [`value_${loc}`, valueByLocale[loc]])),
+      });
     }
     patch.specifications = rows;
   }
@@ -420,20 +482,16 @@ async function processFaq(doc) {
   const client = createWriteClient();
   const patch = { translationSourceHash: currentHash };
   if (question) {
-    const [question_en, question_es] = await Promise.all([
-      translateText(question, 'zh-CN', 'en'),
-      translateText(question, 'zh-CN', 'es'),
-    ]);
-    patch.question_en = question_en;
-    patch.question_es = question_es;
+    const byLocale = await translateForLocales(question, 'zh-CN', PRODUCT_LOCALES);
+    for (const loc of PRODUCT_LOCALES) {
+      patch[`question_${loc}`] = byLocale[loc];
+    }
   }
   if (answer) {
-    const [answer_en, answer_es] = await Promise.all([
-      translateText(answer, 'zh-CN', 'en'),
-      translateText(answer, 'zh-CN', 'es'),
-    ]);
-    patch.answer_en = answer_en;
-    patch.answer_es = answer_es;
+    const byLocale = await translateForLocales(answer, 'zh-CN', PRODUCT_LOCALES);
+    for (const loc of PRODUCT_LOCALES) {
+      patch[`answer_${loc}`] = byLocale[loc];
+    }
   }
 
   await client.patch(_id).set(patch).commit();

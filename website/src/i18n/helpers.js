@@ -59,33 +59,50 @@ export function localizeProduct(product, locale) {
   if (!product || locale === 'zh') return product;
   const pick = (zh, en, es) => pickCmsI18nString(zh, en, es, locale);
   const pickArr = (zh, en, es) => pickCmsI18nArray(zh, en, es, locale);
+  const pickTextByLocale = (zh, en, es, pt, ar, ru) =>
+    (locale === 'pt' && trimStr(pt)) ||
+    (locale === 'ar' && trimStr(ar)) ||
+    (locale === 'ru' && trimStr(ru)) ||
+    pick(zh, en, es);
+  const pickArrayByLocale = (zh, en, es, pt, ar, ru) => {
+    if (locale === 'pt' && Array.isArray(pt) && pt.length) return pt;
+    if (locale === 'ar' && Array.isArray(ar) && ar.length) return ar;
+    if (locale === 'ru' && Array.isArray(ru) && ru.length) return ru;
+    return pickArr(zh, en, es);
+  };
   const pickSpecs = (specs) => {
     if (!Array.isArray(specs) || specs.length === 0) return [];
     return specs.map((r) => ({
       ...r,
-      label: pick(r?.label, r?.label_en, r?.label_es),
-      value: pick(r?.value, r?.value_en, r?.value_es),
+      label: pickTextByLocale(r?.label, r?.label_en, r?.label_es, r?.label_pt, r?.label_ar, r?.label_ru),
+      value: pickTextByLocale(r?.value, r?.value_en, r?.value_es, r?.value_pt, r?.value_ar, r?.value_ru),
     }));
   };
   return {
     ...product,
-    name: pick(product.name, product.name_en, product.name_es),
-    desc: pick(product.desc, product.desc_en, product.desc_es),
-    packaging: pick(product.packaging, product.packaging_en, product.packaging_es),
-    skinType: pick(product.skinType, product.skinType_en, product.skinType_es),
-    oemDesc: pick(product.oemDesc, product.oemDesc_en, product.oemDesc_es),
-    applicationScenarios: pick(
+    name: pickTextByLocale(product.name, product.name_en, product.name_es, product.name_pt, product.name_ar, product.name_ru),
+    desc: pickTextByLocale(product.desc, product.desc_en, product.desc_es, product.desc_pt, product.desc_ar, product.desc_ru),
+    packaging: pickTextByLocale(product.packaging, product.packaging_en, product.packaging_es, product.packaging_pt, product.packaging_ar, product.packaging_ru),
+    skinType: pickTextByLocale(product.skinType, product.skinType_en, product.skinType_es, product.skinType_pt, product.skinType_ar, product.skinType_ru),
+    oemDesc: pickTextByLocale(product.oemDesc, product.oemDesc_en, product.oemDesc_es, product.oemDesc_pt, product.oemDesc_ar, product.oemDesc_ru),
+    applicationScenarios: pickTextByLocale(
       product.applicationScenarios,
       product.applicationScenarios_en,
       product.applicationScenarios_es,
+      product.applicationScenarios_pt,
+      product.applicationScenarios_ar,
+      product.applicationScenarios_ru,
     ),
-    efficacy: pickArr(product.efficacy, product.efficacy_en, product.efficacy_es),
-    tags: pickArr(product.tags, product.tags_en, product.tags_es),
+    efficacy: pickArrayByLocale(product.efficacy, product.efficacy_en, product.efficacy_es, product.efficacy_pt, product.efficacy_ar, product.efficacy_ru),
+    tags: pickArrayByLocale(product.tags, product.tags_en, product.tags_es, product.tags_pt, product.tags_ar, product.tags_ru),
     specifications: pickSpecs(product.specifications),
-    detailContent: pickArr(
+    detailContent: pickArrayByLocale(
       product.detailContent,
       product.detailContent_en,
       product.detailContent_es,
+      product.detailContent_pt,
+      product.detailContent_ar,
+      product.detailContent_ru,
     ),
     ingredients: Array.isArray(product.ingredients)
       ? product.ingredients.map((ing) => ({
@@ -159,6 +176,23 @@ export function pickFaqLocale(faq, locale) {
       q: trimStr(faq.q_es) || trimStr(faq.q_en) || trimStr(faq.q),
       a: trimStr(faq.a_es) || trimStr(faq.a_en) || trimStr(faq.a),
     };
+  }
+  const pickQ = () =>
+    (loc === 'pt' && trimStr(faq.q_pt)) ||
+    (loc === 'ar' && trimStr(faq.q_ar)) ||
+    (loc === 'ru' && trimStr(faq.q_ru)) ||
+    trimStr(faq.q_en) ||
+    trimStr(faq.q_es) ||
+    trimStr(faq.q);
+  const pickA = () =>
+    (loc === 'pt' && trimStr(faq.a_pt)) ||
+    (loc === 'ar' && trimStr(faq.a_ar)) ||
+    (loc === 'ru' && trimStr(faq.a_ru)) ||
+    trimStr(faq.a_en) ||
+    trimStr(faq.a_es) ||
+    trimStr(faq.a);
+  if (loc === 'pt' || loc === 'ar' || loc === 'ru') {
+    return { q: pickQ(), a: pickA() };
   }
   return {
     q: trimStr(faq.q_en) || trimStr(faq.q_es) || trimStr(faq.q),

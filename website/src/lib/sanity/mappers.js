@@ -130,6 +130,9 @@ export function mapSanityProduct(raw) {
   const bodyContent = portableTextToLegacyContent(raw.body);
   const detailEn = legacyContentFromPlain(coalescePlain(raw.bodyPlain_en));
   const detailEs = legacyContentFromPlain(coalescePlain(raw.bodyPlain_es));
+  const detailPt = legacyContentFromPlain(coalescePlain(raw.bodyPlain_pt));
+  const detailAr = legacyContentFromPlain(coalescePlain(raw.bodyPlain_ar));
+  const detailRu = legacyContentFromPlain(coalescePlain(raw.bodyPlain_ru));
   const desc = coalescePlain(raw.desc, raw.description, raw.excerpt, raw.summary);
   const applicationScenarios = coalescePlain(raw.applicationScenarios, raw.applications);
   const specs = normalizeSpecs(raw.specifications);
@@ -144,35 +147,62 @@ export function mapSanityProduct(raw) {
     name: coalescePlain(raw.name, raw.title),
     name_en: coalescePlain(raw.name_en),
     name_es: coalescePlain(raw.name_es),
+    name_pt: coalescePlain(raw.name_pt),
+    name_ar: coalescePlain(raw.name_ar),
+    name_ru: coalescePlain(raw.name_ru),
     img,
     desc: desc || (bodyContent[0]?.text ?? ''),
     desc_en: coalescePlain(raw.description_en, raw.excerpt_en),
     desc_es: coalescePlain(raw.description_es, raw.excerpt_es),
+    desc_pt: coalescePlain(raw.description_pt, raw.excerpt_pt),
+    desc_ar: coalescePlain(raw.description_ar, raw.excerpt_ar),
+    desc_ru: coalescePlain(raw.description_ru, raw.excerpt_ru),
     galleryUrls: Array.isArray(raw.galleryUrls) ? raw.galleryUrls.filter(Boolean) : [],
     detailContent: bodyContent,
     detailContent_en: detailEn,
     detailContent_es: detailEs,
+    detailContent_pt: detailPt,
+    detailContent_ar: detailAr,
+    detailContent_ru: detailRu,
     applicationScenarios,
     applicationScenarios_en: coalescePlain(raw.applicationScenarios_en),
     applicationScenarios_es: coalescePlain(raw.applicationScenarios_es),
+    applicationScenarios_pt: coalescePlain(raw.applicationScenarios_pt),
+    applicationScenarios_ar: coalescePlain(raw.applicationScenarios_ar),
+    applicationScenarios_ru: coalescePlain(raw.applicationScenarios_ru),
     specifications: specs,
     tags,
     tags_en: normalizeTags(raw.tags_en),
     tags_es: normalizeTags(raw.tags_es),
+    tags_pt: normalizeTags(raw.tags_pt),
+    tags_ar: normalizeTags(raw.tags_ar),
+    tags_ru: normalizeTags(raw.tags_ru),
     packaging: coalescePlain(raw.packaging, raw.packagingSuggestion, raw.packagingType),
     packaging_en: coalescePlain(raw.packaging_en),
     packaging_es: coalescePlain(raw.packaging_es),
+    packaging_pt: coalescePlain(raw.packaging_pt),
+    packaging_ar: coalescePlain(raw.packaging_ar),
+    packaging_ru: coalescePlain(raw.packaging_ru),
     supportOem: Boolean(raw.supportOem ?? raw.supportOEM ?? raw.oem),
     skinType: coalescePlain(raw.skinType, raw.skinTypes, raw.targetSkin, raw.audience),
     skinType_en: coalescePlain(raw.skinType_en),
     skinType_es: coalescePlain(raw.skinType_es),
+    skinType_pt: coalescePlain(raw.skinType_pt),
+    skinType_ar: coalescePlain(raw.skinType_ar),
+    skinType_ru: coalescePlain(raw.skinType_ru),
     ingredients,
     efficacy,
     efficacy_en: normalizeEfficacy(raw.efficacy_en),
     efficacy_es: normalizeEfficacy(raw.efficacy_es),
+    efficacy_pt: normalizeEfficacy(raw.efficacy_pt),
+    efficacy_ar: normalizeEfficacy(raw.efficacy_ar),
+    efficacy_ru: normalizeEfficacy(raw.efficacy_ru),
     oemDesc: coalescePlain(raw.oemDesc, raw.customization, raw.odmNote, raw.customNotes),
     oemDesc_en: coalescePlain(raw.oemDesc_en),
     oemDesc_es: coalescePlain(raw.oemDesc_es),
+    oemDesc_pt: coalescePlain(raw.oemDesc_pt),
+    oemDesc_ar: coalescePlain(raw.oemDesc_ar),
+    oemDesc_ru: coalescePlain(raw.oemDesc_ru),
     isFeatured: Boolean(raw.isFeatured),
   };
 }
@@ -185,8 +215,14 @@ function normalizeSpecs(raw) {
       value: coalescePlain(row?.value, row?.text),
       label_en: coalescePlain(row?.label_en),
       label_es: coalescePlain(row?.label_es),
+      label_pt: coalescePlain(row?.label_pt),
+      label_ar: coalescePlain(row?.label_ar),
+      label_ru: coalescePlain(row?.label_ru),
       value_en: coalescePlain(row?.value_en),
       value_es: coalescePlain(row?.value_es),
+      value_pt: coalescePlain(row?.value_pt),
+      value_ar: coalescePlain(row?.value_ar),
+      value_ru: coalescePlain(row?.value_ru),
     }))
     .filter((x) => x.label || x.value);
 }
@@ -202,8 +238,14 @@ export function mapSanityFaq(raw) {
     a: coalescePlain(raw.answer, raw.a, raw.body, typeof raw.content === 'string' ? raw.content : ''),
     q_en: coalescePlain(raw.question_en),
     q_es: coalescePlain(raw.question_es),
+    q_pt: coalescePlain(raw.question_pt),
+    q_ar: coalescePlain(raw.question_ar),
+    q_ru: coalescePlain(raw.question_ru),
     a_en: coalescePlain(raw.answer_en),
     a_es: coalescePlain(raw.answer_es),
+    a_pt: coalescePlain(raw.answer_pt),
+    a_ar: coalescePlain(raw.answer_ar),
+    a_ru: coalescePlain(raw.answer_ru),
     showOnHome: Boolean(raw.showOnHome),
   };
 }
@@ -216,8 +258,14 @@ function mapArticleFaqs(rawList) {
       a: coalescePlain(item?.answer, item?.a, item?.body),
       q_en: coalescePlain(item?.question_en),
       q_es: coalescePlain(item?.question_es),
+      q_pt: coalescePlain(item?.question_pt),
+      q_ar: coalescePlain(item?.question_ar),
+      q_ru: coalescePlain(item?.question_ru),
       a_en: coalescePlain(item?.answer_en),
       a_es: coalescePlain(item?.answer_es),
+      a_pt: coalescePlain(item?.answer_pt),
+      a_ar: coalescePlain(item?.answer_ar),
+      a_ru: coalescePlain(item?.answer_ru),
     }))
     .filter((x) => x.q || x.a);
 }
