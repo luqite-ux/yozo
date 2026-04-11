@@ -1274,9 +1274,11 @@ const ProductDetailPage = () => {
             
             {/* 右侧：产品参数与转化核心 */}
             <div className="lg:col-span-7 flex flex-col justify-center py-4 lg:py-6 min-w-0">
-              <div className="flex items-center gap-3 mb-6">
-                <span className="text-[11px] font-bold tracking-[0.2em] text-[#111111] uppercase bg-gray-200/50 px-3 py-1 rounded-full">{labelProductCategory(product, locale)}</span>
-                <span className="text-[11px] text-gray-400 tracking-widest uppercase flex items-center gap-1"><ShieldCheck size={12}/> {t('products.matureFormula')}</span>
+              <div className="mb-6 flex flex-wrap items-center gap-2 sm:gap-3">
+                <span className="rounded-full bg-gray-200/50 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-[#111111]">{labelProductCategory(product, locale)}</span>
+                <span className="flex items-center gap-1 text-[11px] uppercase tracking-widest text-gray-400">
+                  <ShieldCheck size={12} /> {t('products.matureFormula')}
+                </span>
               </div>
               
               <h1 className="text-3xl md:text-5xl lg:text-5xl font-light tracking-tight mb-6 leading-[1.15] text-[#111111]" itemProp="name">
@@ -1518,14 +1520,14 @@ const FaqPage = () => {
             const { q: faqQ, a: faqA } = pickFaqLocale(faq, locale);
             return (
             <div key={faq.id ?? faq.q ?? idx} className="border-b border-gray-200/60 group">
-              <button className="w-full py-8 flex justify-between items-center text-left hover:text-gray-600 transition-colors" onClick={() => setOpenFaq(openFaq === idx ? -1 : idx)}>
-                <span className={`text-base md:text-lg font-light pr-8 ${openFaq === idx ? 'text-[#111111] font-medium' : 'text-gray-600'}`}>{faqQ}</span>
-                <span className={`transition-transform duration-300 ${openFaq === idx ? 'text-[#111111] rotate-180' : 'text-gray-300'}`}>
+              <button type="button" className="flex w-full items-center justify-between gap-4 px-1 py-6 text-start hover:text-gray-600 transition-colors sm:px-0 sm:py-8" onClick={() => setOpenFaq(openFaq === idx ? -1 : idx)}>
+                <span className={`min-w-0 flex-1 text-base font-light md:text-lg ${openFaq === idx ? 'font-medium text-[#111111]' : 'text-gray-600'}`}>{faqQ}</span>
+                <span className={`shrink-0 transition-transform duration-300 ${openFaq === idx ? 'rotate-180 text-[#111111]' : 'text-gray-300'}`}>
                   {openFaq === idx ? <Minus size={20} strokeWidth={1.5} /> : <Plus size={20} strokeWidth={1.5} />}
                 </span>
               </button>
-              <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openFaq === idx ? 'max-h-[60rem] opacity-100 pb-8' : 'max-h-0 opacity-0'}`}>
-                <p className="text-gray-500 font-light text-[14px] leading-relaxed pr-8">{faqA}</p>
+              <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openFaq === idx ? 'max-h-[60rem] opacity-100 pb-6 sm:pb-8' : 'max-h-0 opacity-0'}`}>
+                <p className="px-1 pb-2 text-[14px] font-light leading-relaxed text-gray-500 sm:px-0">{faqA}</p>
               </div>
             </div>
             );
@@ -1579,7 +1581,7 @@ const ContactPage = () => {
            </div>
 
            {/* Interactive Map Visual */}
-           <div className="relative w-full h-[300px] md:h-[450px] rounded-[24px] border border-white/10 bg-white/5 backdrop-blur-md overflow-hidden mb-16 flex items-center justify-center">
+           <div className="relative mb-16 flex h-[min(52dvh,380px)] w-full items-center justify-center overflow-hidden rounded-[24px] border border-white/10 bg-white/5 backdrop-blur-md sm:h-[340px] md:h-[450px]">
              {/* CSS Grid Pattern */}
              <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_80%)]"></div>
 
@@ -1731,7 +1733,7 @@ const NewsPage = () => {
                 {t('common.featured')}
               </div>
             </div>
-            <div className="w-full lg:w-2/5 p-10 lg:p-16 flex flex-col justify-center">
+            <div className="w-full lg:w-2/5 flex flex-col justify-center p-6 sm:p-10 lg:p-16">
               <div className="flex items-center gap-4 text-[11px] font-bold tracking-widest text-gray-400 uppercase mb-4">
                 <span className="text-[#111111]">{featuredArticle.categoryDisplay}</span>
                 <span className="w-1 h-1 rounded-full bg-gray-300"></span>
@@ -2114,12 +2116,19 @@ const LANG_OPTIONS = [
   { id: 'ru', flag: '🇷🇺', label: 'Русский', short: 'RU' },
 ];
 
-function LanguageSwitcher({ navOnLight }) {
+/** @param {{ navOnLight: boolean, menuAlign?: 'end' | 'center' | 'start' }} props */
+function LanguageSwitcher({ navOnLight, menuAlign = 'end' }) {
   const { locale, t } = useLocale();
   const location = useLocation();
   const switchLocale = useLocaleSwitcherNavigate();
   const [open, setOpen] = useState(false);
   const current = LANG_OPTIONS.find((o) => o.id === locale) || LANG_OPTIONS[0];
+  const menuPositionClass =
+    menuAlign === 'center'
+      ? 'start-1/2 end-auto -translate-x-1/2'
+      : menuAlign === 'start'
+        ? 'start-0 end-auto'
+        : 'end-0 start-auto';
 
   useEffect(() => {
     if (!open) return;
@@ -2146,7 +2155,7 @@ function LanguageSwitcher({ navOnLight }) {
 
       {open && (
         <div
-          className="absolute right-0 top-[calc(100%+6px)] bg-white rounded-xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] border border-gray-100 py-1.5 min-w-[160px] z-[100] overflow-hidden"
+          className={`absolute top-[calc(100%+6px)] z-[100] min-w-[160px] max-w-[min(100vw-2rem,240px)] overflow-hidden rounded-xl border border-gray-100 bg-white py-1.5 shadow-[0_12px_40px_rgba(0,0,0,0.12)] ${menuPositionClass}`}
           onClick={(e) => e.stopPropagation()}
         >
           {LANG_OPTIONS.map((o) => {
@@ -2166,7 +2175,7 @@ function LanguageSwitcher({ navOnLight }) {
                 }`}
               >
                 <span className="text-[18px] leading-none">{o.flag}</span>
-                <span className="flex-1 text-left">{o.label}</span>
+                <span className="flex-1 text-start">{o.label}</span>
                 {active && <span className="text-[10px] text-gray-400">✓</span>}
               </button>
             );
@@ -2204,6 +2213,15 @@ function SiteShell() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [location.pathname]);
 
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [mobileMenuOpen]);
+
   const navItems = useMemo(() => {
     const list = siteSettings?.mainNavigation;
     if (Array.isArray(list) && list.length > 0) {
@@ -2227,20 +2245,23 @@ function SiteShell() {
     <div className="min-h-screen min-w-0 bg-[#FDFDFD] font-sans text-[#222222] selection:bg-gray-200 relative overflow-x-clip">
       <SeoAlternateLinks />
       {/* 现代化高端导航栏 */}
-      <nav className={`fixed w-full z-50 transition-all duration-700 ${
+      <nav className={`fixed inset-x-0 top-0 z-50 transition-all duration-700 pt-[env(safe-area-inset-top,0px)] ${
         navOnLight
           ? 'bg-white/75 backdrop-blur-2xl border-b border-gray-200/50 shadow-[0_4px_30px_rgba(0,0,0,0.03)] py-4' 
           : 'bg-transparent border-b border-white/10 py-8'
       }`}>
-        <div className="max-w-[1400px] mx-auto px-6 md:px-12 flex justify-between items-center relative">
+        <div className="max-w-[1400px] mx-auto flex justify-between items-center relative ps-[max(1rem,env(safe-area-inset-left,0px))] pe-[max(1rem,env(safe-area-inset-right,0px))] sm:ps-6 sm:pe-6 md:ps-12 md:pe-12">
           
-          <div className={`text-xl sm:text-2xl font-bold tracking-[0.12em] sm:tracking-[0.15em] uppercase cursor-pointer transition-colors duration-500 shrink-0 ${navOnLight ? 'text-[#111111]' : 'text-white'}`} onClick={() => navigate('/')}>
+          <div
+            className={`text-lg sm:text-2xl font-bold tracking-[0.1em] sm:tracking-[0.15em] uppercase cursor-pointer transition-colors duration-500 min-w-0 flex-1 mr-3 text-left ${navOnLight ? 'text-[#111111]' : 'text-white'}`}
+            onClick={() => navigate('/')}
+          >
             {siteBrandTitle ? (
-              <span>{siteBrandTitle}</span>
+              <span className="line-clamp-2 leading-tight [overflow-wrap:anywhere]">{siteBrandTitle}</span>
             ) : (
-              <>
+              <span className="line-clamp-1">
                 YOZO<span className="text-gray-400">.</span>
-              </>
+              </span>
             )}
           </div>
           
@@ -2292,13 +2313,16 @@ function SiteShell() {
             </button>
           </div>
 
-          <button type="button" className={`xl:hidden transition-colors duration-500 ${navOnLight ? 'text-[#111111]' : 'text-white'}`} onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+          <button type="button" aria-expanded={mobileMenuOpen} aria-controls="site-mobile-nav" className={`xl:hidden shrink-0 p-2 -m-2 rounded-lg transition-colors duration-500 ${navOnLight ? 'text-[#111111]' : 'text-white'}`} onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
             {mobileMenuOpen ? <X size={28} strokeWidth={1.5} /> : <Menu size={28} strokeWidth={1.5} />}
           </button>
         </div>
 
         {mobileMenuOpen && (
-          <div className="xl:hidden absolute top-full left-0 w-full max-h-[min(80dvh,calc(100vh-4rem))] overflow-y-auto overscroll-contain bg-white shadow-2xl border-t border-gray-100 py-6 flex flex-col">
+          <div
+            id="site-mobile-nav"
+            className="xl:hidden absolute top-full inset-x-0 w-full max-h-[min(85dvh,calc(100dvh-5rem))] overflow-y-auto overscroll-contain bg-white shadow-2xl border-t border-gray-100 py-4 flex flex-col pb-[max(1.5rem,env(safe-area-inset-bottom,0px))]"
+          >
              {navItems.map((item) => (
                <button
                  key={`${item.path}-${item.label}`}
@@ -2307,13 +2331,26 @@ function SiteShell() {
                    followHref(navigate, item.path, item.newTab);
                    setMobileMenuOpen(false);
                  }}
-                 className="w-full text-center px-6 py-4 text-[#111111] text-[14px] tracking-widest hover:bg-gray-50 transition-colors"
+                 className="w-full text-center px-5 py-3.5 text-[#111111] text-[15px] tracking-wide hover:bg-gray-50 transition-colors min-h-12"
                >
                  {navLabelForItem(item, t)}
                </button>
              ))}
-             <div className="px-6 pt-6 pb-2 flex justify-center">
-               <LanguageSwitcher navOnLight={true} />
+             <div className="px-5 pt-4 flex flex-col items-center gap-4 border-t border-gray-100 mt-2">
+               <LanguageSwitcher navOnLight={true} menuAlign="center" />
+               <button
+                 type="button"
+                 onClick={() => {
+                   if (headerCta?.href && headerCta?.label) followHref(navigate, headerCta.href);
+                   else navigate('/contact');
+                   setMobileMenuOpen(false);
+                 }}
+                 className="w-full max-w-xs rounded-full border border-[#1A1A1A] bg-[#1A1A1A] px-6 py-3.5 text-[13px] font-medium tracking-wide text-white transition-colors hover:bg-black"
+               >
+                 {locale === 'zh' && headerCta?.label?.trim()
+                   ? headerCta.label.trim()
+                   : t('common.freeInquiry')}
+               </button>
              </div>
           </div>
         )}
@@ -2325,13 +2362,15 @@ function SiteShell() {
       </main>
 
       {/* 底部 Footer */}
-      <footer className="bg-[#111111] text-white pt-20 pb-10 border-t border-white/10">
-        <div className="container mx-auto px-6 md:px-12 max-w-[1400px]">
+      <footer className="border-t border-white/10 bg-[#111111] pb-[max(2.5rem,env(safe-area-inset-bottom,0px))] pt-20 text-white">
+        <div className="container mx-auto max-w-[1400px] px-4 sm:px-6 md:px-12">
            <div className="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-8 mb-20">
               {/* 品牌信息区 */}
               <div className="md:col-span-12 lg:col-span-5 pr-0 lg:pr-12">
-                <div className="text-3xl font-bold tracking-[0.15em] text-white uppercase mb-6 flex items-center gap-2">
-                  {siteBrandTitle ? siteBrandTitle : (
+                <div className="mb-6 flex items-center gap-2 text-2xl font-bold uppercase tracking-[0.12em] text-white sm:text-3xl sm:tracking-[0.15em]">
+                  {siteBrandTitle ? (
+                    <span className="break-words leading-tight">{siteBrandTitle}</span>
+                  ) : (
                     <>
                       YOZO<span className="text-white/30">.</span>
                     </>
@@ -2393,29 +2432,29 @@ function SiteShell() {
                     <span className="w-3 h-px bg-white/40"></span> {t('footer.colContact')}
                   </h4>
                   <ul className="space-y-5 text-[14px] font-light text-white/70">
-                    <li className="flex items-start gap-3 group">
-                      <Phone size={16} className="mt-0.5 flex-shrink-0 text-white/50 group-hover:text-white transition-colors" />
-                      <span className="hover:text-white transition-colors cursor-default">
+                    <li className="group flex items-start gap-3">
+                      <Phone size={16} className="mt-0.5 shrink-0 text-white/50 transition-colors group-hover:text-white" />
+                      <span className="min-w-0 cursor-default break-words transition-colors hover:text-white">
                         {siteSettings?.contactPhone || '+86 0754-89920101'}
                       </span>
                     </li>
-                    <li className="flex items-start gap-3 group">
-                      <MessageCircle size={16} className="mt-0.5 flex-shrink-0 text-white/50 group-hover:text-white transition-colors" />
-                      <span className="hover:text-white transition-colors cursor-default">
+                    <li className="group flex items-start gap-3">
+                      <MessageCircle size={16} className="mt-0.5 shrink-0 text-white/50 transition-colors group-hover:text-white" />
+                      <span className="min-w-0 cursor-default break-words transition-colors hover:text-white">
                         {siteSettings?.contactWhatsapp
                           ? `WhatsApp: ${siteSettings.contactWhatsapp}`
                           : 'WhatsApp: +86 13632470463'}
                       </span>
                     </li>
-                    <li className="flex items-start gap-3 group">
-                      <Mail size={16} className="mt-0.5 flex-shrink-0 text-white/50 group-hover:text-white transition-colors" />
-                      <span className="hover:text-white transition-colors cursor-default">
+                    <li className="group flex items-start gap-3">
+                      <Mail size={16} className="mt-0.5 shrink-0 text-white/50 transition-colors group-hover:text-white" />
+                      <span className="min-w-0 cursor-default break-all transition-colors hover:text-white">
                         {siteSettings?.contactEmail || 'yozobeauty@outlook.com'}
                       </span>
                     </li>
-                    <li className="flex items-start gap-3 pt-1 group">
-                      <MapPin size={16} className="mt-0.5 flex-shrink-0 text-white/50 group-hover:text-white transition-colors" />
-                      <span className="leading-relaxed hover:text-white transition-colors cursor-default">
+                    <li className="group flex items-start gap-3 pt-1">
+                      <MapPin size={16} className="mt-0.5 shrink-0 text-white/50 transition-colors group-hover:text-white" />
+                      <span className="min-w-0 cursor-default break-words leading-relaxed transition-colors hover:text-white">
                         {locale === 'zh' && siteSettings?.address ? (
                           siteSettings.address
                         ) : (
@@ -2448,7 +2487,7 @@ function SiteShell() {
       </footer>
 
       {/* 全局右下角悬浮表单 */}
-      <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 md:bottom-8 md:right-8 z-50 flex flex-col items-end max-w-[calc(100vw-1.5rem)]">
+      <div className="fixed z-50 flex max-w-[calc(100vw-1.5rem)] flex-col items-end bottom-[max(1rem,env(safe-area-inset-bottom,0px))] end-[max(1rem,env(safe-area-inset-right,0px))] sm:bottom-6 sm:end-6 md:bottom-8 md:end-8">
         {floatingFormOpen && (
           <div className="bg-white shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)] border border-gray-100 rounded-2xl p-5 sm:p-8 mb-3 sm:mb-4 w-[min(22rem,calc(100vw-2rem))] sm:w-[min(24rem,calc(100vw-2.5rem))] md:w-[380px] yozo-animate-panel-up">
             <div className="flex justify-between items-center mb-8">

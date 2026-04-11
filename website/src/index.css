@@ -3,12 +3,21 @@
 /* 避免大屏定宽/绝对定位元素在小屏撑出横向滚动条 */
 html {
   overflow-x: clip;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
   overflow-x: clip;
   margin: 0;
   min-width: 0;
+}
+
+/* 减轻 iOS 点击 300ms 延迟，避免误触缩放 */
+button,
+[role="button"],
+a {
+  touch-action: manipulation;
 }
 
 #root {
