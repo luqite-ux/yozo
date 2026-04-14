@@ -2107,14 +2107,35 @@ const SimplePageView = () => {
 // 主应用渲染 (Main App & Layout)
 // ==========================================
 
+/** ISO 3166-1 alpha-2，用于小国旗图（Windows 上 emoji 区旗常显示为 CN/GB 字母） */
 const LANG_OPTIONS = [
-  { id: 'zh', flag: '🇨🇳', label: '中文', short: '中文' },
-  { id: 'en', flag: '🇬🇧', label: 'English', short: 'EN' },
-  { id: 'es', flag: '🇪🇸', label: 'Español', short: 'ES' },
-  { id: 'pt', flag: '🇧🇷', label: 'Português', short: 'PT' },
-  { id: 'ar', flag: '🇸🇦', label: 'العربية', short: 'AR' },
-  { id: 'ru', flag: '🇷🇺', label: 'Русский', short: 'RU' },
+  { id: 'zh', flagCode: 'cn', label: '中文', short: '中文' },
+  { id: 'en', flagCode: 'gb', label: 'English', short: 'EN' },
+  { id: 'es', flagCode: 'es', label: 'Español', short: 'ES' },
+  { id: 'pt', flagCode: 'br', label: 'Português', short: 'PT' },
+  { id: 'ar', flagCode: 'sa', label: 'العربية', short: 'AR' },
+  { id: 'ru', flagCode: 'ru', label: 'Русский', short: 'RU' },
 ];
+
+/** @param {{ flagCode: string, className?: string }} props */
+function LocaleFlagImg({ flagCode, className = '' }) {
+  return (
+    <span
+      className={`inline-flex shrink-0 overflow-hidden rounded-[2px] ring-1 ring-black/10 ${className}`}
+    >
+      <img
+        src={`https://flagcdn.com/w40/${flagCode}.png`}
+        alt=""
+        width={40}
+        height={30}
+        className="block h-full w-full object-cover"
+        loading="lazy"
+        decoding="async"
+        referrerPolicy="no-referrer"
+      />
+    </span>
+  );
+}
 
 /** @param {{ navOnLight: boolean, menuAlign?: 'end' | 'center' | 'start' }} props */
 function LanguageSwitcher({ navOnLight, menuAlign = 'end' }) {
@@ -2148,7 +2169,7 @@ function LanguageSwitcher({ navOnLight, menuAlign = 'end' }) {
             : 'border-white/30 bg-black/25 text-white/90 hover:border-white/50'
         }`}
       >
-        <span className="text-[15px] leading-none">{current.flag}</span>
+        <LocaleFlagImg flagCode={current.flagCode} className="h-3.5 w-[22px]" />
         <span>{current.short}</span>
         <ChevronRight size={12} className={`transition-transform duration-200 ${open ? 'rotate-90' : ''}`} />
       </button>
@@ -2174,7 +2195,7 @@ function LanguageSwitcher({ navOnLight, menuAlign = 'end' }) {
                     : 'text-gray-600 hover:bg-gray-50 hover:text-[#111]'
                 }`}
               >
-                <span className="text-[18px] leading-none">{o.flag}</span>
+                <LocaleFlagImg flagCode={o.flagCode} className="h-4 w-6" />
                 <span className="flex-1 text-start">{o.label}</span>
                 {active && <span className="text-[10px] text-gray-400">✓</span>}
               </button>
