@@ -664,7 +664,7 @@ const HomePage = () => {
               {t('products.browseProducts')} <ArrowUpRight size={16} className="transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"/>
             </button>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
             {featuredProducts.map(product => (
               <div key={product.id} className="group cursor-pointer bg-[#FAFAFA] border border-gray-100/50 rounded-[16px] md:rounded-[20px] hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1 transition-all duration-500" onClick={() => navigate(productDetailPath(product))}>
                 <div className="relative aspect-square sm:aspect-[4/5] overflow-hidden bg-gray-100 mb-2 md:mb-3 rounded-t-[16px] md:rounded-t-[20px]">
@@ -674,7 +674,7 @@ const HomePage = () => {
                   }
                 </div>
                 <div className="p-3 md:p-5 pt-1 md:pt-2">
-                  <div className="text-[9px] md:text-[10px] tracking-widest text-gray-400 uppercase mb-1">{labelProductCategory(product, locale)}</div>
+                  <div className="text-[10px] md:text-[11px] tracking-widest text-gray-400 uppercase mb-1">{labelProductCategory(product, locale)}</div>
                   <h3 className="text-[13px] md:text-[15px] font-medium group-hover:text-[#1A1A1A] transition-colors line-clamp-2 text-[#333]">{product.name}</h3>
                 </div>
               </div>
@@ -1559,8 +1559,8 @@ const ContactPage = () => {
       <div className="inline-flex items-center gap-3 mb-6">
         <span className="h-px w-8 bg-gray-300"></span><span className="text-[11px] font-bold tracking-[0.3em] uppercase text-gray-400">{t('contact.eyebrow')}</span><span className="h-px w-8 bg-gray-300"></span>
       </div>
-      <h1 className="text-4xl md:text-5xl font-light tracking-tight mb-6 text-[#111111]">{t('contact.title')}</h1>
-      <p className="text-gray-500 font-light text-lg">{t('contact.lead')}</p>
+      <h1 className="text-3xl sm:text-4xl md:text-5xl font-light tracking-tight mb-6 text-[#111111]">{t('contact.title')}</h1>
+      <p className="text-gray-500 font-light text-base sm:text-lg">{t('contact.lead')}</p>
     </div>
 
     {/* Global Network Map Section */}
@@ -1594,7 +1594,7 @@ const ContactPage = () => {
                  </div>
                  <div className={`flex flex-col items-center bg-black/50 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-lg transition-all duration-300 ${dot.isHQ ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0'}`}>
                     <span className="text-[11px] font-bold tracking-widest text-white whitespace-nowrap">{dot.label}</span>
-                    <span className="text-[9px] tracking-widest text-white/50 uppercase font-light mt-0.5">{dot.sub}</span>
+                   <span className="text-[10px] tracking-widest text-white/50 uppercase font-light mt-0.5">{dot.sub}</span>
                  </div>
                </div>
              ))}
@@ -1606,7 +1606,7 @@ const ContactPage = () => {
            </div>
 
            {/* Key Stats */}
-           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-4 text-center divide-x-0 md:divide-x divide-white/10">
+           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 md:gap-4 text-center divide-x-0 md:divide-x divide-white/10">
               <div>
                  <div className="text-4xl font-light text-white mb-2">50<span className="text-2xl text-white/50">+</span></div>
                  <div className="text-[11px] tracking-[0.2em] text-white/50 uppercase font-bold">{t('contact.statCountries')}</div>
@@ -1631,7 +1631,7 @@ const ContactPage = () => {
     {/* Global Offices Cards */}
     <section className="container mx-auto px-6 md:px-12 mb-24 max-w-6xl">
        <div className="grid md:grid-cols-3 gap-6">
-          <div className="bg-white p-8 rounded-[20px] border border-gray-100 shadow-[0_4px_20px_rgb(0,0,0,0.02)] hover:-translate-y-1 transition-transform">
+          <div className="bg-white p-6 sm:p-8 rounded-[20px] border border-gray-100 shadow-[0_4px_20px_rgb(0,0,0,0.02)] hover:-translate-y-1 transition-transform">
              <div className="w-10 h-10 rounded-full bg-[#FAFAFA] flex items-center justify-center mb-6 text-[#111111]">
                <MapPin size={18} strokeWidth={1.5}/>
              </div>
@@ -1639,7 +1639,7 @@ const ContactPage = () => {
              <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-4">Shantou, China</div>
              <p className="text-[13px] text-gray-500 font-light leading-relaxed">{t('contact.card1p')}</p>
           </div>
-          <div className="bg-white p-8 rounded-[20px] border border-gray-100 shadow-[0_4px_20px_rgb(0,0,0,0.02)] hover:-translate-y-1 transition-transform">
+          <div className="bg-white p-6 sm:p-8 rounded-[20px] border border-gray-100 shadow-[0_4px_20px_rgb(0,0,0,0.02)] hover:-translate-y-1 transition-transform">
              <div className="w-10 h-10 rounded-full bg-[#FAFAFA] flex items-center justify-center mb-6 text-[#111111]">
                <Phone size={18} strokeWidth={1.5}/>
              </div>
@@ -1650,7 +1650,7 @@ const ContactPage = () => {
                <span>{t('contact.card2l2')}</span>
              </p>
           </div>
-          <div className="bg-white p-8 rounded-[20px] border border-gray-100 shadow-[0_4px_20px_rgb(0,0,0,0.02)] hover:-translate-y-1 transition-transform">
+          <div className="bg-white p-6 sm:p-8 rounded-[20px] border border-gray-100 shadow-[0_4px_20px_rgb(0,0,0,0.02)] hover:-translate-y-1 transition-transform">
              <div className="w-10 h-10 rounded-full bg-[#FAFAFA] flex items-center justify-center mb-6 text-[#111111]">
                <Mail size={18} strokeWidth={1.5}/>
              </div>
@@ -1863,7 +1863,7 @@ const NewsDetailPage = () => {
           <button onClick={() => navigate('/news')} className="group text-[12px] font-medium tracking-[0.1em] text-gray-400 hover:text-[#111111] mb-12 flex items-center gap-2 transition-colors uppercase">
             <ArrowRight size={14} className="rotate-180 transition-transform group-hover:-translate-x-1" /> {t('common.backToNews')}
           </button>
-          <div className="flex items-center gap-4 text-[11px] font-bold tracking-widest text-gray-400 uppercase mb-6">
+          <div className="mb-6 flex flex-wrap items-center gap-3 text-[11px] font-bold tracking-widest text-gray-400 uppercase">
              <span className="bg-[#111111] text-white px-3 py-1 rounded-full">{article.categoryDisplay}</span>
              <time dateTime={article.date}>{article.date}</time>
              <span className="w-1 h-1 rounded-full bg-gray-300"></span>
@@ -1872,7 +1872,7 @@ const NewsDetailPage = () => {
           <h1 className="text-3xl md:text-5xl lg:text-6xl font-light tracking-tight mb-8 leading-[1.2] text-[#111111]" itemProp="headline">
             {article.title}
           </h1>
-          <p className="text-xl font-light text-gray-500 leading-relaxed border-l-2 border-[#111111] pl-6" itemProp="description">
+          <p className="border-l-2 border-[#111111] pl-4 sm:pl-6 text-lg sm:text-xl font-light text-gray-500 leading-relaxed" itemProp="description">
             {article.summary}
           </p>
         </div>
@@ -1904,8 +1904,8 @@ const NewsDetailPage = () => {
             })}
           </div>
           
-          <div className="mt-16 pt-8 border-t border-gray-100 flex justify-between items-center">
-             <div className="flex gap-2">
+          <div className="mt-16 flex flex-col gap-4 border-t border-gray-100 pt-8 sm:flex-row sm:items-center sm:justify-between">
+             <div className="flex flex-wrap gap-2">
                 <span className="text-[11px] font-medium tracking-widest text-gray-400 uppercase bg-gray-50 px-3 py-1.5 rounded-full">{article.categoryDisplay}</span>
                 <span className="text-[11px] font-medium tracking-widest text-gray-400 uppercase bg-gray-50 px-3 py-1.5 rounded-full">{t('news.insightsTag')}</span>
              </div>
@@ -1961,9 +1961,9 @@ const NewsDetailPage = () => {
                 <article 
                   key={rel.id} 
                   onClick={() => { navigate(`/news/${rel.id}`); setOpenFaq(0); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                  className="group cursor-pointer bg-white p-6 md:p-8 rounded-[24px] border border-gray-100 hover:shadow-lg transition-all duration-300 flex items-center gap-6"
+                  className="group cursor-pointer bg-white p-6 md:p-8 rounded-[24px] border border-gray-100 hover:shadow-lg transition-all duration-300 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-6"
                 >
-                  <div className="w-24 h-24 md:w-32 md:h-32 rounded-[16px] overflow-hidden flex-shrink-0 bg-gray-50">
+                  <div className="h-24 w-full sm:w-24 md:w-32 sm:h-24 md:h-32 rounded-[16px] overflow-hidden flex-shrink-0 bg-gray-50">
                     <img src={rel.img} alt={rel.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                   </div>
                   <div>
