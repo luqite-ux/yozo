@@ -517,7 +517,30 @@ async function main() {
     }
 
     const hash = hashPost(doc);
-    if (!FORCE && doc.translationSourceHash === hash) {
+    const hasMissingPostLocales = () => {
+      const requiredTextFields = ['title', 'summary', 'bodyPlain'];
+      for (const field of requiredTextFields) {
+        const baseValue = field === 'bodyPlain'
+          ? bodyPlain
+          : String(doc[field] || '').trim();
+        if (!baseValue) continue;
+        for (const loc of PRODUCT_LOCALES) {
+          if (!String(doc[`${field}_${loc}`] || '').trim()) return true;
+        }
+      }
+      if (Array.isArray(doc.relatedFaqs) && doc.relatedFaqs.length > 0) {
+        for (const item of doc.relatedFaqs) {
+          const q = String(item?.question || '').trim();
+          const a = String(item?.answer || '').trim();
+          for (const loc of PRODUCT_LOCALES) {
+            if (q && !String(item?.[`question_${loc}`] || '').trim()) return true;
+            if (a && !String(item?.[`answer_${loc}`] || '').trim()) return true;
+          }
+        }
+      }
+      return false;
+    };
+    if (!FORCE && doc.translationSourceHash === hash && !hasMissingPostLocales()) {
       postSkipped++;
       console.log(`  [skip] ${doc._id} — already translated`);
       continue;
@@ -537,37 +560,34 @@ async function main() {
     try {
       const patch = { translationSourceHash: hash };
       if (title) {
-        console.log(`    title → en…`);
-        patch.title_en = await translateText(title, 'zh-CN', 'en');
-        console.log(`    title → es…`);
-        patch.title_es = await translateText(title, 'zh-CN', 'es');
+        console.log(`    title → ${PRODUCT_LOCALES.join('/')}…`);
+        const byLocale = await translateForLocales(title, 'zh-CN', PRODUCT_LOCALES);
+        for (const loc of PRODUCT_LOCALES) patch[`title_${loc}`] = byLocale[loc];
       }
       if (summary) {
-        console.log(`    summary → en…`);
-        patch.summary_en = await translateText(summary, 'zh-CN', 'en');
-        console.log(`    summary → es…`);
-        patch.summary_es = await translateText(summary, 'zh-CN', 'es');
+        console.log(`    summary → ${PRODUCT_LOCALES.join('/')}…`);
+        const byLocale = await translateForLocales(summary, 'zh-CN', PRODUCT_LOCALES);
+        for (const loc of PRODUCT_LOCALES) patch[`summary_${loc}`] = byLocale[loc];
       }
       if (hasBody) {
-        console.log(`    body (plain) → en…`);
-        patch.bodyPlain_en = await translateText(bodyPlain, 'zh-CN', 'en');
-        console.log(`    body (plain) → es…`);
-        patch.bodyPlain_es = await translateText(bodyPlain, 'zh-CN', 'es');
+        console.log(`    body (plain) → ${PRODUCT_LOCALES.join('/')}…`);
+        const byLocale = await translateForLocales(bodyPlain, 'zh-CN', PRODUCT_LOCALES);
+        for (const loc of PRODUCT_LOCALES) patch[`bodyPlain_${loc}`] = byLocale[loc];
       }
       if (hasFaqs) {
-        console.log(`    relatedFaqs[] → en/es…`);
+        console.log(`    relatedFaqs[] → ${PRODUCT_LOCALES.join('/')}…`);
         const rows = [];
         for (const item of doc.relatedFaqs) {
           const q = String(item.question || '').trim();
           const a = String(item.answer || '').trim();
           const row = { ...item };
           if (q) {
-            row.question_en = await translateText(q, 'zh-CN', 'en');
-            row.question_es = await translateText(q, 'zh-CN', 'es');
+            const byLocale = await translateForLocales(q, 'zh-CN', PRODUCT_LOCALES);
+            for (const loc of PRODUCT_LOCALES) row[`question_${loc}`] = byLocale[loc];
           }
           if (a) {
-            row.answer_en = await translateText(a, 'zh-CN', 'en');
-            row.answer_es = await translateText(a, 'zh-CN', 'es');
+            const byLocale = await translateForLocales(a, 'zh-CN', PRODUCT_LOCALES);
+            for (const loc of PRODUCT_LOCALES) row[`answer_${loc}`] = byLocale[loc];
           }
           rows.push(row);
         }

@@ -136,7 +136,10 @@ export const homePageQuery = `*[_type == "homePage"][0]{
   },
   faqSectionTitle,
   ctaSection,
-  content,
+  "content": content{
+    ...,
+    "worldBackgroundImageUrl": worldBackgroundImage.asset->url
+  },
   sections,
   seo,
   "seoOgImageUrl": seo.ogImage.asset->url

@@ -96,6 +96,28 @@ export default defineType({
       description: '留空时前台使用 i18n 默认文案；填写后中文前台优先显示这里的文案。',
       fields: [
         defineField({ name: 'trustLine', title: '信任背书行文案', type: 'string' }),
+        defineField({
+          name: 'trustBrands',
+          title: '信任背书品牌列表',
+          type: 'array',
+          of: [{ type: 'string' }],
+          description: '示例：SGS Tested、BASF、DSM、Symrise、Lubrizol、Givaudan、FDA Compliant',
+        }),
+        defineField({
+          name: 'stats',
+          title: '数据指标卡（4 项）',
+          type: 'array',
+          validation: (r) => r.max(8),
+          of: [
+            {
+              type: 'object',
+              fields: [
+                defineField({ name: 'value', title: '数值', type: 'string' }),
+                defineField({ name: 'label', title: '标签', type: 'string' }),
+              ],
+            },
+          ],
+        }),
         defineField({ name: 'serviceEyebrow', title: '服务模块眉题', type: 'string' }),
         defineField({ name: 'serviceTitle', title: '服务模块标题', type: 'string' }),
         defineField({ name: 'serviceLead', title: '服务模块导语', type: 'text', rows: 2 }),
@@ -123,12 +145,19 @@ export default defineType({
         defineField({ name: 'worldTitle1', title: '全球模块标题第一行', type: 'string' }),
         defineField({ name: 'worldTitle2', title: '全球模块标题第二行', type: 'string' }),
         defineField({ name: 'worldLead', title: '全球模块导语', type: 'text', rows: 2 }),
+        defineField({
+          name: 'worldBackgroundImage',
+          title: '全球模块背景图',
+          type: 'image',
+          options: { hotspot: true },
+        }),
         defineField({ name: 'worldLawT', title: '全球模块卡片1标题', type: 'string' }),
         defineField({ name: 'worldLawD', title: '全球模块卡片1说明', type: 'text', rows: 2 }),
         defineField({ name: 'worldLogT', title: '全球模块卡片2标题', type: 'string' }),
         defineField({ name: 'worldLogD', title: '全球模块卡片2说明', type: 'text', rows: 2 }),
         defineField({ name: 'featEyebrow', title: '精选产品模块眉题', type: 'string' }),
         defineField({ name: 'featTitle', title: '精选产品模块标题', type: 'string' }),
+        defineField({ name: 'browseProducts', title: '精选产品右侧按钮文案', type: 'string' }),
         defineField({ name: 'casesEyebrow', title: '案例模块眉题', type: 'string' }),
         defineField({ name: 'casesTitle', title: '案例模块标题', type: 'string' }),
         defineField({ name: 'faqSectionLead', title: 'FAQ 模块导语', type: 'text', rows: 2 }),

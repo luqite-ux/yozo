@@ -368,6 +368,20 @@ const HomePage = () => {
     { icon: <Lock size={24} strokeWidth={1.5} />, title: hc('why3t', 'home.why3t'), desc: hc('why3d', 'home.why3d') },
     { icon: <Activity size={24} strokeWidth={1.5} />, title: hc('why4t', 'home.why4t'), desc: hc('why4d', 'home.why4d') },
   ];
+  const trustBrands = Array.isArray(homeContent?.trustBrands) && homeContent.trustBrands.length
+    ? homeContent.trustBrands.filter(Boolean)
+    : ['SGS Tested', 'BASF', 'DSM', 'Symrise', 'Lubrizol', 'Givaudan', 'FDA Compliant'];
+  const homeStats =
+    Array.isArray(homeContent?.stats) && homeContent.stats.length
+      ? homeContent.stats
+          .map((s) => ({ value: String(s?.value || '').trim(), label: String(s?.label || '').trim() }))
+          .filter((s) => s.value || s.label)
+      : [
+          { value: '15+', label: t('home.statYears') },
+          { value: '10k+', label: t('home.statFormulas') },
+          { value: '10w', label: t('home.statClean') },
+          { value: '1M+', label: t('home.statCap') },
+        ];
 
   if (loading) return <CmsLoadingScreen />;
   if (error) {
@@ -465,13 +479,13 @@ const HomePage = () => {
         <div className="container mx-auto px-4">
           <div className="text-[11px] tracking-[0.2em] text-center text-gray-400 uppercase mb-8 font-medium">{hc('trustLine', 'home.trustLine')}</div>
           <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-40 grayscale hover:grayscale-0 transition-all duration-500 text-sm md:text-lg font-bold tracking-tighter">
-            <span className="flex items-center gap-1"><Globe2 size={18}/> SGS Tested</span>
-            <span>BASF</span>
-            <span>DSM</span>
-            <span>Symrise</span>
-            <span>Lubrizol</span>
-            <span>Givaudan</span>
-            <span className="flex items-center gap-1"><Award size={18}/> FDA Compliant</span>
+            {trustBrands.map((item, idx) => (
+              <span key={`${item}-${idx}`} className="flex items-center gap-1">
+                {idx === 0 ? <Globe2 size={18} /> : null}
+                {idx === trustBrands.length - 1 ? <Award size={18} /> : null}
+                {item}
+              </span>
+            ))}
           </div>
         </div>
       </section>
@@ -479,18 +493,12 @@ const HomePage = () => {
       {/* 3. 数据与优势指标 */}
       <section className="bg-white py-12 md:py-20">
         <div className="container mx-auto px-4 md:px-12 grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 max-w-6xl">
-          <div className="bg-[#FAFAFA] rounded-xl md:rounded-2xl p-5 md:p-8 text-center hover:-translate-y-1 transition-transform duration-300">
-            <div className="text-3xl md:text-5xl font-light mb-1 md:mb-2 text-[#111111]">15+</div><div className="text-[11px] md:text-[12px] text-gray-500 font-medium">{t('home.statYears')}</div>
-          </div>
-          <div className="bg-[#FAFAFA] rounded-xl md:rounded-2xl p-5 md:p-8 text-center hover:-translate-y-1 transition-transform duration-300">
-            <div className="text-3xl md:text-5xl font-light mb-1 md:mb-2 text-[#111111]">10k+</div><div className="text-[11px] md:text-[12px] text-gray-500 font-medium">{t('home.statFormulas')}</div>
-          </div>
-          <div className="bg-[#FAFAFA] rounded-xl md:rounded-2xl p-5 md:p-8 text-center hover:-translate-y-1 transition-transform duration-300">
-            <div className="text-3xl md:text-5xl font-light mb-1 md:mb-2 text-[#111111]">10w</div><div className="text-[11px] md:text-[12px] text-gray-500 font-medium">{t('home.statClean')}</div>
-          </div>
-          <div className="bg-[#FAFAFA] rounded-xl md:rounded-2xl p-5 md:p-8 text-center hover:-translate-y-1 transition-transform duration-300">
-            <div className="text-3xl md:text-5xl font-light mb-1 md:mb-2 text-[#111111]">1M+</div><div className="text-[11px] md:text-[12px] text-gray-500 font-medium">{t('home.statCap')}</div>
-          </div>
+          {homeStats.slice(0, 4).map((stat, idx) => (
+            <div key={`${stat.value}-${idx}`} className="bg-[#FAFAFA] rounded-xl md:rounded-2xl p-5 md:p-8 text-center hover:-translate-y-1 transition-transform duration-300">
+              <div className="text-3xl md:text-5xl font-light mb-1 md:mb-2 text-[#111111]">{stat.value || '—'}</div>
+              <div className="text-[11px] md:text-[12px] text-gray-500 font-medium">{stat.label || '—'}</div>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -608,7 +616,7 @@ const HomePage = () => {
       {/* 7. 全球出口与市场覆盖 */}
       <div className="relative py-32 md:py-40 bg-[#1A1A1A] text-white overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <img src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=2000" alt={t('home.globalNetAlt')} className="w-full h-full object-cover opacity-[0.15] filter grayscale mix-blend-screen" />
+          <img src={homeContent?.worldBackgroundImageUrl || 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=2000'} alt={t('home.globalNetAlt')} className="w-full h-full object-cover opacity-[0.15] filter grayscale mix-blend-screen" />
           <div className="absolute inset-0 bg-gradient-to-r from-[#1A1A1A] via-[#1A1A1A]/80 to-transparent"></div>
         </div>
 
@@ -660,7 +668,7 @@ const HomePage = () => {
               <h2 className="text-3xl md:text-4xl font-light tracking-tight">{hc('featTitle', 'home.featTitle')}</h2>
             </div>
             <button onClick={() => navigate('/products')} className="group flex items-center gap-2 text-[14px] font-medium tracking-wide text-gray-500 hover:text-[#111111] transition-colors">
-              {t('products.browseProducts')} <ArrowUpRight size={16} className="transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"/>
+              {hc('browseProducts', 'products.browseProducts')} <ArrowUpRight size={16} className="transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"/>
             </button>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
