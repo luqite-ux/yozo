@@ -129,6 +129,12 @@ export function localizeProduct(product, locale) {
  */
 export function localizePost(article, locale) {
   if (!article) return article;
+  const pick = (zh, en, es) => pickCmsI18nString(zh, en, es, locale);
+  const pickTextByLocale = (zh, en, es, pt, ar, ru) =>
+    (locale === 'pt' && trimStr(pt)) ||
+    (locale === 'ar' && trimStr(ar)) ||
+    (locale === 'ru' && trimStr(ru)) ||
+    pick(zh, en, es);
   const faqs = Array.isArray(article.faqs)
     ? article.faqs
         .map((f) => {
@@ -138,8 +144,14 @@ export function localizePost(article, locale) {
               a: f.a,
               q_en: f.q_en,
               q_es: f.q_es,
+              q_pt: f.q_pt,
+              q_ar: f.q_ar,
+              q_ru: f.q_ru,
               a_en: f.a_en,
               a_es: f.a_es,
+              a_pt: f.a_pt,
+              a_ar: f.a_ar,
+              a_ru: f.a_ru,
             },
             locale,
           );
@@ -154,9 +166,27 @@ export function localizePost(article, locale) {
   }
   return {
     ...article,
-    title: pickCmsI18nString(article.title, article.title_en, article.title_es, locale),
-    summary: pickCmsI18nString(article.summary, article.summary_en, article.summary_es, locale),
-    content: pickArr(article.content, article.content_en, article.content_es),
+    title: pickTextByLocale(
+      article.title,
+      article.title_en,
+      article.title_es,
+      article.title_pt,
+      article.title_ar,
+      article.title_ru,
+    ),
+    summary: pickTextByLocale(
+      article.summary,
+      article.summary_en,
+      article.summary_es,
+      article.summary_pt,
+      article.summary_ar,
+      article.summary_ru,
+    ),
+    content:
+      (locale === 'pt' && Array.isArray(article.content_pt) && article.content_pt.length && article.content_pt) ||
+      (locale === 'ar' && Array.isArray(article.content_ar) && article.content_ar.length && article.content_ar) ||
+      (locale === 'ru' && Array.isArray(article.content_ru) && article.content_ru.length && article.content_ru) ||
+      pickArr(article.content, article.content_en, article.content_es),
     categoryDisplay,
     faqs,
   };

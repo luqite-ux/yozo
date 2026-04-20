@@ -136,6 +136,7 @@ export const homePageQuery = `*[_type == "homePage"][0]{
   },
   faqSectionTitle,
   ctaSection,
+  content,
   sections,
   seo,
   "seoOgImageUrl": seo.ogImage.asset->url
@@ -198,13 +199,16 @@ export const faqsQuery = `*[_type == "faq" && ${published}] | order(coalesce(sor
 /** @type {string} */
 export const postsQuery = `*[_type == "post" && ${published}] | order(coalesce(publishedAt, _createdAt) desc) {
   _id,
-  title, title_en, title_es,
+  title, title_en, title_es, title_pt, title_ar, title_ru,
   slug,
   headline,
   excerpt,
-  summary, summary_en, summary_es,
+  summary, summary_en, summary_es, summary_pt, summary_ar, summary_ru,
   bodyPlain_en,
   bodyPlain_es,
+  bodyPlain_pt,
+  bodyPlain_ar,
+  bodyPlain_ru,
   blurb,
   readTime,
   readingTime,

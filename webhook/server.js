@@ -520,7 +520,30 @@ async function processPost(doc) {
     .update([title, summary, faqKey, bodyPlain].join('|'))
     .digest('hex');
 
-  if (doc.translationSourceHash && doc.translationSourceHash === currentHash) {
+  const hasMissingPostLocales = () => {
+    const requiredTextFields = ['title', 'summary', 'bodyPlain'];
+    for (const field of requiredTextFields) {
+      const baseValue = String(doc[field] || '').trim();
+      if (!baseValue) continue;
+      for (const loc of PRODUCT_LOCALES) {
+        const translated = String(doc[`${field}_${loc}`] || '').trim();
+        if (!translated) return true;
+      }
+    }
+    if (Array.isArray(doc.relatedFaqs) && doc.relatedFaqs.length > 0) {
+      for (const item of doc.relatedFaqs) {
+        const q = String(item?.question || '').trim();
+        const a = String(item?.answer || '').trim();
+        for (const loc of PRODUCT_LOCALES) {
+          if (q && !String(item?.[`question_${loc}`] || '').trim()) return true;
+          if (a && !String(item?.[`answer_${loc}`] || '').trim()) return true;
+        }
+      }
+    }
+    return false;
+  };
+
+  if (doc.translationSourceHash && doc.translationSourceHash === currentHash && !hasMissingPostLocales()) {
     console.log(`[${_id}] Skipped (post) — already translated`);
     return { skipped: true, reason: 'already translated' };
   }
@@ -529,54 +552,34 @@ async function processPost(doc) {
   const patch = { translationSourceHash: currentHash };
 
   if (title) {
-    const [title_en, title_es] = await Promise.all([
-      translateText(title, 'zh-CN', 'en'),
-      translateText(title, 'zh-CN', 'es'),
-    ]);
-    patch.title_en = title_en;
-    patch.title_es = title_es;
+    const byLocale = await translateForLocales(title, 'zh-CN', PRODUCT_LOCALES);
+    for (const loc of PRODUCT_LOCALES) patch[`title_${loc}`] = byLocale[loc];
   }
   if (summary) {
-    const [summary_en, summary_es] = await Promise.all([
-      translateText(summary, 'zh-CN', 'en'),
-      translateText(summary, 'zh-CN', 'es'),
-    ]);
-    patch.summary_en = summary_en;
-    patch.summary_es = summary_es;
+    const byLocale = await translateForLocales(summary, 'zh-CN', PRODUCT_LOCALES);
+    for (const loc of PRODUCT_LOCALES) patch[`summary_${loc}`] = byLocale[loc];
   }
 
   if (hasBody) {
-    console.log(`  post body (plain) → en/es`);
-    const [bodyPlain_en, bodyPlain_es] = await Promise.all([
-      translateText(bodyPlain, 'zh-CN', 'en'),
-      translateText(bodyPlain, 'zh-CN', 'es'),
-    ]);
-    patch.bodyPlain_en = bodyPlain_en;
-    patch.bodyPlain_es = bodyPlain_es;
+    console.log(`  post body (plain) → ${PRODUCT_LOCALES.join('/')}`);
+    const byLocale = await translateForLocales(bodyPlain, 'zh-CN', PRODUCT_LOCALES);
+    for (const loc of PRODUCT_LOCALES) patch[`bodyPlain_${loc}`] = byLocale[loc];
   }
 
   if (hasFaqs) {
-    console.log(`  relatedFaqs[] → en/es`);
+    console.log(`  relatedFaqs[] → ${PRODUCT_LOCALES.join('/')}`);
     const rows = [];
     for (const item of doc.relatedFaqs) {
       const q = String(item.question || '').trim();
       const a = String(item.answer || '').trim();
       const row = { ...item };
       if (q) {
-        const [question_en, question_es] = await Promise.all([
-          translateText(q, 'zh-CN', 'en'),
-          translateText(q, 'zh-CN', 'es'),
-        ]);
-        row.question_en = question_en;
-        row.question_es = question_es;
+        const byLocale = await translateForLocales(q, 'zh-CN', PRODUCT_LOCALES);
+        for (const loc of PRODUCT_LOCALES) row[`question_${loc}`] = byLocale[loc];
       }
       if (a) {
-        const [answer_en, answer_es] = await Promise.all([
-          translateText(a, 'zh-CN', 'en'),
-          translateText(a, 'zh-CN', 'es'),
-        ]);
-        row.answer_en = answer_en;
-        row.answer_es = answer_es;
+        const byLocale = await translateForLocales(a, 'zh-CN', PRODUCT_LOCALES);
+        for (const loc of PRODUCT_LOCALES) row[`answer_${loc}`] = byLocale[loc];
       }
       rows.push(row);
     }

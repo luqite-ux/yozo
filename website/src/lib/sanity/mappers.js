@@ -364,6 +364,9 @@ export function mapSanityPost(raw) {
 
   const content_en = legacyContentFromPlain(coalescePlain(raw.bodyPlain_en));
   const content_es = legacyContentFromPlain(coalescePlain(raw.bodyPlain_es));
+  const content_pt = legacyContentFromPlain(coalescePlain(raw.bodyPlain_pt));
+  const content_ar = legacyContentFromPlain(coalescePlain(raw.bodyPlain_ar));
+  const content_ru = legacyContentFromPlain(coalescePlain(raw.bodyPlain_ru));
 
   return {
     id: sanityRefToLegacyId(String(raw._id)),
@@ -373,6 +376,9 @@ export function mapSanityPost(raw) {
     title: coalescePlain(raw.title, raw.headline),
     title_en: coalescePlain(raw.title_en),
     title_es: coalescePlain(raw.title_es),
+    title_pt: coalescePlain(raw.title_pt),
+    title_ar: coalescePlain(raw.title_ar),
+    title_ru: coalescePlain(raw.title_ru),
     date: dateStr || new Date().toISOString().slice(0, 10),
     readTime: coalescePlain(raw.readTime, raw.readingTime, '5 min') || '5 min',
     views: coalescePlain(raw.views, raw.viewCount, '—'),
@@ -380,9 +386,15 @@ export function mapSanityPost(raw) {
     summary: summary || (content[0]?.text ?? ''),
     summary_en: coalescePlain(raw.summary_en),
     summary_es: coalescePlain(raw.summary_es),
+    summary_pt: coalescePlain(raw.summary_pt),
+    summary_ar: coalescePlain(raw.summary_ar),
+    summary_ru: coalescePlain(raw.summary_ru),
     content,
     content_en,
     content_es,
+    content_pt,
+    content_ar,
+    content_ru,
     faqs,
   };
 }
@@ -551,6 +563,7 @@ export function mergeHomePageIntoSiteSettings(mappedBase, homeRaw) {
   m.homeFeaturedFaqs = homeFeaturedFaqs;
   m.faqSectionTitle = homeRaw.faqSectionTitle || null;
   m.homeCtaSection = homeRaw.ctaSection || null;
+  m.homeContent = homeRaw.content && typeof homeRaw.content === 'object' ? homeRaw.content : null;
   m.homeSeoOgImageUrl = coalescePlain(homeRaw.seoOgImageUrl, homeRaw.seo?.ogImage?.asset?.url);
 
   return m;

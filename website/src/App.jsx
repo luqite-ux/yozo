@@ -359,16 +359,15 @@ const HomePage = () => {
       ? siteSettings.coreCompetenceGmpcBody.trim()
       : t('home.coreGmpcBody');
   const faqSectionHeading = cmsZhElseT(locale, siteSettings?.faqSectionTitle, 'home.faqSectionTitle', t);
+  const homeContent = siteSettings?.homeContent;
+  const hc = (field, key) => cmsZhElseT(locale, homeContent?.[field], key, t);
 
-  const whyItems = useMemo(
-    () => [
-      { icon: <Target size={24} strokeWidth={1.5} />, title: t('home.why1t'), desc: t('home.why1d') },
-      { icon: <Zap size={24} strokeWidth={1.5} />, title: t('home.why2t'), desc: t('home.why2d') },
-      { icon: <Lock size={24} strokeWidth={1.5} />, title: t('home.why3t'), desc: t('home.why3d') },
-      { icon: <Activity size={24} strokeWidth={1.5} />, title: t('home.why4t'), desc: t('home.why4d') },
-    ],
-    [t],
-  );
+  const whyItems = [
+    { icon: <Target size={24} strokeWidth={1.5} />, title: hc('why1t', 'home.why1t'), desc: hc('why1d', 'home.why1d') },
+    { icon: <Zap size={24} strokeWidth={1.5} />, title: hc('why2t', 'home.why2t'), desc: hc('why2d', 'home.why2d') },
+    { icon: <Lock size={24} strokeWidth={1.5} />, title: hc('why3t', 'home.why3t'), desc: hc('why3d', 'home.why3d') },
+    { icon: <Activity size={24} strokeWidth={1.5} />, title: hc('why4t', 'home.why4t'), desc: hc('why4d', 'home.why4d') },
+  ];
 
   if (loading) return <CmsLoadingScreen />;
   if (error) {
@@ -464,7 +463,7 @@ const HomePage = () => {
       {/* 2. 国际认证与供应链信任背书墙 */}
       <section className="bg-[#FAFAFA] pt-8 pb-20 relative z-20">
         <div className="container mx-auto px-4">
-          <div className="text-[11px] tracking-[0.2em] text-center text-gray-400 uppercase mb-8 font-medium">{t('home.trustLine')}</div>
+          <div className="text-[11px] tracking-[0.2em] text-center text-gray-400 uppercase mb-8 font-medium">{hc('trustLine', 'home.trustLine')}</div>
           <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-40 grayscale hover:grayscale-0 transition-all duration-500 text-sm md:text-lg font-bold tracking-tighter">
             <span className="flex items-center gap-1"><Globe2 size={18}/> SGS Tested</span>
             <span>BASF</span>
@@ -499,28 +498,28 @@ const HomePage = () => {
       <section className="py-16 md:py-24 lg:py-32 bg-[#FAFAFA]">
         <div className="container mx-auto px-6 md:px-12">
           <div className="text-center mb-16 md:mb-20">
-            <div className="text-[11px] tracking-[0.2em] text-gray-400 uppercase mb-4 font-bold">{t('home.serviceEyebrow')}</div>
-            <h2 className="text-3xl md:text-4xl font-light tracking-tight mb-6 text-[#111111]">{t('home.serviceTitle')}</h2>
-            <p className="text-gray-500 font-light max-w-2xl mx-auto text-[15px]">{t('home.serviceLead')}</p>
+            <div className="text-[11px] tracking-[0.2em] text-gray-400 uppercase mb-4 font-bold">{hc('serviceEyebrow', 'home.serviceEyebrow')}</div>
+            <h2 className="text-3xl md:text-4xl font-light tracking-tight mb-6 text-[#111111]">{hc('serviceTitle', 'home.serviceTitle')}</h2>
+            <p className="text-gray-500 font-light max-w-2xl mx-auto text-[15px]">{hc('serviceLead', 'home.serviceLead')}</p>
           </div>
           <div className="grid md:grid-cols-3 gap-5 md:gap-8 max-w-6xl mx-auto">
             <div className="bg-white border border-gray-100/50 p-6 md:p-10 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-500 group cursor-pointer rounded-[20px] md:rounded-[24px]" onClick={() => navigate('/services')}>
               <Settings size={28} className="mb-4 md:mb-6 text-gray-400 group-hover:text-[#111111] transition-colors" strokeWidth={1.5} />
               <div className="text-[11px] font-bold tracking-widest text-[#1A1A1A] mb-2 uppercase">Original Equipment Mfg</div>
-              <h3 className="text-xl md:text-2xl font-light mb-3 md:mb-4">{t('home.oemTitle')}</h3>
-              <p className="text-[13px] md:text-[14px] text-gray-500 font-light leading-relaxed">{t('home.oemCardLead')}</p>
+              <h3 className="text-xl md:text-2xl font-light mb-3 md:mb-4">{hc('oemTitle', 'home.oemTitle')}</h3>
+              <p className="text-[13px] md:text-[14px] text-gray-500 font-light leading-relaxed">{hc('oemCardLead', 'home.oemCardLead')}</p>
             </div>
             <div className="bg-[#1A1A1A] text-white p-6 md:p-10 shadow-[0_10px_40px_rgb(0,0,0,0.1)] transform md:-translate-y-4 cursor-pointer rounded-[20px] md:rounded-[24px]" onClick={() => navigate('/services')}>
               <Beaker size={28} className="mb-4 md:mb-6 text-gray-300" strokeWidth={1.5} />
               <div className="text-[11px] font-bold tracking-widest text-gray-400 mb-2 uppercase">Original Design Mfg</div>
-              <h3 className="text-xl md:text-2xl font-light mb-3 md:mb-4">{t('home.odmTitle')}</h3>
-              <p className="text-[13px] md:text-[14px] text-gray-400 font-light leading-relaxed">{t('home.odmCardLead')}</p>
+              <h3 className="text-xl md:text-2xl font-light mb-3 md:mb-4">{hc('odmTitle', 'home.odmTitle')}</h3>
+              <p className="text-[13px] md:text-[14px] text-gray-400 font-light leading-relaxed">{hc('odmCardLead', 'home.odmCardLead')}</p>
             </div>
             <div className="bg-white border border-gray-100/50 p-6 md:p-10 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-500 group cursor-pointer rounded-[20px] md:rounded-[24px]" onClick={() => navigate('/services')}>
               <Box size={28} className="mb-4 md:mb-6 text-gray-400 group-hover:text-[#111111] transition-colors" strokeWidth={1.5} />
               <div className="text-[11px] font-bold tracking-widest text-[#1A1A1A] mb-2 uppercase">Private Label / OBM</div>
-              <h3 className="text-xl md:text-2xl font-light mb-3 md:mb-4">{t('home.obmTitle')}</h3>
-              <p className="text-[13px] md:text-[14px] text-gray-500 font-light leading-relaxed">{t('home.obmCardLead')}</p>
+              <h3 className="text-xl md:text-2xl font-light mb-3 md:mb-4">{hc('obmTitle', 'home.obmTitle')}</h3>
+              <p className="text-[13px] md:text-[14px] text-gray-500 font-light leading-relaxed">{hc('obmCardLead', 'home.obmCardLead')}</p>
             </div>
           </div>
         </div>
@@ -530,9 +529,9 @@ const HomePage = () => {
       <section className="py-16 md:py-24 lg:py-32 bg-white">
         <div className="container mx-auto px-6 md:px-12">
           <div className="text-center mb-20">
-            <div className="text-[11px] tracking-[0.2em] text-gray-400 uppercase mb-4 font-bold">{t('home.coreEyebrow')}</div>
-            <h2 className="text-3xl md:text-4xl font-light tracking-tight mb-6">{t('home.coreTitle')}</h2>
-            <p className="text-gray-500 font-light max-w-2xl mx-auto text-[15px]">{t('home.coreLead')}</p>
+            <div className="text-[11px] tracking-[0.2em] text-gray-400 uppercase mb-4 font-bold">{hc('coreEyebrow', 'home.coreEyebrow')}</div>
+            <h2 className="text-3xl md:text-4xl font-light tracking-tight mb-6">{hc('coreTitle', 'home.coreTitle')}</h2>
+            <p className="text-gray-500 font-light max-w-2xl mx-auto text-[15px]">{hc('coreLead', 'home.coreLead')}</p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 max-w-6xl mx-auto">
@@ -589,9 +588,9 @@ const HomePage = () => {
       <section className="py-14 md:py-24 bg-[#FAFAFA]">
         <div className="container mx-auto px-6 md:px-12">
           <div className="text-center mb-16">
-            <div className="text-[11px] tracking-[0.2em] text-gray-400 uppercase mb-4 font-bold">{t('home.whyEyebrow')}</div>
-            <h2 className="text-3xl md:text-4xl font-light tracking-tight mb-4">{t('home.whyTitle')}</h2>
-            <p className="text-gray-500 font-light text-[15px] max-w-2xl mx-auto">{t('home.whyLead')}</p>
+            <div className="text-[11px] tracking-[0.2em] text-gray-400 uppercase mb-4 font-bold">{hc('whyEyebrow', 'home.whyEyebrow')}</div>
+            <h2 className="text-3xl md:text-4xl font-light tracking-tight mb-4">{hc('whyTitle', 'home.whyTitle')}</h2>
+            <p className="text-gray-500 font-light text-[15px] max-w-2xl mx-auto">{hc('whyLead', 'home.whyLead')}</p>
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 max-w-6xl mx-auto">
@@ -617,34 +616,34 @@ const HomePage = () => {
           <div className="max-w-3xl">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-2 h-2 rounded-full bg-white"></div>
-              <span className="text-[11px] font-bold tracking-[0.2em] text-gray-400 uppercase">{t('home.worldEyebrow')}</span>
+              <span className="text-[11px] font-bold tracking-[0.2em] text-gray-400 uppercase">{hc('worldEyebrow', 'home.worldEyebrow')}</span>
             </div>
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-light tracking-tight mb-6 leading-[1.15]">
-              {t('home.worldTitle1')}
+              {hc('worldTitle1', 'home.worldTitle1')}
               <br />
-              {t('home.worldTitle2')}
+              {hc('worldTitle2', 'home.worldTitle2')}
             </h2>
             <p className="text-gray-400 font-light text-base md:text-lg leading-relaxed mb-12 max-w-xl">
-              {t('home.worldLead')}
+              {hc('worldLead', 'home.worldLead')}
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 border-t border-white/10 pt-10">
                <div className="group">
                   <div className="flex items-center gap-3 mb-3">
                     <ShieldCheck size={20} className="text-white" strokeWidth={1.5} />
-                    <h4 className="text-[15px] font-medium text-white">{t('home.worldLawT')}</h4>
+                    <h4 className="text-[15px] font-medium text-white">{hc('worldLawT', 'home.worldLawT')}</h4>
                   </div>
                   <p className="text-[13px] text-gray-400 font-light leading-relaxed">
-                    {t('home.worldLawD')}
+                    {hc('worldLawD', 'home.worldLawD')}
                   </p>
                </div>
                <div className="group">
                   <div className="flex items-center gap-3 mb-3">
                     <Globe2 size={20} className="text-white" strokeWidth={1.5} />
-                    <h4 className="text-[15px] font-medium text-white">{t('home.worldLogT')}</h4>
+                    <h4 className="text-[15px] font-medium text-white">{hc('worldLogT', 'home.worldLogT')}</h4>
                   </div>
                   <p className="text-[13px] text-gray-400 font-light leading-relaxed">
-                    {t('home.worldLogD')}
+                    {hc('worldLogD', 'home.worldLogD')}
                   </p>
                </div>
             </div>
@@ -657,8 +656,8 @@ const HomePage = () => {
         <div className="container mx-auto px-4 md:px-12">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 md:mb-16 gap-4 md:gap-6">
             <div>
-              <div className="text-[11px] tracking-[0.2em] text-gray-400 uppercase mb-4 font-bold">{t('home.featEyebrow')}</div>
-              <h2 className="text-3xl md:text-4xl font-light tracking-tight">{t('home.featTitle')}</h2>
+              <div className="text-[11px] tracking-[0.2em] text-gray-400 uppercase mb-4 font-bold">{hc('featEyebrow', 'home.featEyebrow')}</div>
+              <h2 className="text-3xl md:text-4xl font-light tracking-tight">{hc('featTitle', 'home.featTitle')}</h2>
             </div>
             <button onClick={() => navigate('/products')} className="group flex items-center gap-2 text-[14px] font-medium tracking-wide text-gray-500 hover:text-[#111111] transition-colors">
               {t('products.browseProducts')} <ArrowUpRight size={16} className="transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"/>
@@ -689,8 +688,8 @@ const HomePage = () => {
           <div className="container mx-auto px-6 md:px-12">
             <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
               <div>
-                <div className="text-[11px] tracking-[0.2em] text-gray-400 uppercase mb-4 font-bold">Case Studies</div>
-                <h2 className="text-3xl md:text-4xl font-light tracking-tight">{t('home.casesTitle')}</h2>
+                <div className="text-[11px] tracking-[0.2em] text-gray-400 uppercase mb-4 font-bold">{locale === 'zh' && homeContent?.casesEyebrow?.trim() ? homeContent.casesEyebrow.trim() : 'Case Studies'}</div>
+                <h2 className="text-3xl md:text-4xl font-light tracking-tight">{hc('casesTitle', 'home.casesTitle')}</h2>
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl">
@@ -728,7 +727,7 @@ const HomePage = () => {
             <h2 className="text-3xl md:text-4xl font-light tracking-tight mb-4">
               {faqSectionHeading}
             </h2>
-            <p className="text-gray-500 font-light text-[15px]">{t('home.faqSectionLead')}</p>
+            <p className="text-gray-500 font-light text-[15px]">{hc('faqSectionLead', 'home.faqSectionLead')}</p>
           </div>
           <div className="border-t border-gray-200/60">
             {homeFaqs.map((faq, idx) => {
@@ -748,7 +747,7 @@ const HomePage = () => {
           </div>
           <div className="text-center mt-12">
             <button onClick={() => navigate('/faq')} className="group flex items-center justify-center gap-2 mx-auto text-[14px] font-medium text-gray-500 hover:text-[#111111] transition-colors">
-              {t('home.browseFullGuide')} <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-1"/>
+              {hc('browseFullGuide', 'home.browseFullGuide')} <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-1"/>
             </button>
           </div>
         </div>
