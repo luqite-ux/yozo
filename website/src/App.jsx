@@ -361,6 +361,35 @@ const HomePage = () => {
   const faqSectionHeading = cmsZhElseT(locale, siteSettings?.faqSectionTitle, 'home.faqSectionTitle', t);
   const homeContent = siteSettings?.homeContent;
   const hc = (field, key) => cmsZhElseT(locale, homeContent?.[field], key, t);
+  const cfgUrl = (field, fallback) => {
+    const v = typeof homeContent?.[field] === 'string' ? homeContent[field].trim() : '';
+    return v || fallback;
+  };
+  const cfgImage = (field, fallback) => {
+    const v = typeof homeContent?.[field] === 'string' ? homeContent[field].trim() : '';
+    return v || fallback;
+  };
+  const heroFallbackImageUrl = cfgImage(
+    'heroFallbackImageUrl',
+    'https://images.unsplash.com/photo-1617897903246-719242758050?auto=format&fit=crop&q=80&w=2000',
+  );
+  const coreLabFallbackImageUrl = cfgImage(
+    'coreLabFallbackImageUrl',
+    'https://dummyimage.com/1600x900/e5e7eb/374151.png&text=Lab',
+  );
+  const coreGmpcFallbackImageUrl = cfgImage(
+    'coreGmpcFallbackImageUrl',
+    'https://dummyimage.com/1600x900/111827/e5e7eb.png&text=GMPC',
+  );
+  const worldFallbackImageUrl = cfgImage(
+    'worldFallbackImageUrl',
+    'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=2000',
+  );
+  const oemCardUrl = cfgUrl('oemCardUrl', '/services');
+  const odmCardUrl = cfgUrl('odmCardUrl', '/services');
+  const obmCardUrl = cfgUrl('obmCardUrl', '/services');
+  const browseProductsUrl = cfgUrl('browseProductsUrl', '/products');
+  const browseFullGuideUrl = cfgUrl('browseFullGuideUrl', '/faq');
 
   const whyItems = [
     { icon: <Target size={24} strokeWidth={1.5} />, title: hc('why1t', 'home.why1t'), desc: hc('why1d', 'home.why1d') },
@@ -412,13 +441,12 @@ const HomePage = () => {
             />
           ) : (
             <img
-              src={siteSettings?.heroImageUrl || 'https://images.unsplash.com/photo-1617897903246-719242758050?auto=format&fit=crop&q=80&w=2000'}
+              src={siteSettings?.heroImageUrl || heroFallbackImageUrl}
               alt=""
               className="w-full h-full object-cover scale-105 animate-[pulse_30s_ease-in-out_infinite] opacity-60 filter grayscale-[10%]"
               onError={(e) => {
                 e.currentTarget.onerror = null;
-                e.currentTarget.src =
-                  'https://dummyimage.com/2000x1125/e5e7eb/374151.png&text=YOZO';
+                e.currentTarget.src = heroFallbackImageUrl;
               }}
             />
           )}
@@ -511,19 +539,19 @@ const HomePage = () => {
             <p className="text-gray-500 font-light max-w-2xl mx-auto text-[15px]">{hc('serviceLead', 'home.serviceLead')}</p>
           </div>
           <div className="grid md:grid-cols-3 gap-5 md:gap-8 max-w-6xl mx-auto">
-            <div className="bg-white border border-gray-100/50 p-6 md:p-10 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-500 group cursor-pointer rounded-[20px] md:rounded-[24px]" onClick={() => navigate('/services')}>
+            <div className="bg-white border border-gray-100/50 p-6 md:p-10 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-500 group cursor-pointer rounded-[20px] md:rounded-[24px]" onClick={() => followHref(navigate, oemCardUrl)}>
               <Settings size={28} className="mb-4 md:mb-6 text-gray-400 group-hover:text-[#111111] transition-colors" strokeWidth={1.5} />
               <div className="text-[11px] font-bold tracking-widest text-[#1A1A1A] mb-2 uppercase">{hc('oemTagline', 'home.oemTagline')}</div>
               <h3 className="text-xl md:text-2xl font-light mb-3 md:mb-4">{hc('oemTitle', 'home.oemTitle')}</h3>
               <p className="text-[13px] md:text-[14px] text-gray-500 font-light leading-relaxed">{hc('oemCardLead', 'home.oemCardLead')}</p>
             </div>
-            <div className="bg-[#1A1A1A] text-white p-6 md:p-10 shadow-[0_10px_40px_rgb(0,0,0,0.1)] transform md:-translate-y-4 cursor-pointer rounded-[20px] md:rounded-[24px]" onClick={() => navigate('/services')}>
+            <div className="bg-[#1A1A1A] text-white p-6 md:p-10 shadow-[0_10px_40px_rgb(0,0,0,0.1)] transform md:-translate-y-4 cursor-pointer rounded-[20px] md:rounded-[24px]" onClick={() => followHref(navigate, odmCardUrl)}>
               <Beaker size={28} className="mb-4 md:mb-6 text-gray-300" strokeWidth={1.5} />
               <div className="text-[11px] font-bold tracking-widest text-gray-400 mb-2 uppercase">{hc('odmTagline', 'home.odmTagline')}</div>
               <h3 className="text-xl md:text-2xl font-light mb-3 md:mb-4">{hc('odmTitle', 'home.odmTitle')}</h3>
               <p className="text-[13px] md:text-[14px] text-gray-400 font-light leading-relaxed">{hc('odmCardLead', 'home.odmCardLead')}</p>
             </div>
-            <div className="bg-white border border-gray-100/50 p-6 md:p-10 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-500 group cursor-pointer rounded-[20px] md:rounded-[24px]" onClick={() => navigate('/services')}>
+            <div className="bg-white border border-gray-100/50 p-6 md:p-10 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-500 group cursor-pointer rounded-[20px] md:rounded-[24px]" onClick={() => followHref(navigate, obmCardUrl)}>
               <Box size={28} className="mb-4 md:mb-6 text-gray-400 group-hover:text-[#111111] transition-colors" strokeWidth={1.5} />
               <div className="text-[11px] font-bold tracking-widest text-[#1A1A1A] mb-2 uppercase">{hc('obmTagline', 'home.obmTagline')}</div>
               <h3 className="text-xl md:text-2xl font-light mb-3 md:mb-4">{hc('obmTitle', 'home.obmTitle')}</h3>
@@ -548,14 +576,13 @@ const HomePage = () => {
                 <img
                   src={
                     siteSettings?.coreCompetenceLabImageUrl ||
-                    'https://dummyimage.com/1600x900/e5e7eb/374151.png&text=Lab'
+                    coreLabFallbackImageUrl
                   }
                   alt={t('home.labAlt')}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 filter grayscale-[10%]"
                   onError={(e) => {
                     e.currentTarget.onerror = null;
-                    e.currentTarget.src =
-                      'https://dummyimage.com/1600x900/e5e7eb/374151.png&text=Lab';
+                    e.currentTarget.src = coreLabFallbackImageUrl;
                   }}
                 />
               </div>
@@ -571,14 +598,13 @@ const HomePage = () => {
                 <img
                   src={
                     siteSettings?.coreCompetenceGmpcImageUrl ||
-                    'https://dummyimage.com/1600x900/111827/e5e7eb.png&text=GMPC'
+                    coreGmpcFallbackImageUrl
                   }
                   alt={t('home.gmpcAlt')}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-70"
                   onError={(e) => {
                     e.currentTarget.onerror = null;
-                    e.currentTarget.src =
-                      'https://dummyimage.com/1600x900/111827/e5e7eb.png&text=GMPC';
+                    e.currentTarget.src = coreGmpcFallbackImageUrl;
                   }}
                 />
               </div>
@@ -616,7 +642,7 @@ const HomePage = () => {
       {/* 7. 全球出口与市场覆盖 */}
       <div className="relative py-32 md:py-40 bg-[#1A1A1A] text-white overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <img src={homeContent?.worldBackgroundImageUrl || 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=2000'} alt={t('home.globalNetAlt')} className="w-full h-full object-cover opacity-[0.15] filter grayscale mix-blend-screen" />
+          <img src={homeContent?.worldBackgroundImageUrl || worldFallbackImageUrl} alt={t('home.globalNetAlt')} className="w-full h-full object-cover opacity-[0.15] filter grayscale mix-blend-screen" />
           <div className="absolute inset-0 bg-gradient-to-r from-[#1A1A1A] via-[#1A1A1A]/80 to-transparent"></div>
         </div>
 
@@ -667,7 +693,7 @@ const HomePage = () => {
               <div className="text-[11px] tracking-[0.2em] text-gray-400 uppercase mb-4 font-bold">{hc('featEyebrow', 'home.featEyebrow')}</div>
               <h2 className="text-3xl md:text-4xl font-light tracking-tight">{hc('featTitle', 'home.featTitle')}</h2>
             </div>
-            <button onClick={() => navigate('/products')} className="group flex items-center gap-2 text-[14px] font-medium tracking-wide text-gray-500 hover:text-[#111111] transition-colors">
+            <button onClick={() => followHref(navigate, browseProductsUrl)} className="group flex items-center gap-2 text-[14px] font-medium tracking-wide text-gray-500 hover:text-[#111111] transition-colors">
               {hc('browseProducts', 'products.browseProducts')} <ArrowUpRight size={16} className="transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"/>
             </button>
           </div>
@@ -754,7 +780,7 @@ const HomePage = () => {
             })}
           </div>
           <div className="text-center mt-12">
-            <button onClick={() => navigate('/faq')} className="group flex items-center justify-center gap-2 mx-auto text-[14px] font-medium text-gray-500 hover:text-[#111111] transition-colors">
+            <button onClick={() => followHref(navigate, browseFullGuideUrl)} className="group flex items-center justify-center gap-2 mx-auto text-[14px] font-medium text-gray-500 hover:text-[#111111] transition-colors">
               {hc('browseFullGuide', 'home.browseFullGuide')} <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-1"/>
             </button>
           </div>
