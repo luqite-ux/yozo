@@ -513,19 +513,19 @@ const HomePage = () => {
           <div className="grid md:grid-cols-3 gap-5 md:gap-8 max-w-6xl mx-auto">
             <div className="bg-white border border-gray-100/50 p-6 md:p-10 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-500 group cursor-pointer rounded-[20px] md:rounded-[24px]" onClick={() => navigate('/services')}>
               <Settings size={28} className="mb-4 md:mb-6 text-gray-400 group-hover:text-[#111111] transition-colors" strokeWidth={1.5} />
-              <div className="text-[11px] font-bold tracking-widest text-[#1A1A1A] mb-2 uppercase">Original Equipment Mfg</div>
+              <div className="text-[11px] font-bold tracking-widest text-[#1A1A1A] mb-2 uppercase">{hc('oemTagline', 'home.oemTagline')}</div>
               <h3 className="text-xl md:text-2xl font-light mb-3 md:mb-4">{hc('oemTitle', 'home.oemTitle')}</h3>
               <p className="text-[13px] md:text-[14px] text-gray-500 font-light leading-relaxed">{hc('oemCardLead', 'home.oemCardLead')}</p>
             </div>
             <div className="bg-[#1A1A1A] text-white p-6 md:p-10 shadow-[0_10px_40px_rgb(0,0,0,0.1)] transform md:-translate-y-4 cursor-pointer rounded-[20px] md:rounded-[24px]" onClick={() => navigate('/services')}>
               <Beaker size={28} className="mb-4 md:mb-6 text-gray-300" strokeWidth={1.5} />
-              <div className="text-[11px] font-bold tracking-widest text-gray-400 mb-2 uppercase">Original Design Mfg</div>
+              <div className="text-[11px] font-bold tracking-widest text-gray-400 mb-2 uppercase">{hc('odmTagline', 'home.odmTagline')}</div>
               <h3 className="text-xl md:text-2xl font-light mb-3 md:mb-4">{hc('odmTitle', 'home.odmTitle')}</h3>
               <p className="text-[13px] md:text-[14px] text-gray-400 font-light leading-relaxed">{hc('odmCardLead', 'home.odmCardLead')}</p>
             </div>
             <div className="bg-white border border-gray-100/50 p-6 md:p-10 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-500 group cursor-pointer rounded-[20px] md:rounded-[24px]" onClick={() => navigate('/services')}>
               <Box size={28} className="mb-4 md:mb-6 text-gray-400 group-hover:text-[#111111] transition-colors" strokeWidth={1.5} />
-              <div className="text-[11px] font-bold tracking-widest text-[#1A1A1A] mb-2 uppercase">Private Label / OBM</div>
+              <div className="text-[11px] font-bold tracking-widest text-[#1A1A1A] mb-2 uppercase">{hc('obmTagline', 'home.obmTagline')}</div>
               <h3 className="text-xl md:text-2xl font-light mb-3 md:mb-4">{hc('obmTitle', 'home.obmTitle')}</h3>
               <p className="text-[13px] md:text-[14px] text-gray-500 font-light leading-relaxed">{hc('obmCardLead', 'home.obmCardLead')}</p>
             </div>
