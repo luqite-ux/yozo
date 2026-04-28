@@ -36,12 +36,12 @@ export default {
   },
   home: {
     trustLine: 'موثوق من العلامات التجارية العالمية والموردين المتميزين',
-    statYears: 'سنوات في التصنيع المتميز',
-    statFormulas: 'تركيبات مثبتة في الأرشيف',
+    statYears: 'سنوات من الخبرة',
+    statFormulas: 'مكتبة التركيبات',
     statIso: 'شهادة دولية مزدوجة',
     statLines: 'خطوط إنتاج آلية مستوردة',
-    statClean: 'غرفة نظيفة GMPC',
-    statCap: 'الطاقة الإنتاجية اليومية القصوى (وحدة)',
+    statClean: 'ورشة بمستوى GMPC',
+    statCap: 'الطاقة الإنتاجية الشهرية',
     serviceEyebrow: 'نماذج الخدمة',
     serviceTitle: 'حلول OEM / ODM متكاملة من البداية إلى النهاية',
     serviceLead:

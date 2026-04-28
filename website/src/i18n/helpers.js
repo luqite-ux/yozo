@@ -12,6 +12,61 @@ function trimStr(v) {
   return String(v).trim();
 }
 
+/** 粗略检测汉字；避免非中文界面落回 Sanity 仅存中文的主文案字段 */
+function hasHanScript(s) {
+  const str = String(s || '');
+  if (!str) return false;
+  try {
+    return /\p{Script=Han}/u.test(str);
+  } catch {
+    return /[\u3400-\u9fff\uf900-\ufaff]/.test(str);
+  }
+}
+
+/**
+ * 首页数据卡 label：非 zh 时只接受 label_*（或拉丁/阿语等非汉字文案），不使用仅含汉字的 `label`。
+ * @param {Record<string, unknown>|null} row Sanity stats 单行
+ */
+export function pickHomeStatLabel(row, locale, fallbackLabel) {
+  const fb = trimStr(fallbackLabel);
+  if (!row || typeof row !== 'object') return fb;
+  const loc = locale || 'zh';
+  if (loc === 'zh') return trimStr(row.label) || fb;
+
+  const en = trimStr(row.label_en);
+  const es = trimStr(row.label_es);
+  const pt = trimStr(row.label_pt);
+  const ar = trimStr(row.label_ar);
+  const ru = trimStr(row.label_ru);
+
+  let cand = '';
+  if (loc === 'pt') cand = pt || en || es;
+  else if (loc === 'ar') cand = ar || en || es;
+  else if (loc === 'ru') cand = ru || en || es;
+  else if (loc === 'es') cand = es || en;
+  else if (loc === 'en') cand = en || es;
+  else cand = en || es;
+
+  if (cand && !hasHanScript(cand)) return cand;
+  const baseLatin = trimStr(row.label);
+  if (baseLatin && !hasHanScript(baseLatin)) return baseLatin;
+  return fb;
+}
+
+/** 首页数据卡数字：常用「Nw」万的简写在非中文下转为「Nk+」（如 20w → 200k+）。 */
+export function localizeStatValueDisplay(raw, locale) {
+  const s = trimStr(raw);
+  if (!s || locale === 'zh') return s;
+  const m = /^(\d+(?:\.\d+)?)w$/i.exec(s);
+  if (!m) return s;
+  const wan = Number(m[1]);
+  const kUnits = wan * 10;
+  if (!Number.isFinite(kUnits)) return s;
+  const rounded =
+    Math.abs(kUnits - Math.round(kUnits)) < 1e-6 ? Math.round(kUnits) : Number(kUnits.toFixed(1));
+  return `${rounded}k+`;
+}
+
 export function pickCmsI18nString(zh, en, es, locale) {
   const z = trimStr(zh);
   const e = trimStr(en);

@@ -36,12 +36,12 @@ export default {
   },
   home: {
     trustLine: 'Trusted by Global Brands & Premium Suppliers',
-    statYears: 'years in premium manufacturing',
-    statFormulas: 'proven formulas on file',
+    statYears: 'Years of experience',
+    statFormulas: 'Formula library',
     statIso: 'Dual international certification',
     statLines: 'Imported automated lines',
-    statClean: 'GMPC cleanroom',
-    statCap: 'Peak daily capacity (units)',
+    statClean: 'GMPC-level workshop',
+    statCap: 'Monthly production capacity',
     serviceEyebrow: 'Service Models',
     serviceTitle: 'End-to-end OEM / ODM solutions',
     serviceLead:

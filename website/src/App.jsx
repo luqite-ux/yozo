@@ -25,6 +25,8 @@ import {
   localizeProduct,
   navLabelForItem,
   pickFaqLocale,
+  pickHomeStatLabel,
+  localizeStatValueDisplay,
 } from './i18n/helpers.js';
 import { alternatePathsForBare, bareToLocalized } from './i18n/routing.js';
 import { getDefaultAboutPage } from './lib/sanity/index.js';
@@ -361,6 +363,29 @@ const HomePage = () => {
   const faqSectionHeading = cmsZhElseT(locale, siteSettings?.faqSectionTitle, 'home.faqSectionTitle', t);
   const homeContent = siteSettings?.homeContent;
   const hc = (field, key) => cmsZhElseT(locale, homeContent?.[field], key, t);
+  const isCjk = (s) => /[\u3400-\u9fff]/.test(String(s || ''));
+  const pickLocalizedText = (row, base) => {
+    if (!row || typeof row !== 'object') return '';
+    const zh = String(row[base] || '').trim();
+    if (locale === 'zh') return zh;
+    const direct = String(row[`${base}_${locale}`] || '').trim();
+    if (direct) return direct;
+    const en = String(row[`${base}_en`] || '').trim();
+    const es = String(row[`${base}_es`] || '').trim();
+    const pt = String(row[`${base}_pt`] || '').trim();
+    const ar = String(row[`${base}_ar`] || '').trim();
+    const ru = String(row[`${base}_ru`] || '').trim();
+    return (
+      (locale === 'pt' && pt) ||
+      (locale === 'ar' && ar) ||
+      (locale === 'ru' && ru) ||
+      (locale === 'en' && en) ||
+      (locale === 'es' && es) ||
+      en ||
+      es ||
+      zh
+    );
+  };
   const cfgUrl = (field, fallback) => {
     const v = typeof homeContent?.[field] === 'string' ? homeContent[field].trim() : '';
     return v || fallback;
@@ -397,20 +422,35 @@ const HomePage = () => {
     { icon: <Lock size={24} strokeWidth={1.5} />, title: hc('why3t', 'home.why3t'), desc: hc('why3d', 'home.why3d') },
     { icon: <Activity size={24} strokeWidth={1.5} />, title: hc('why4t', 'home.why4t'), desc: hc('why4d', 'home.why4d') },
   ];
-  const trustBrands = Array.isArray(homeContent?.trustBrands) && homeContent.trustBrands.length
-    ? homeContent.trustBrands.filter(Boolean)
-    : ['SGS Tested', 'BASF', 'DSM', 'Symrise', 'Lubrizol', 'Givaudan', 'FDA Compliant'];
+  const defaultTrustBrands = ['SGS Tested', 'BASF', 'DSM', 'Symrise', 'Lubrizol', 'Givaudan', 'FDA Compliant'];
+  const trustBrandsRaw =
+    locale === 'zh'
+      ? homeContent?.trustBrands
+      : homeContent?.[`trustBrands_${locale}`] || homeContent?.trustBrands_en || homeContent?.trustBrands;
+  const trustBrands = Array.isArray(trustBrandsRaw) && trustBrandsRaw.length
+    ? trustBrandsRaw.filter(Boolean)
+    : defaultTrustBrands;
+  const trustBrandsDisplay =
+    locale !== 'zh' && trustBrands.some((x) => isCjk(x)) ? defaultTrustBrands : trustBrands;
+  const homeStatDefaults = [
+    { value: '15+', label: t('home.statYears') },
+    { value: '10k+', label: t('home.statFormulas') },
+    { value: '10w', label: t('home.statClean') },
+    { value: '1M+', label: t('home.statCap') },
+  ];
   const homeStats =
     Array.isArray(homeContent?.stats) && homeContent.stats.length
       ? homeContent.stats
-          .map((s) => ({ value: String(s?.value || '').trim(), label: String(s?.label || '').trim() }))
+          .map((s, idx) => {
+            const fallback = homeStatDefaults[idx] || { value: '—', label: '' };
+            const valueRaw = pickLocalizedText(s, 'value') || String(s?.value || '').trim();
+            const label = pickHomeStatLabel(s, locale, fallback.label);
+            const valueBase = valueRaw || fallback.value;
+            const value = localizeStatValueDisplay(valueBase, locale) || valueBase;
+            return { value, label };
+          })
           .filter((s) => s.value || s.label)
-      : [
-          { value: '15+', label: t('home.statYears') },
-          { value: '10k+', label: t('home.statFormulas') },
-          { value: '10w', label: t('home.statClean') },
-          { value: '1M+', label: t('home.statCap') },
-        ];
+      : homeStatDefaults;
 
   if (loading) return <CmsLoadingScreen />;
   if (error) {
@@ -507,10 +547,10 @@ const HomePage = () => {
         <div className="container mx-auto px-4">
           <div className="text-[11px] tracking-[0.2em] text-center text-gray-400 uppercase mb-8 font-medium">{hc('trustLine', 'home.trustLine')}</div>
           <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-40 grayscale hover:grayscale-0 transition-all duration-500 text-sm md:text-lg font-bold tracking-tighter">
-            {trustBrands.map((item, idx) => (
+            {trustBrandsDisplay.map((item, idx) => (
               <span key={`${item}-${idx}`} className="flex items-center gap-1">
                 {idx === 0 ? <Globe2 size={18} /> : null}
-                {idx === trustBrands.length - 1 ? <Award size={18} /> : null}
+                {idx === trustBrandsDisplay.length - 1 ? <Award size={18} /> : null}
                 {item}
               </span>
             ))}
@@ -722,7 +762,7 @@ const HomePage = () => {
           <div className="container mx-auto px-6 md:px-12">
             <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
               <div>
-                <div className="text-[11px] tracking-[0.2em] text-gray-400 uppercase mb-4 font-bold">{locale === 'zh' && homeContent?.casesEyebrow?.trim() ? homeContent.casesEyebrow.trim() : 'Case Studies'}</div>
+                <div className="text-[11px] tracking-[0.2em] text-gray-400 uppercase mb-4 font-bold">{hc('casesEyebrow', 'home.casesEyebrow')}</div>
                 <h2 className="text-3xl md:text-4xl font-light tracking-tight">{hc('casesTitle', 'home.casesTitle')}</h2>
               </div>
             </div>

@@ -36,12 +36,12 @@ export default {
   },
   home: {
     trustLine: 'Trusted by Global Brands & Premium Suppliers',
-    statYears: 'años en fabricación premium',
-    statFormulas: 'fórmulas probadas en archivo',
+    statYears: 'Años de experiencia',
+    statFormulas: 'Biblioteca de fórmulas',
     statIso: 'Doble certificación internacional',
     statLines: 'Líneas automatizadas importadas',
-    statClean: 'Sala limpia GMPC',
-    statCap: 'Capacidad diaria pico (uds.)',
+    statClean: 'Taller clase GMPC',
+    statCap: 'Capacidad de producción mensual',
     serviceEyebrow: 'Service Models',
     serviceTitle: 'Soluciones OEM / ODM integrales',
     serviceLead:
