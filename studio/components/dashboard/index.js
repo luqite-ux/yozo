@@ -2,6 +2,7 @@ import { WelcomeWidget } from './WelcomeWidget.jsx';
 import { OverviewWidget } from './OverviewWidget.jsx';
 import { RecentInquiriesWidget } from './RecentInquiriesWidget.jsx';
 import { RecentEditsWidget } from './RecentEditsWidget.jsx';
+import { OperationsWidget } from './OperationsWidget.jsx';
 
 export function welcomeWidget() {
   return { name: 'yozo-welcome', component: WelcomeWidget, layout: { width: 'full' } };
@@ -14,4 +15,7 @@ export function recentInquiriesWidget() {
 }
 export function recentEditsWidget() {
   return { name: 'yozo-edits', component: RecentEditsWidget, layout: { width: 'medium' } };
+}
+export function operationsWidget() {
+  return { name: 'yozo-ops', component: OperationsWidget, layout: { width: 'medium' } };
 }

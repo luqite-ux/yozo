@@ -63,8 +63,16 @@ export function RecentInquiriesWidget() {
   };
 
   return (
-    <DashboardWidgetContainer header="最近询盘 (10条)">
-      <div style={{ padding: '4px 0 8px' }}>
+    <DashboardWidgetContainer header="实时客户询盘">
+      <div style={{ padding: '4px 0 8px', background: '#fff' }}>
+        <div style={{ padding: '8px 20px 12px', borderBottom: '1px solid #eef2f7' }}>
+          <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            Inquiry Tracking System
+          </div>
+          <div style={{ fontSize: 13, color: '#334155', marginTop: 4 }}>
+            最近 10 条线索，点击即可进入详情并更新状态。
+          </div>
+        </div>
         {loading ? (
           <div style={{ textAlign: 'center', padding: 24, color: '#999', fontSize: 14 }}>
             加载中…
@@ -118,6 +126,11 @@ export function RecentInquiriesWidget() {
                   <div style={{ fontSize: 12, color: '#888', marginBottom: 2 }}>
                     {[item.phone, item.email, item.company].filter(Boolean).join(' · ') || '—'}
                   </div>
+                  {item.source && (
+                    <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 3 }}>
+                      来源：{item.source}
+                    </div>
+                  )}
                   {item.message && (
                     <div style={{
                       fontSize: 12,

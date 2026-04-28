@@ -11,6 +11,7 @@ import {
   overviewWidget,
   recentInquiriesWidget,
   recentEditsWidget,
+  operationsWidget,
 } from './components/dashboard/index.js';
 
 /** 与 Vercel / .env 导入一致：去掉 BOM、首尾空白与成对引号（避免批量导入把引号写进值里） */
@@ -51,6 +52,7 @@ export default defineConfig({
         overviewWidget(),
         recentInquiriesWidget(),
         recentEditsWidget(),
+        operationsWidget(),
       ],
     }),
     structureTool({ structure: deskStructure }),

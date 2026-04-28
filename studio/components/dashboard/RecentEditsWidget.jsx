@@ -57,8 +57,16 @@ export function RecentEditsWidget() {
   };
 
   return (
-    <DashboardWidgetContainer header="最近更新">
+    <DashboardWidgetContainer header="最近更新记录">
       <div style={{ padding: '4px 0 8px' }}>
+        <div style={{ padding: '8px 20px 12px', borderBottom: '1px solid #eef2f7' }}>
+          <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            Content Activity
+          </div>
+          <div style={{ fontSize: 13, color: '#334155', marginTop: 4 }}>
+            最近编辑优先展示，方便快速回看与继续修改。
+          </div>
+        </div>
         {loading ? (
           <div style={{ textAlign: 'center', padding: 24, color: '#999', fontSize: 14 }}>
             加载中…

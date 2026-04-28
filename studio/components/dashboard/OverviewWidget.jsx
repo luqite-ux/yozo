@@ -9,17 +9,19 @@ const STAT_QUERY = `{
   "faqs":           count(*[_type == "faq"            && !(_id in path("drafts.**"))]),
   "cases":          count(*[_type == "caseStudy"      && !(_id in path("drafts.**"))]),
   "inquiriesTotal": count(*[_type == "inquiry"        && !(_id in path("drafts.**"))]),
-  "inquiriesNew":   count(*[_type == "inquiry"        && !(_id in path("drafts.**")) && status == "new"])
+  "inquiriesNew":   count(*[_type == "inquiry"        && !(_id in path("drafts.**")) && status == "new"]),
+  "simplePages":    count(*[_type == "simplePage"     && !(_id in path("drafts.**"))])
 }`;
 
 const cards = [
-  { key: 'products',       label: '产品',     icon: '📦', color: '#6366f1', structureId: 'itemProducts' },
-  { key: 'categories',     label: '分类',     icon: '🏷️', color: '#8b5cf6', structureId: 'itemProductCategories' },
-  { key: 'posts',          label: '文章',     icon: '📝', color: '#0ea5e9', structureId: 'itemPosts' },
-  { key: 'faqs',           label: 'FAQ',      icon: '❓', color: '#14b8a6', structureId: 'itemFaqs' },
-  { key: 'cases',          label: '案例',     icon: '💼', color: '#f59e0b', structureId: 'itemCaseStudies' },
-  { key: 'inquiriesTotal', label: '询盘总数',  icon: '📬', color: '#64748b', structureId: 'itemInquiries' },
-  { key: 'inquiriesNew',   label: '待处理询盘', icon: '🔔', color: '#ef4444', highlight: true, structureId: 'itemInquiries' },
+  { key: 'products', label: '产品总数', icon: '📦', color: '#2563eb', structureId: 'itemProducts' },
+  { key: 'posts', label: '文章发布', icon: '📝', color: '#7c3aed', structureId: 'itemPosts' },
+  { key: 'cases', label: '案例展示', icon: '💼', color: '#f59e0b', structureId: 'itemCaseStudies' },
+  { key: 'inquiriesTotal', label: 'CRM 询盘', icon: '📬', color: '#0f766e', structureId: 'itemInquiries' },
+  { key: 'categories', label: '产品分类', icon: '🏷️', color: '#4f46e5', structureId: 'itemProductCategories' },
+  { key: 'faqs', label: 'FAQ 条目', icon: '❓', color: '#0891b2', structureId: 'itemFaqs' },
+  { key: 'simplePages', label: '通用页面', icon: '📄', color: '#475569', structureId: 'itemSimplePages' },
+  { key: 'inquiriesNew', label: '待处理询盘', icon: '🔔', color: '#dc2626', highlight: true, structureId: 'itemInquiries' },
 ];
 
 export function OverviewWidget() {
@@ -44,77 +46,112 @@ export function OverviewWidget() {
 
   return (
     <DashboardWidgetContainer header="数据总览">
-      <div style={{ padding: '16px 20px 20px' }}>
+      <div style={{ padding: '16px 20px 20px', background: '#f8fafc' }}>
         {loading ? (
           <div style={{ textAlign: 'center', padding: 24, color: '#999', fontSize: 14 }}>
             加载中…
           </div>
         ) : (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
-            gap: 12,
-          }}>
-            {cards.map((c) => (
-              <div
-                key={c.key}
-                onClick={() => navigateTo(c.structureId)}
-                style={{
-                  background: c.highlight && stats?.[c.key] > 0
-                    ? 'linear-gradient(135deg, #fef2f2, #fee2e2)'
-                    : '#fafafa',
-                  borderRadius: 12,
-                  padding: '16px 14px',
-                  textAlign: 'center',
-                  border: c.highlight && stats?.[c.key] > 0
-                    ? '1px solid #fecaca'
-                    : '1px solid #f0f0f0',
-                  cursor: 'pointer',
-                  transition: 'box-shadow 0.2s, transform 0.15s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)';
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.boxShadow = 'none';
-                  e.currentTarget.style.transform = 'none';
-                }}
-              >
-                <div style={{ fontSize: 22, marginBottom: 6 }}>{c.icon}</div>
-                <div style={{
-                  fontSize: 28,
-                  fontWeight: 700,
-                  color: c.highlight && stats?.[c.key] > 0 ? c.color : '#111',
-                  lineHeight: 1.1,
-                  marginBottom: 4,
-                }}>
-                  {stats?.[c.key] ?? '—'}
-                </div>
-                <div style={{ fontSize: 12, color: '#888', letterSpacing: '0.02em' }}>
-                  {c.label}
-                </div>
+          <>
+            <div style={{
+              borderRadius: 18,
+              background: 'linear-gradient(140deg, #0f172a, #1d4ed8)',
+              color: '#fff',
+              padding: '20px 22px',
+              marginBottom: 14,
+            }}>
+              <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.09em', fontWeight: 700 }}>
+                Live Snapshot
               </div>
-            ))}
-          </div>
+              <div style={{ fontSize: 22, fontWeight: 800, lineHeight: 1.35, marginBottom: 10 }}>
+                后台数据状态正常，核心业务模块可直接进入编辑。
+              </div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {['产品维护', '内容更新', '询盘跟进', 'SEO 运营'].map((pill) => (
+                  <span key={pill} style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    border: '1px solid rgba(255,255,255,0.28)',
+                    borderRadius: 999,
+                    padding: '4px 9px',
+                    background: 'rgba(255,255,255,0.08)',
+                  }}>
+                    {pill}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))',
+              gap: 12,
+            }}>
+              {cards.map((c) => (
+                <div
+                  key={c.key}
+                  onClick={() => navigateTo(c.structureId)}
+                  style={{
+                    background: c.highlight && stats?.[c.key] > 0
+                      ? 'linear-gradient(135deg, #fef2f2, #fee2e2)'
+                      : '#ffffff',
+                    borderRadius: 16,
+                    padding: '14px 14px 12px',
+                    border: c.highlight && stats?.[c.key] > 0
+                      ? '1px solid #fecaca'
+                      : '1px solid #e2e8f0',
+                    cursor: 'pointer',
+                    transition: 'box-shadow 0.2s, transform 0.15s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.boxShadow = '0 8px 20px rgba(15,23,42,0.08)';
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.boxShadow = 'none';
+                    e.currentTarget.style.transform = 'none';
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div style={{ fontSize: 20 }}>{c.icon}</div>
+                    <div style={{ fontSize: 10, color: '#94a3b8', fontWeight: 700, letterSpacing: '0.08em' }}>CLICK</div>
+                  </div>
+                  <div style={{
+                    fontSize: 30,
+                    fontWeight: 800,
+                    color: c.highlight && stats?.[c.key] > 0 ? c.color : '#0f172a',
+                    lineHeight: 1.08,
+                    margin: '10px 0 4px',
+                  }}>
+                    {stats?.[c.key] ?? '—'}
+                  </div>
+                  <div style={{ fontSize: 12, color: '#64748b', letterSpacing: '0.02em', fontWeight: 600 }}>
+                    {c.label}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
-        <button
-          type="button"
-          onClick={load}
-          style={{
-            display: 'block',
-            margin: '16px auto 0',
-            background: 'none',
-            border: '1px solid #e5e5e5',
-            borderRadius: 6,
-            padding: '6px 18px',
-            fontSize: 12,
-            color: '#666',
-            cursor: 'pointer',
-          }}
-        >
-          ↻ 刷新
-        </button>
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <button
+            type="button"
+            onClick={load}
+            style={{
+              display: 'block',
+              margin: '14px auto 0',
+              background: '#fff',
+              border: '1px solid #cbd5e1',
+              borderRadius: 999,
+              padding: '7px 18px',
+              fontSize: 12,
+              fontWeight: 700,
+              color: '#475569',
+              cursor: 'pointer',
+            }}
+          >
+            ↻ 刷新数据
+          </button>
+        </div>
       </div>
     </DashboardWidgetContainer>
   );
