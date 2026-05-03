@@ -1,0 +1,403 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  LayoutDashboard, 
+  Package, 
+  Layers, 
+  FileText, 
+  HelpCircle, 
+  Briefcase, 
+  MessageSquare, 
+  Bell, 
+  Settings, 
+  Search, 
+  User, 
+  ChevronRight, 
+  Plus, 
+  TrendingUp, 
+  ExternalLink,
+  Globe,
+  Image as ImageIcon,
+  MoreVertical,
+  LogOut,
+  Menu,
+  X,
+  Users,
+  BarChart3,
+  Languages,
+  CheckCircle2,
+  Clock
+} from 'lucide-react';
+
+// 模拟数据
+const stats = [
+  { id: 1, name: '产品总数', value: '1,284', change: '+12%', icon: Package, color: 'from-blue-500 to-cyan-400' },
+  { id: 2, name: '文章发布', value: '456', change: '+5%', icon: FileText, color: 'from-purple-500 to-indigo-400' },
+  { id: 3, name: 'CRM 客户数', value: '2,840', change: '+24%', icon: Users, color: 'from-emerald-500 to-teal-400' },
+  { id: 4, name: '案例展示', value: '89', change: '+2%', icon: Briefcase, color: 'from-amber-500 to-orange-400' },
+];
+
+const inquiries = [
+  { id: 1, name: '陈先生', email: 'chen@example.com', subject: '产品报价咨询', time: '10分钟前', status: '待处理', priority: '高' },
+  { id: 2, name: '张经理', email: 'zhang_pro@company.com', subject: '长期合作意向', time: '2小时前', status: '已跟进', priority: '中' },
+  { id: 3, name: 'Roberts', email: 'rob@global.net', subject: '定制需求咨询', time: '5小时前', status: '待处理', priority: '高' },
+];
+
+const crmCustomers = [
+  { id: 1, name: 'Global Trade Inc.', level: 'VIP', lastContact: '3小时前', value: '￥12.5k' },
+  { id: 2, name: '美妆连锁采购部', level: '核心', lastContact: '1天前', value: '￥45.0k' },
+  { id: 3, name: '欧洲代理商 Leon', level: '潜在', lastContact: '2天前', value: '￥8.2k' },
+];
+
+const App = () => {
+  const [isSidebarOpen, setSidebarOpen] = useState(true);
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [greeting, setGreeting] = useState('');
+  const [translationActive, setTranslationActive] = useState(true);
+
+  useEffect(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) setGreeting('早上好');
+    else if (hour < 18) setGreeting('下午好');
+    else setGreeting('晚上好');
+  }, []);
+
+  const NavItem = ({ id, label, icon: Icon, badge }) => (
+    <button
+      onClick={() => setActiveTab(id)}
+      className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 ${
+        activeTab === id 
+        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-200' 
+        : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
+      }`}
+    >
+      <div className="flex items-center space-x-3">
+        <Icon size={20} />
+        <span className={`font-medium ${!isSidebarOpen && 'hidden'}`}>{label}</span>
+      </div>
+      {badge && isSidebarOpen && (
+        <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-bold ${activeTab === id ? 'bg-white/20 text-white' : 'bg-rose-100 text-rose-600'}`}>
+          {badge}
+        </span>
+      )}
+    </button>
+  );
+
+  return (
+    <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900">
+      {/* 侧边栏 */}
+      <aside className={`${isSidebarOpen ? 'w-64' : 'w-20'} bg-white border-r border-slate-200 transition-all duration-300 flex flex-col fixed h-full z-50`}>
+        <div className="p-6 flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold shadow-lg shadow-blue-200">Y</div>
+            {isSidebarOpen && <span className="font-bold text-xl tracking-tight text-slate-800">YOZO Pro</span>}
+          </div>
+          <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="p-1 hover:bg-slate-100 rounded-md text-slate-400">
+            {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+        </div>
+
+        <nav className="flex-1 px-4 space-y-1.5 mt-4 overflow-y-auto">
+          <div className={`px-4 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider ${!isSidebarOpen && 'hidden'}`}>
+            业务核心
+          </div>
+          <NavItem id="dashboard" label="概览中心" icon={LayoutDashboard} />
+          <NavItem id="crm" label="CRM 客户" icon={Users} />
+          <NavItem id="analytics" label="流量分析" icon={BarChart3} />
+          <NavItem id="inquiry" label="客户询盘" icon={MessageSquare} badge="3" />
+          
+          <div className={`px-4 mt-8 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider ${!isSidebarOpen && 'hidden'}`}>
+            内容管理
+          </div>
+          <NavItem id="products" label="产品库" icon={Package} />
+          <NavItem id="content" label="文案/文章" icon={FileText} />
+          <NavItem id="media" label="多媒体" icon={ImageIcon} />
+          
+          <div className={`px-4 mt-8 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider ${!isSidebarOpen && 'hidden'}`}>
+            系统引擎
+          </div>
+          <NavItem id="translate" label="智能翻译" icon={Languages} />
+          <NavItem id="seo" label="SEO 矩阵" icon={Globe} />
+          <NavItem id="settings" label="设置" icon={Settings} />
+        </nav>
+
+        <div className="p-4 border-t border-slate-100">
+          <button className={`w-full flex items-center space-x-3 px-4 py-3 text-red-500 hover:bg-red-50 rounded-xl transition-colors ${!isSidebarOpen && 'justify-center px-0'}`}>
+            <LogOut size={20} />
+            {isSidebarOpen && <span className="font-medium text-sm">退出登录</span>}
+          </button>
+        </div>
+      </aside>
+
+      {/* 主体内容 */}
+      <main className={`flex-1 transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-20'}`}>
+        {/* 顶栏 */}
+        <header className="h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-40 px-8 flex items-center justify-between">
+          <div className="relative w-96 max-w-full">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            <input 
+              type="text" 
+              placeholder="搜索客户、询盘或关键词..." 
+              className="w-full pl-10 pr-4 py-2.5 bg-slate-100 border-transparent focus:bg-white focus:border-blue-500 focus:ring-0 rounded-2xl transition-all text-sm"
+            />
+          </div>
+
+          <div className="flex items-center space-x-6">
+            {/* 智能翻译快捷切换 */}
+            <div className="hidden md:flex items-center bg-slate-100 p-1 rounded-xl">
+              <button 
+                onClick={() => setTranslationActive(!translationActive)}
+                className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${translationActive ? 'bg-white shadow-sm text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
+              >
+                <Languages size={14} />
+                <span>AI 翻译已开启</span>
+              </button>
+            </div>
+
+            <button className="relative p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all">
+              <Bell size={20} />
+              <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-rose-500 rounded-full ring-2 ring-white"></span>
+            </button>
+            
+            <div className="flex items-center space-x-3 cursor-pointer group">
+              <div className="text-right hidden sm:block">
+                <p className="text-sm font-bold text-slate-800 leading-none">系统管理员</p>
+                <p className="text-[10px] text-emerald-500 font-bold mt-1 uppercase tracking-widest flex items-center justify-end">
+                   <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full mr-1.5 animate-pulse"></span> 在线
+                </p>
+              </div>
+              <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center border-2 border-white shadow-md overflow-hidden group-hover:rotate-6 transition-transform">
+                <User size={20} className="text-white" />
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* 页面区域 */}
+        <div className="p-8 max-w-[1600px] mx-auto space-y-8">
+          {/* 欢迎 & 核心概览 (融合流量分析) */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 relative overflow-hidden bg-slate-900 rounded-[2.5rem] p-10 text-white shadow-2xl">
+              <div className="relative z-10">
+                <div className="flex items-center space-x-3 mb-4">
+                   <span className="px-3 py-1 bg-blue-500 rounded-full text-[10px] font-bold tracking-tighter uppercase">Live Traffic</span>
+                   <span className="text-slate-400 text-xs font-medium">最近24小时全球流量概况</span>
+                </div>
+                <h1 className="text-3xl font-black mb-6 leading-tight">{greeting}，您的业务正在稳步增长。</h1>
+                
+                {/* 流量走势模拟 */}
+                <div className="mt-8 flex items-end space-x-2 h-40">
+                   {[30, 45, 35, 60, 40, 75, 50, 90, 65, 100, 80, 55, 70, 85, 40, 60, 95, 75].map((h, i) => (
+                     <div key={i} className="flex-1 group relative">
+                        <div className="bg-gradient-to-t from-blue-600 to-cyan-400 rounded-t-lg opacity-40 group-hover:opacity-100 transition-opacity" style={{height: `${h}%`}}></div>
+                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 bg-white text-slate-900 text-[10px] font-bold px-1.5 py-0.5 rounded transition-opacity shadow-lg">
+                           {h}k
+                        </div>
+                     </div>
+                   ))}
+                </div>
+                <div className="flex justify-between mt-4 text-[10px] text-slate-500 font-bold uppercase tracking-widest border-t border-white/5 pt-4">
+                   <span>00:00</span>
+                   <span>06:00</span>
+                   <span>12:00</span>
+                   <span>18:00</span>
+                   <span>24:00</span>
+                </div>
+              </div>
+              <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-600 rounded-full blur-[120px] opacity-20 -mr-40 -mt-40"></div>
+            </div>
+
+            <div className="space-y-8">
+              <div className="bg-white rounded-[2rem] p-8 border border-slate-100 shadow-sm flex flex-col justify-between h-full">
+                <div>
+                  <h3 className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-6">CRM 重点追踪</h3>
+                  <div className="space-y-6">
+                    {crmCustomers.map((cust) => (
+                      <div key={cust.id} className="flex items-center justify-between group cursor-pointer">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center group-hover:bg-blue-50 transition-colors">
+                            <Users size={18} className="text-slate-400 group-hover:text-blue-600" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-slate-800">{cust.name}</p>
+                            <div className="flex items-center space-x-2 mt-0.5">
+                              <span className="text-[10px] font-bold text-blue-500">{cust.level}</span>
+                              <span className="text-[10px] text-slate-400 flex items-center">
+                                <Clock size={10} className="mr-1" /> {cust.lastContact}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <span className="text-sm font-black text-slate-700">{cust.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <button className="mt-8 w-full py-3 bg-slate-50 hover:bg-slate-100 rounded-xl text-xs font-bold text-slate-600 transition-colors flex items-center justify-center">
+                  进入 CRM 系统 <ChevronRight size={14} className="ml-1" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* 快捷统计 */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {stats.map((stat) => (
+              <div key={stat.id} className="bg-white p-6 rounded-[2rem] border border-slate-100 hover:shadow-xl hover:shadow-slate-200/40 transition-all group cursor-pointer">
+                <div className="flex justify-between items-start mb-6">
+                  <div className={`p-4 rounded-2xl bg-gradient-to-br ${stat.color} text-white shadow-lg shadow-current/20`}>
+                    <stat.icon size={24} />
+                  </div>
+                  <div className="flex flex-col items-end">
+                    <span className="text-emerald-500 font-black text-xs">{stat.change}</span>
+                    <span className="text-slate-400 text-[10px] uppercase font-bold mt-1">vs Last Month</span>
+                  </div>
+                </div>
+                <h3 className="text-slate-400 text-xs font-bold uppercase tracking-widest">{stat.name}</h3>
+                <p className="text-3xl font-black text-slate-800 mt-1">{stat.value}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* 详细数据展示 */}
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 pb-12">
+            {/* 最近询盘 */}
+            <div className="xl:col-span-2 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden flex flex-col">
+              <div className="p-8 border-b border-slate-50 flex items-center justify-between bg-white sticky top-0 z-10">
+                <div>
+                  <h2 className="text-xl font-black text-slate-800">实时客户询盘</h2>
+                  <p className="text-xs text-slate-400 mt-1 uppercase font-bold tracking-widest">Inquiry Tracking System</p>
+                </div>
+                <div className="flex space-x-2">
+                   <button className="px-4 py-2 bg-slate-50 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-100 transition-colors">导出报表</button>
+                   <button className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200">批量处理</button>
+                </div>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="text-left text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50/50">
+                      <th className="px-8 py-4">客户详情</th>
+                      <th className="px-8 py-4">主题</th>
+                      <th className="px-8 py-4">AI 翻译建议</th>
+                      <th className="px-8 py-4">响应状态</th>
+                      <th className="px-8 py-4 text-right">时间</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {inquiries.map((item) => (
+                      <tr key={item.id} className="hover:bg-slate-50/40 transition-colors group cursor-pointer">
+                        <td className="px-8 py-6">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center font-black text-slate-500 text-xs shadow-sm">
+                              {item.name[0]}
+                            </div>
+                            <div>
+                              <p className="text-sm font-black text-slate-800">{item.name}</p>
+                              <p className="text-xs text-slate-400 mt-0.5">{item.email}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-8 py-6">
+                          <p className="text-sm text-slate-600 font-bold">{item.subject}</p>
+                        </td>
+                        <td className="px-8 py-6">
+                           <div className="flex items-center space-x-2 text-indigo-500 bg-indigo-50 px-3 py-1.5 rounded-xl w-fit">
+                              <Languages size={14} />
+                              <span className="text-[10px] font-bold">智能翻译准备就绪</span>
+                           </div>
+                        </td>
+                        <td className="px-8 py-6">
+                          <span className={`text-[10px] px-3 py-1 rounded-full font-black uppercase tracking-tighter ${
+                            item.status === '待处理' ? 'bg-rose-100 text-rose-600' : 'bg-blue-100 text-blue-600'
+                          }`}>
+                            {item.status}
+                          </span>
+                        </td>
+                        <td className="px-8 py-6 text-right">
+                           <p className="text-xs font-bold text-slate-400">{item.time}</p>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* AI 运营辅助面板 */}
+            <div className="space-y-8">
+              <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8">
+                <div className="flex items-center justify-between mb-8">
+                  <h2 className="text-lg font-black text-slate-800 uppercase tracking-tighter">AI 智能分析</h2>
+                  <BarChart3 className="text-blue-500" size={20} />
+                </div>
+                <div className="space-y-6">
+                  <div className="p-5 bg-emerald-50 rounded-3xl border border-emerald-100">
+                     <p className="text-emerald-700 font-black text-xs uppercase mb-2">SEO 优化建议</p>
+                     <p className="text-xs text-emerald-600/80 leading-relaxed font-medium">检测到“Vegan Lip Gloss”搜索热度上升，建议本周增加相关关键词的文章发布。</p>
+                  </div>
+                  
+                  <div className="p-5 bg-blue-50 rounded-3xl border border-blue-100">
+                     <p className="text-blue-700 font-black text-xs uppercase mb-2">翻译引擎状态</p>
+                     <div className="flex items-center justify-between mt-2">
+                        <span className="text-[10px] font-bold text-blue-600 flex items-center"><CheckCircle2 size={12} className="mr-1" /> 多语言引擎已对齐</span>
+                        <span className="text-[10px] font-bold text-blue-400 underline cursor-pointer">更新词库</span>
+                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                     <button className="p-4 bg-slate-900 rounded-2xl text-white flex flex-col items-center justify-center hover:bg-slate-800 transition-colors group">
+                        <Globe size={20} className="mb-2 group-hover:scale-110 transition-transform" />
+                        <span className="text-[10px] font-bold">SEO 审计</span>
+                     </button>
+                     <button className="p-4 bg-indigo-600 rounded-2xl text-white flex flex-col items-center justify-center hover:bg-indigo-700 transition-colors group">
+                        <Languages size={20} className="mb-2 group-hover:scale-110 transition-transform" />
+                        <span className="text-[10px] font-bold">一键翻译</span>
+                     </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8">
+                <h2 className="text-lg font-black text-slate-800 mb-6">运营待办</h2>
+                <div className="space-y-4">
+                  {[
+                    { title: '审查欧洲站翻译内容', time: '14:00', icon: Languages, color: 'text-indigo-500' },
+                    { title: 'CRM 核心客户回访', time: '16:30', icon: Users, color: 'text-emerald-500' },
+                    { title: '导出流量周报', time: '18:00', icon: BarChart3, color: 'text-blue-500' },
+                  ].map((task, i) => (
+                    <div key={i} className="flex items-center justify-between p-4 bg-slate-50/50 hover:bg-slate-50 rounded-2xl transition-all cursor-pointer group">
+                      <div className="flex items-center space-x-3">
+                         <div className={`${task.color} p-2 bg-white rounded-xl shadow-sm`}>
+                            <task.icon size={16} />
+                         </div>
+                         <div>
+                            <p className="text-xs font-bold text-slate-700">{task.title}</p>
+                            <p className="text-[10px] text-slate-400 mt-1">{task.time}</p>
+                         </div>
+                      </div>
+                      <ChevronRight size={14} className="text-slate-300 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      {/* 精简版全局通知条 */}
+      <footer className={`fixed bottom-4 left-0 right-0 pointer-events-none flex justify-center transition-all ${isSidebarOpen ? 'pl-64' : 'pl-20'}`}>
+        <div className="bg-white shadow-2xl px-6 py-2 rounded-full border border-slate-100 pointer-events-auto flex items-center space-x-4">
+          <div className="flex items-center space-x-1.5">
+             <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+             <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">System Operational</span>
+          </div>
+          <div className="h-3 w-[1px] bg-slate-200"></div>
+          <p className="text-[10px] font-bold text-slate-400 italic">“AI 翻译引擎已自动同步最新的 45 条产品描述。”</p>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+export default App;
