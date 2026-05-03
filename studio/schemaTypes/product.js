@@ -1,5 +1,30 @@
 import { defineField, defineType } from 'sanity';
 
+const FAQ_TR_LOCALES = ['en', 'es', 'pt', 'ar', 'ru'];
+
+function faqTranslatedStrings(baseKey, baseTitle) {
+  return FAQ_TR_LOCALES.map((loc) =>
+    defineField({
+      name: `${baseKey}_${loc}`,
+      title: `${baseTitle}（${loc.toUpperCase()}，自动翻译）`,
+      type: 'string',
+      readOnly: true,
+    }),
+  );
+}
+
+function faqTranslatedTexts(baseKey, baseTitle) {
+  return FAQ_TR_LOCALES.map((loc) =>
+    defineField({
+      name: `${baseKey}_${loc}`,
+      title: `${baseTitle}（${loc.toUpperCase()}，自动翻译）`,
+      type: 'text',
+      rows: 4,
+      readOnly: true,
+    }),
+  );
+}
+
 export default defineType({
   name: 'product',
   title: '产品',
@@ -7,6 +32,7 @@ export default defineType({
   groups: [
     { name: 'main', title: '基础' },
     { name: 'content', title: '详情' },
+    { name: 'deliveryFaq', title: '定制与交付答疑' },
     { name: 'translations', title: '翻译（自动）' },
     { name: 'meta', title: '展示设置' },
     { name: 'seo', title: 'SEO' },
@@ -14,9 +40,10 @@ export default defineType({
   fields: [
     defineField({
       name: 'name',
-      title: '名称',
+      title: '名称（中文）',
       type: 'string',
       group: 'main',
+      description: '仅需维护中文；发布后会自动翻译并写入「翻译（自动）」分组，前台按用户语言展示。',
       validation: (r) => r.required(),
     }),
     defineField({
@@ -51,10 +78,11 @@ export default defineType({
     }),
     defineField({
       name: 'excerpt',
-      title: '摘要',
+      title: '摘要（中文）',
       type: 'text',
       rows: 3,
       group: 'content',
+      description: '列表与 SEO 摘要兜底用；多语言由发布后自动翻译。',
     }),
     defineField({
       name: 'description',
@@ -128,6 +156,32 @@ export default defineType({
       group: 'content',
     }),
     defineField({ name: 'oemDesc', title: 'OEM/定制说明', type: 'text', rows: 4, group: 'content' }),
+    defineField({
+      name: 'deliveryFaqs',
+      title: '问答列表',
+      type: 'array',
+      group: 'deliveryFaq',
+      description:
+        '仅本产品详情页底部「定制与交付答疑」区块使用，与站点设置无关。可使用占位符 {{name}}（产品名）、{{oem}}（上方 OEM 说明）。只编辑中文；发布后由翻译服务写入各语言。',
+      of: [
+        {
+          type: 'object',
+          name: 'productDeliveryFaqRow',
+          fields: [
+            defineField({ name: 'question', title: '问题（中文）', type: 'string' }),
+            ...faqTranslatedStrings('question', '问题'),
+            defineField({ name: 'answer', title: '回答（中文）', type: 'text', rows: 6 }),
+            ...faqTranslatedTexts('answer', '回答'),
+          ],
+          preview: {
+            select: { q: 'question' },
+            prepare({ q }) {
+              return { title: q || '条目' };
+            },
+          },
+        },
+      ],
+    }),
 
     // ── 自动翻译字段（由 Webhook 写入，勿手动编辑）──────────────────
     defineField({ name: 'name_en', title: 'Name (EN)', type: 'string', group: 'translations', readOnly: true,
@@ -248,6 +302,7 @@ export default defineType({
       title: 'SEO',
       type: 'seo',
       group: 'seo',
+      description: '标题/描述以中文为准编辑；各语言 SEO 在发布后由翻译服务写入 seo 内对应字段。',
     }),
   ],
   preview: {

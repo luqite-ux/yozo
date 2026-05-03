@@ -207,6 +207,20 @@ export function mapSanityProduct(raw) {
     oemDesc_ar: coalescePlain(raw.oemDesc_ar),
     oemDesc_ru: coalescePlain(raw.oemDesc_ru),
     isFeatured: Boolean(raw.isFeatured),
+    deliveryFaqs: Array.isArray(raw.deliveryFaqs) ? raw.deliveryFaqs : [],
+    seoTitle: coalescePlain(raw.seo?.seoTitle),
+    seoTitle_en: coalescePlain(raw.seo?.seoTitle_en),
+    seoTitle_es: coalescePlain(raw.seo?.seoTitle_es),
+    seoTitle_pt: coalescePlain(raw.seo?.seoTitle_pt),
+    seoTitle_ar: coalescePlain(raw.seo?.seoTitle_ar),
+    seoTitle_ru: coalescePlain(raw.seo?.seoTitle_ru),
+    seoDescription: coalescePlain(raw.seo?.seoDescription),
+    seoDescription_en: coalescePlain(raw.seo?.seoDescription_en),
+    seoDescription_es: coalescePlain(raw.seo?.seoDescription_es),
+    seoDescription_pt: coalescePlain(raw.seo?.seoDescription_pt),
+    seoDescription_ar: coalescePlain(raw.seo?.seoDescription_ar),
+    seoDescription_ru: coalescePlain(raw.seo?.seoDescription_ru),
+    seoOgImageUrl: coalescePlain(raw.seo?.seoOgImageUrl),
   };
 }
 

@@ -6,6 +6,7 @@
     "dev": "npm run dev --prefix website",
     "dev:website": "npm run dev --prefix website",
     "dev:studio": "npm run dev --prefix studio",
+    "dev:webhook": "npm run dev --prefix webhook",
     "build:website": "npm run build --prefix website",
     "build:studio": "npm run build --prefix studio",
     "lint:website": "npm run lint --prefix website",

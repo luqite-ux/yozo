@@ -9,35 +9,21 @@
  * 需：SANITY_API_WRITE_TOKEN（或 SANITY_WRITE_TOKEN）、projectId；DEEPSEEK_API_KEY 等可读 studio/.env.local。
  */
 import crypto from 'node:crypto';
-import { readFileSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createClient } from '@sanity/client';
 import { getContactPageSeedDoc } from '../seed/contactPageSeed.js';
+import {
+  createDeepseekTranslator,
+  loadMergedEnv,
+  PRODUCT_LOCALES,
+} from './lib/deepseekTranslate.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const studioRoot = join(__dirname, '..');
 const repoRoot = join(studioRoot, '..');
 
-function parseEnvFile(path) {
-  if (!existsSync(path)) return {};
-  const out = {};
-  for (const line of readFileSync(path, 'utf8').split(/\r?\n/)) {
-    const t = line.trim();
-    if (!t || t.startsWith('#')) continue;
-    const i = t.indexOf('=');
-    if (i === -1) continue;
-    out[t.slice(0, i).trim()] = t.slice(i + 1).trim().replace(/^['"]|['"]$/g, '');
-  }
-  return out;
-}
-
-const env = {
-  ...process.env,
-  ...parseEnvFile(join(repoRoot, 'webhook', '.env')),
-  ...parseEnvFile(join(repoRoot, 'website', '.env.local')),
-  ...parseEnvFile(join(studioRoot, '.env.local')),
-};
+const env = loadMergedEnv(studioRoot, repoRoot);
 
 const projectId =
   env.SANITY_PROJECT_ID ||
@@ -51,10 +37,11 @@ const DEEPSEEK_API_KEY = String(env.DEEPSEEK_API_KEY || '').trim();
 const DEEPSEEK_BASE_URL = String(env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com').trim();
 const DEEPSEEK_MODEL = String(env.DEEPSEEK_MODEL || 'deepseek-chat').trim();
 
-const PRODUCT_LOCALES = ['en', 'es', 'pt', 'ar', 'ru'];
-const MAX_RETRIES = 5;
-const RETRY_BASE_MS = 800;
-const MAX_TRANSLATE_CHARS = 1800;
+const translator = createDeepseekTranslator({
+  apiKey: DEEPSEEK_API_KEY,
+  baseUrl: DEEPSEEK_BASE_URL,
+  model: DEEPSEEK_MODEL,
+});
 
 function portableBlocksToPlain(blocks) {
   if (!blocks || !Array.isArray(blocks)) return '';
@@ -73,94 +60,6 @@ function serializeSimplePageForHash(doc) {
   const bodyPlain = portableBlocksToPlain(doc?.body);
   const contactLayout = doc?.contactLayout ? JSON.stringify(doc.contactLayout) : '';
   return crypto.createHash('md5').update([title, excerpt, bodyPlain, contactLayout].join('|')).digest('hex');
-}
-
-function getRetryDelayMs(attempt, retryAfterHeader) {
-  const retryAfterSeconds = Number.parseInt(retryAfterHeader || '', 10);
-  if (Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0) {
-    return retryAfterSeconds * 1000;
-  }
-  const exp = RETRY_BASE_MS * 2 ** (attempt - 1);
-  const jitter = Math.floor(Math.random() * 250);
-  return exp + jitter;
-}
-
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-async function translateChunk(text, from, to) {
-  const endpoint = `${DEEPSEEK_BASE_URL.replace(/\/$/, '')}/chat/completions`;
-  const payload = {
-    model: DEEPSEEK_MODEL,
-    temperature: 0.2,
-    messages: [
-      {
-        role: 'system',
-        content:
-          'You are a professional translator. Translate faithfully and naturally. Return only the translated text.',
-      },
-      {
-        role: 'user',
-        content: `Translate the following text from ${from} to ${to}. Keep formatting, punctuation, and line breaks.\n\n${text}`,
-      },
-    ],
-  };
-
-  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(120_000),
-    });
-
-    if (res.ok) {
-      const data = await res.json();
-      const translated = data?.choices?.[0]?.message?.content?.trim();
-      if (!translated) throw new Error('DeepSeek empty translation result');
-      return translated;
-    }
-
-    if ((res.status === 429 || res.status >= 500) && attempt < MAX_RETRIES) {
-      await sleep(getRetryDelayMs(attempt, res.headers.get('retry-after')));
-      continue;
-    }
-
-    const errText = await res.text();
-    throw new Error(`DeepSeek HTTP ${res.status}: ${errText.slice(0, 200)}`);
-  }
-
-  throw new Error('DeepSeek retry exhausted');
-}
-
-async function translateText(text, from, to) {
-  if (!text || !text.trim()) return '';
-  if (text.length <= MAX_TRANSLATE_CHARS) {
-    return translateChunk(text, from, to);
-  }
-  const sentences = text.split(/(?<=[。！？.!?])\s*/);
-  const chunks = [];
-  let buf = '';
-  for (const s of sentences) {
-    if (buf.length + s.length > MAX_TRANSLATE_CHARS) {
-      if (buf) chunks.push(buf);
-      buf = s;
-    } else {
-      buf += (buf ? ' ' : '') + s;
-    }
-  }
-  if (buf) chunks.push(buf);
-  const translated = await Promise.all(chunks.map((c) => translateChunk(c, from, to)));
-  return translated.join(' ');
-}
-
-async function translateForLocales(text, from, locales) {
-  const translated = await Promise.all(locales.map((to) => translateText(text, from, to)));
-  return Object.fromEntries(locales.map((loc, i) => [loc, translated[i]]));
 }
 
 /**
@@ -193,15 +92,15 @@ async function processContactSimplePage(client, doc, opts = {}) {
   const patch = { translationSourceHash: currentHash };
 
   if (title) {
-    const byLocale = await translateForLocales(title, 'zh-CN', PRODUCT_LOCALES);
+    const byLocale = await translator.translateForLocales(title, 'zh-CN', PRODUCT_LOCALES);
     for (const loc of PRODUCT_LOCALES) patch[`title_${loc}`] = byLocale[loc];
   }
   if (excerpt) {
-    const byLocale = await translateForLocales(excerpt, 'zh-CN', PRODUCT_LOCALES);
+    const byLocale = await translator.translateForLocales(excerpt, 'zh-CN', PRODUCT_LOCALES);
     for (const loc of PRODUCT_LOCALES) patch[`excerpt_${loc}`] = byLocale[loc];
   }
   if (bodyPlain) {
-    const byLocale = await translateForLocales(bodyPlain, 'zh-CN', PRODUCT_LOCALES);
+    const byLocale = await translator.translateForLocales(bodyPlain, 'zh-CN', PRODUCT_LOCALES);
     for (const loc of PRODUCT_LOCALES) patch[`bodyPlain_${loc}`] = byLocale[loc];
   }
 
@@ -232,7 +131,7 @@ async function processContactSimplePage(client, doc, opts = {}) {
       const val = String(src[f] || '').trim();
       if (!val) continue;
       console.log(`  contactLayout.${f} → ${PRODUCT_LOCALES.join('/')}`);
-      const byLocale = await translateForLocales(val, 'zh-CN', PRODUCT_LOCALES);
+      const byLocale = await translator.translateForLocales(val, 'zh-CN', PRODUCT_LOCALES);
       for (const loc of PRODUCT_LOCALES) dst[`${f}_${loc}`] = byLocale[loc];
     }
     if (Array.isArray(src.hubs)) {
@@ -242,11 +141,11 @@ async function processContactSimplePage(client, doc, opts = {}) {
         const label = String(row?.label || '').trim();
         const sub = String(row?.sub || '').trim();
         if (label) {
-          const byLocale = await translateForLocales(label, 'zh-CN', PRODUCT_LOCALES);
+          const byLocale = await translator.translateForLocales(label, 'zh-CN', PRODUCT_LOCALES);
           for (const loc of PRODUCT_LOCALES) n[`label_${loc}`] = byLocale[loc];
         }
         if (sub) {
-          const byLocale = await translateForLocales(sub, 'zh-CN', PRODUCT_LOCALES);
+          const byLocale = await translator.translateForLocales(sub, 'zh-CN', PRODUCT_LOCALES);
           for (const loc of PRODUCT_LOCALES) n[`sub_${loc}`] = byLocale[loc];
         }
         dst.hubs.push(n);
@@ -258,7 +157,7 @@ async function processContactSimplePage(client, doc, opts = {}) {
         const n = { ...row };
         const label = String(row?.label || '').trim();
         if (label) {
-          const byLocale = await translateForLocales(label, 'zh-CN', PRODUCT_LOCALES);
+          const byLocale = await translator.translateForLocales(label, 'zh-CN', PRODUCT_LOCALES);
           for (const loc of PRODUCT_LOCALES) n[`label_${loc}`] = byLocale[loc];
         }
         dst.stats.push(n);

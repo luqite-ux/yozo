@@ -6,7 +6,11 @@ import { deskStructure } from './deskStructure.js';
 import { StudioBrandLogo } from './components/StudioBrandLogo.jsx';
 import { STUDIO_PROJECT_ID_FALLBACK } from './sanity.project.constants.js';
 import { proDashboardTool } from './plugins/proDashboardTool.js';
-import TranslateContactDocumentAction from './actions/translateContactDocumentAction.jsx';
+import TranslateWebhookDocumentAction from './actions/translateWebhookDocumentAction.jsx';
+import {
+  publishedDocumentId,
+  triggerTranslateAfterPublish,
+} from './lib/translationWebhook.js';
 
 /** 与 Vercel / .env 导入一致：去掉 BOM、首尾空白与成对引号（避免批量导入把引号写进值里） */
 function studioEnv(name, fallback = '') {
@@ -36,10 +40,49 @@ export default defineConfig({
   dataset,
   document: {
     actions: (prev, context) => {
-      if (context.schemaType !== 'simplePage') return prev;
-      const baseId = String(context.documentId || '').replace(/^drafts\./, '');
-      if (baseId !== 'contact') return prev;
-      return [TranslateContactDocumentAction, ...prev];
+      const supported = new Set([
+        'product',
+        'productCategory',
+        'post',
+        'faq',
+        'caseStudy',
+        'servicePage',
+        'simplePage',
+      ]);
+      if (!supported.has(context.schemaType)) return prev;
+
+      /** 包装内置 Publish：发布后异步提交翻译（与「同步翻译多语言」同一 Webhook） */
+      const withAutoTranslateOnPublish = prev.map((Action) => {
+        if (Action.action !== 'publish') return Action;
+        return function PublishWithAutoTranslate(props) {
+          const inner = Action(props);
+          if (inner == null || typeof inner.onHandle !== 'function') return inner;
+          const origOnHandle = inner.onHandle;
+          return {
+            ...inner,
+            onHandle: () => {
+              const previousRev = props.published?._rev;
+              const publishedId = publishedDocumentId(props.id);
+              origOnHandle();
+              void triggerTranslateAfterPublish({
+                getClient: context.getClient,
+                publishedId,
+                previousPublishedRev: previousRev,
+              }).catch((err) => {
+                console.error('[auto-translate]', err);
+              });
+            },
+          };
+        };
+      });
+      /** DocumentAction 组件的 props 不含 getClient，须从 actions 回调的 context 注入 */
+      function TranslateWebhookWithClient(props) {
+        return TranslateWebhookDocumentAction({
+          ...props,
+          getClient: context.getClient,
+        });
+      }
+      return [TranslateWebhookWithClient, ...withAutoTranslateOnPublish];
     },
   },
   studio: {

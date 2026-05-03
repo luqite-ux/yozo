@@ -83,7 +83,37 @@ const productProjection = `
     detail
   },
   "tagsList": tags,
-  "galleryUrls": gallery[].asset->url
+  "galleryUrls": gallery[].asset->url,
+  deliveryFaqs[]{
+    _key,
+    question,
+    question_en,
+    question_es,
+    question_pt,
+    question_ar,
+    question_ru,
+    answer,
+    answer_en,
+    answer_es,
+    answer_pt,
+    answer_ar,
+    answer_ru
+  },
+  seo{
+    seoTitle,
+    seoDescription,
+    seoTitle_en,
+    seoTitle_es,
+    seoTitle_pt,
+    seoTitle_ar,
+    seoTitle_ru,
+    seoDescription_en,
+    seoDescription_es,
+    seoDescription_pt,
+    seoDescription_ar,
+    seoDescription_ru,
+    "seoOgImageUrl": ogImage.asset->url
+  }
 `;
 
 /** @type {string} */

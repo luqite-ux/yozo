@@ -16,11 +16,77 @@
 
 import http from 'http';
 import crypto from 'crypto';
+import { readFileSync, existsSync } from 'fs';
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
 import { createClient } from '@sanity/client';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+/** 从仓库内 .env 文件合并到 process.env（不覆盖已有非空环境变量，便于 Docker 注入优先） */
+function parseEnvFile(filePath) {
+  if (!existsSync(filePath)) return {};
+  const out = {};
+  for (const line of readFileSync(filePath, 'utf8').split(/\r?\n/)) {
+    const t = line.trim();
+    if (!t || t.startsWith('#')) continue;
+    const i = t.indexOf('=');
+    if (i === -1) continue;
+    const key = t.slice(0, i).trim();
+    let val = t.slice(i + 1).trim().replace(/^['"]|['"]$/g, '');
+    out[key] = val;
+  }
+  return out;
+}
+
+function loadLocalEnvFiles() {
+  const repoRoot = join(__dirname, '..');
+  const paths = [
+    join(__dirname, '.env'),
+    join(repoRoot, 'studio', '.env.local'),
+    join(repoRoot, 'website', '.env.local'),
+    join(repoRoot, 'website', '.env'),
+  ];
+  for (const p of paths) {
+    const parsed = parseEnvFile(p);
+    for (const [k, v] of Object.entries(parsed)) {
+      if (v == null) continue;
+      const t = String(v).trim();
+      if (!t) continue;
+      if (process.env[k] && String(process.env[k]).trim()) continue;
+      process.env[k] = t;
+    }
+  }
+  const pid =
+    String(process.env.SANITY_PROJECT_ID || '').trim() ||
+    String(process.env.VITE_SANITY_PROJECT_ID || '').trim() ||
+    String(process.env.SANITY_STUDIO_PROJECT_ID || '').trim();
+  if (pid) process.env.SANITY_PROJECT_ID = pid;
+  const ds =
+    String(process.env.SANITY_DATASET || '').trim() ||
+    String(process.env.VITE_SANITY_DATASET || '').trim() ||
+    String(process.env.SANITY_STUDIO_DATASET || '').trim();
+  if (ds) process.env.SANITY_DATASET = ds;
+}
+
+loadLocalEnvFiles();
+if (process.env.DEBUG_WEBHOOK_ENV === '1') {
+  console.log(
+    '[webhook] env merged: SANITY_PROJECT_ID=%s SANITY_DATASET=%s DEEPSEEK_API_KEY=%s writeToken=%s',
+    process.env.SANITY_PROJECT_ID ? 'set' : 'MISSING',
+    process.env.SANITY_DATASET || 'production',
+    process.env.DEEPSEEK_API_KEY ? 'set' : 'MISSING',
+    process.env.SANITY_WRITE_TOKEN || process.env.SANITY_API_WRITE_TOKEN ? 'set' : 'MISSING',
+  );
+}
 
 // ── 环境变量 ────────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3001;
 const WEBHOOK_SECRET  = process.env.SANITY_WEBHOOK_SECRET;   // Sanity 后台配置时生成
+/** 与 Studio 同名的共享密钥：Studio「同步翻译」POST 可带请求头绕过 HMAC（本地/内网用） */
+const TRANSLATE_BYPASS_KEY = String(
+  process.env.SANITY_STUDIO_TRANSLATE_BYPASS_KEY || process.env.STUDIO_TRANSLATE_BYPASS_KEY || '',
+).trim();
 const SANITY_PROJECT_ID = process.env.SANITY_PROJECT_ID;
 const SANITY_DATASET    = process.env.SANITY_DATASET || 'production';
 const SANITY_TOKEN      =
@@ -128,6 +194,14 @@ function portableBlocksToPlain(blocks) {
   return parts.join('\n\n');
 }
 
+function serializeProductSeoForHash(doc) {
+  const s = doc?.seo;
+  if (!s || typeof s !== 'object') return '';
+  const t = String(s.seoTitle ?? '').trim();
+  const d = String(s.seoDescription ?? '').trim();
+  return `${t}|${d}`;
+}
+
 function computeContentHash(doc) {
   const parts = [
     ...TEXT_FIELDS.map(f => doc[f] || ''),
@@ -135,6 +209,8 @@ function computeContentHash(doc) {
     serializeSpecs(doc.specifications),
     portableBlocksToPlain(doc.body),
     serializeIngredientsForHash(doc.ingredients),
+    serializeRelatedFaqsForHash(doc.deliveryFaqs),
+    serializeProductSeoForHash(doc),
   ].join('|');
   return crypto.createHash('md5').update(parts).digest('hex');
 }
@@ -396,6 +472,55 @@ async function processProduct(doc) {
       rows.push(row);
     }
     patch.ingredients = rows;
+  }
+
+  // SEO 对象：仅翻译中文 seoTitle / seoDescription，写入 seoTitle_en 等（嵌套 set）
+  if (doc.seo && typeof doc.seo === 'object') {
+    const st = String(doc.seo.seoTitle || '').trim();
+    const sd = String(doc.seo.seoDescription || '').trim();
+    if (st || sd) {
+      console.log(`  seo → ${PRODUCT_LOCALES.join('/')}`);
+      const nextSeo = { ...doc.seo };
+      if (st) {
+        const byLocale = await translateForLocales(st, 'zh-CN', PRODUCT_LOCALES);
+        for (const loc of PRODUCT_LOCALES) {
+          nextSeo[`seoTitle_${loc}`] = byLocale[loc];
+        }
+      }
+      if (sd) {
+        const byLocale = await translateForLocales(sd, 'zh-CN', PRODUCT_LOCALES);
+        for (const loc of PRODUCT_LOCALES) {
+          nextSeo[`seoDescription_${loc}`] = byLocale[loc];
+        }
+      }
+      patch.seo = nextSeo;
+    }
+  }
+
+  if (Array.isArray(doc.deliveryFaqs)) {
+    console.log(`  deliveryFaqs[] → ${PRODUCT_LOCALES.join('/')}`);
+    const dstRows = [];
+    for (let i = 0; i < doc.deliveryFaqs.length; i++) {
+      const row = doc.deliveryFaqs[i];
+      const q = String(row?.question || '').trim();
+      const a = String(row?.answer || '').trim();
+      if (!q && !a) continue;
+      const n = {
+        _key: row._key || `delFaq-${i}`,
+        ...(q ? { question: row.question } : {}),
+        ...(a ? { answer: row.answer } : {}),
+      };
+      if (q) {
+        const byLocale = await translateForLocales(q, 'zh-CN', PRODUCT_LOCALES);
+        for (const loc of PRODUCT_LOCALES) n[`question_${loc}`] = byLocale[loc];
+      }
+      if (a) {
+        const byLocale = await translateForLocales(a, 'zh-CN', PRODUCT_LOCALES);
+        for (const loc of PRODUCT_LOCALES) n[`answer_${loc}`] = byLocale[loc];
+      }
+      dstRows.push(n);
+    }
+    patch.deliveryFaqs = dstRows;
   }
 
   await client.patch(_id).set(patch).commit();
@@ -804,9 +929,11 @@ const server = http.createServer((req, res) => {
   req.on('end', async () => {
     const rawBody = Buffer.concat(chunks).toString('utf8');
     const sigHeader = req.headers['sanity-webhook-signature'] || '';
+    const bypassHdr = String(req.headers['x-studio-translate-bypass'] || '').trim();
+    const bypassOk = TRANSLATE_BYPASS_KEY && bypassHdr === TRANSLATE_BYPASS_KEY;
 
-    if (!verifySignature(rawBody, sigHeader)) {
-      console.warn('Signature verification failed');
+    if (!bypassOk && !verifySignature(rawBody, sigHeader)) {
+      console.warn('Signature verification failed (set SANITY_STUDIO_TRANSLATE_BYPASS_KEY on webhook + Studio to allow document menu POST)');
       res.writeHead(401).end('Unauthorized');
       return;
     }
@@ -833,4 +960,7 @@ server.listen(PORT, () => {
   console.log(`Translation webhook server listening on port ${PORT}`);
   console.log(`Endpoint: POST /webhook/translate`);
   if (!WEBHOOK_SECRET) console.warn('WARN: No SANITY_WEBHOOK_SECRET set — running without signature verification');
+  else if (TRANSLATE_BYPASS_KEY) {
+    console.log('Studio document menu may POST with header X-Studio-Translate-Bypass (SANITY_STUDIO_TRANSLATE_BYPASS_KEY)');
+  }
 });

@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Routes, Route, Outlet, useLocation, useParams } from 'react-router-dom';
+import { applyProductPageSeo, clearProductPageSeo } from './lib/applyProductPageSeo.js';
 import {
   Menu, X, ArrowRight, MessageCircle,
   MapPin, Mail, Phone, ArrowUpRight, CheckCircle2, Beaker, Settings, Box,
@@ -42,6 +43,14 @@ function resolveProductByRouteParam(products, param) {
     if (hit) return hit;
   }
   return products.find((p) => p.slug === param || p.sanityId === param);
+}
+
+/** 产品详情 FAQ 文案中的 {{name}} / {{oem}} 占位符 */
+function applyProductFaqPlaceholders(text, product) {
+  if (text == null || text === '') return '';
+  return String(text)
+    .replace(/\{\{name\}\}/g, product?.name ?? '')
+    .replace(/\{\{oem\}\}/g, product?.oemDesc || '');
 }
 
 function resolveArticleByRouteParam(articles, param) {
@@ -1296,34 +1305,79 @@ const ProductsPage = () => {
 // --- 产品详情页 ---
 const ProductDetailPage = () => {
   const navigate = useLocalizedNavigate();
+  const location = useLocation();
   const { productId } = useParams();
   const { locale, t } = useLocale();
-  const { products, loading, error, reload } = useCms();
+  const { products, loading, error, reload, siteSettings } = useCms();
   const [openFaq, setOpenFaq] = useState(0);
 
   const resolvedProduct = resolveProductByRouteParam(products, productId);
   const baseProduct = resolvedProduct ?? products[0];
   const product = baseProduct ? localizeProduct(baseProduct, locale) : null;
 
-  const productFaqs = useMemo(
-    () => [
+  const productFaqs = useMemo(() => {
+    const rows = Array.isArray(product?.deliveryFaqs) ? product.deliveryFaqs : [];
+    const nonempty = rows.filter(
+      (row) => String(row?.question || '').trim() || String(row?.answer || '').trim(),
+    );
+    if (nonempty.length) {
+      return nonempty.map((row) => ({
+        q: applyProductFaqPlaceholders(row.question || '', product),
+        a: applyProductFaqPlaceholders(row.answer || '', product),
+      }));
+    }
+    return [
       {
-        q: t('products.faq1q').replace(/\{\{name\}\}/g, product?.name ?? ''),
-        a: t('products.faq1a')
-          .replace(/\{\{name\}\}/g, product?.name ?? '')
-          .replace(/\{\{oem\}\}/g, product?.oemDesc || ''),
+        q: applyProductFaqPlaceholders(t('products.faq1q'), product),
+        a: applyProductFaqPlaceholders(t('products.faq1a'), product),
       },
-      { q: t('products.faq2q'), a: t('products.faq2a') },
-      { q: t('products.faq3q'), a: t('products.faq3a') },
-    ],
-    [t, product?.name, product?.oemDesc],
-  );
+      { q: applyProductFaqPlaceholders(t('products.faq2q'), product), a: applyProductFaqPlaceholders(t('products.faq2a'), product) },
+      { q: applyProductFaqPlaceholders(t('products.faq3q'), product), a: applyProductFaqPlaceholders(t('products.faq3a'), product) },
+    ];
+  }, [t, product]);
+
+  const faqSectionTitleResolved = t('products.faqH');
+  const faqSectionLeadResolved = t('products.faqLead');
 
   useEffect(() => {
     if (!loading && products.length && !resolvedProduct) {
       navigate(`/products/${products[0].id}`, { replace: true });
     }
   }, [loading, products, resolvedProduct, navigate]);
+
+  useEffect(() => {
+    if (loading || !products.length || error || !product) {
+      clearProductPageSeo();
+      return undefined;
+    }
+    const titleBase = String(product.seoTitle || '').trim() || product.name;
+    const siteBrand = String(siteSettings?.seoTitleResolved || '').trim();
+    const pageTitle =
+      siteBrand && !titleBase.includes(siteBrand) ? `${titleBase} | ${siteBrand}` : titleBase;
+    const desc =
+      String(product.seoDescription || '').trim() ||
+      String(product.desc || '').replace(/\s+/g, ' ').trim();
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const canonicalUrl = origin ? `${origin}${location.pathname}` : '';
+    const imageUrl = String(product.seoOgImageUrl || product.img || '').trim();
+    applyProductPageSeo({
+      title: pageTitle,
+      description: desc,
+      locale,
+      canonicalUrl,
+      imageUrl,
+      productName: product.name,
+    });
+    return () => clearProductPageSeo();
+  }, [
+    loading,
+    products.length,
+    error,
+    product,
+    locale,
+    location.pathname,
+    siteSettings?.seoTitleResolved,
+  ]);
 
   if (loading || !products.length) return <CmsLoadingScreen />;
   if (error) {
@@ -1508,8 +1562,8 @@ const ProductDetailPage = () => {
       <section className="py-24 bg-[#FAFAFA] border-y border-gray-100">
         <div className="container mx-auto px-6 md:px-12 max-w-4xl" itemScope itemType="https://schema.org/FAQPage">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-light tracking-tight mb-4 text-[#111111]">{t('products.faqH')}</h2>
-            <p className="text-gray-500 text-[15px] font-light">{t('products.faqLead')}</p>
+            <h2 className="text-3xl md:text-4xl font-light tracking-tight mb-4 text-[#111111]">{faqSectionTitleResolved}</h2>
+            <p className="text-gray-500 text-[15px] font-light">{faqSectionLeadResolved}</p>
           </div>
           <div className="border-t border-gray-200/60 bg-white rounded-[20px] overflow-hidden shadow-sm">
             {productFaqs.map((faq, idx) => (

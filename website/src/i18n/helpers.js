@@ -212,6 +212,29 @@ export function localizeProduct(product, locale) {
             pickCmsI18nString(ing?.desc, ing?.desc_en, ing?.desc_es, locale),
         }))
       : product.ingredients,
+    deliveryFaqs: Array.isArray(product.deliveryFaqs)
+      ? product.deliveryFaqs.map((row) => ({
+          ...row,
+          question: pickCmsLocaleFieldOrZh(row, 'question', locale),
+          answer: pickCmsLocaleFieldOrZh(row, 'answer', locale),
+        }))
+      : product.deliveryFaqs,
+    seoTitle: pickTextByLocale(
+      product.seoTitle,
+      product.seoTitle_en,
+      product.seoTitle_es,
+      product.seoTitle_pt,
+      product.seoTitle_ar,
+      product.seoTitle_ru,
+    ),
+    seoDescription: pickTextByLocale(
+      product.seoDescription,
+      product.seoDescription_en,
+      product.seoDescription_es,
+      product.seoDescription_pt,
+      product.seoDescription_ar,
+      product.seoDescription_ru,
+    ),
   };
 }
 

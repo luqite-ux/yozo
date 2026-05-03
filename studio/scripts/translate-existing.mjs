@@ -242,6 +242,12 @@ function serializeRelatedFaqsForHash(list) {
     .join('¶');
 }
 
+function serializeProductSeoForHash(doc) {
+  const s = doc?.seo;
+  if (!s || typeof s !== 'object') return '';
+  return `${String(s.seoTitle ?? '').trim()}|${String(s.seoDescription ?? '').trim()}`;
+}
+
 function hashProduct(doc) {
   const parts = [
     ...TEXT_FIELDS.map((f) => doc[f] || ''),
@@ -253,6 +259,8 @@ function hashProduct(doc) {
           .map((ing) => `${String(ing?.name ?? '').trim()}::${String(ing?.description ?? '').trim()}`)
           .join('¶')
       : '',
+    serializeRelatedFaqsForHash(doc.deliveryFaqs),
+    serializeProductSeoForHash(doc),
   ].join('|');
   return crypto.createHash('md5').update(parts).digest('hex');
 }
@@ -383,19 +391,67 @@ async function processProduct(doc) {
     patch.ingredients = rows;
   }
 
-    const bodyPlain = portableBlocksToPlain(doc.body);
-    if (bodyPlain) {
-      console.log(`    body (plain) → ${PRODUCT_LOCALES.join('/')}…`);
-      const byLocale = await translateForLocales(bodyPlain, 'zh-CN', PRODUCT_LOCALES);
-      for (const loc of PRODUCT_LOCALES) {
-        patch[`bodyPlain_${loc}`] = byLocale[loc];
+  if (Array.isArray(doc.deliveryFaqs)) {
+    console.log(`    deliveryFaqs[] → ${PRODUCT_LOCALES.join('/')}…`);
+    const dstRows = [];
+    for (let i = 0; i < doc.deliveryFaqs.length; i++) {
+      const row = doc.deliveryFaqs[i];
+      const q = String(row?.question || '').trim();
+      const a = String(row?.answer || '').trim();
+      if (!q && !a) continue;
+      const n = {
+        _key: row._key || `delFaq-${i}`,
+        ...(q ? { question: row.question } : {}),
+        ...(a ? { answer: row.answer } : {}),
+      };
+      if (q) {
+        const byLocale = await translateForLocales(q, 'zh-CN', PRODUCT_LOCALES);
+        for (const loc of PRODUCT_LOCALES) n[`question_${loc}`] = byLocale[loc];
       }
+      if (a) {
+        const byLocale = await translateForLocales(a, 'zh-CN', PRODUCT_LOCALES);
+        for (const loc of PRODUCT_LOCALES) n[`answer_${loc}`] = byLocale[loc];
+      }
+      dstRows.push(n);
     }
-
-    await client.patch(doc._id).set(patch).commit();
-    console.log(`    ✓ done`);
-    return { success: true };
+    patch.deliveryFaqs = dstRows;
   }
+
+  if (doc.seo && typeof doc.seo === 'object') {
+    const st = String(doc.seo.seoTitle || '').trim();
+    const sd = String(doc.seo.seoDescription || '').trim();
+    if (st || sd) {
+      console.log(`    seo → ${PRODUCT_LOCALES.join('/')}…`);
+      const nextSeo = { ...doc.seo };
+      if (st) {
+        const byLocale = await translateForLocales(st, 'zh-CN', PRODUCT_LOCALES);
+        for (const loc of PRODUCT_LOCALES) {
+          nextSeo[`seoTitle_${loc}`] = byLocale[loc];
+        }
+      }
+      if (sd) {
+        const byLocale = await translateForLocales(sd, 'zh-CN', PRODUCT_LOCALES);
+        for (const loc of PRODUCT_LOCALES) {
+          nextSeo[`seoDescription_${loc}`] = byLocale[loc];
+        }
+      }
+      patch.seo = nextSeo;
+    }
+  }
+
+  const bodyPlain = portableBlocksToPlain(doc.body);
+  if (bodyPlain) {
+    console.log(`    body (plain) → ${PRODUCT_LOCALES.join('/')}…`);
+    const byLocale = await translateForLocales(bodyPlain, 'zh-CN', PRODUCT_LOCALES);
+    for (const loc of PRODUCT_LOCALES) {
+      patch[`bodyPlain_${loc}`] = byLocale[loc];
+    }
+  }
+
+  await client.patch(doc._id).set(patch).commit();
+  console.log(`    ✓ done`);
+  return { success: true };
+}
 
 // ── 处理单条 faq ──────────────────────────────────────────────────────────────
 async function processFaq(doc) {
@@ -442,7 +498,9 @@ async function main() {
       _id, name, excerpt, description, applicationScenarios,
       packaging, skinType, oemDesc, efficacy, tags, specifications, translationSourceHash,
       body,
-      ingredients
+      ingredients,
+      deliveryFaqs,
+      seo
     }`),
     client.fetch(`*[_type == "faq" && !(_id in path("drafts.**"))]{
       _id, question, answer, translationSourceHash
