@@ -888,19 +888,51 @@ async function routeTranslation(doc) {
   return { skipped: true, reason: `unsupported _type: ${doc._type}` };
 }
 
-function setTranslateCors(req, res) {
-  const origin = req.headers.origin;
+/** 允许携带 Studio 自定义头时的预检；须包含 X-Studio-Translate-Bypass */
+const TRANSLATE_CORS_ALLOW_HEADERS =
+  'Content-Type, sanity-webhook-signature, X-Studio-Translate-Bypass';
+
+function parseTranslateCorsExtraOrigins() {
+  const raw = String(
+    process.env.SANITY_STUDIO_TRANSLATE_CORS_ORIGINS ||
+      process.env.TRANSLATE_CORS_EXTRA_ORIGINS ||
+      '',
+  ).trim();
+  if (!raw) return [];
+  return raw.split(/[\s,]+/).map((s) => s.trim()).filter(Boolean);
+}
+
+function isOriginAllowedForTranslate(originStr) {
+  const origin = String(originStr || '').trim();
+  if (!origin) return false;
   const allowed = new Set([
     'http://localhost:3333',
     'http://127.0.0.1:3333',
     'http://localhost:5173',
     'http://127.0.0.1:5173',
+    ...parseTranslateCorsExtraOrigins(),
   ]);
-  if (origin && allowed.has(String(origin))) {
+  if (allowed.has(origin)) return true;
+  // 部署在 Vercel 的 Studio：*.vercel.app（可用环境变量关闭）
+  if (process.env.TRANSLATE_CORS_ALLOW_VERCEL_STUDIO !== '0') {
+    try {
+      const u = new URL(origin);
+      if (u.protocol === 'https:' && u.hostname.endsWith('.vercel.app')) return true;
+    } catch {
+      /* ignore */
+    }
+  }
+  return false;
+}
+
+function setTranslateCors(req, res) {
+  const origin = req.headers.origin;
+  if (origin && isOriginAllowedForTranslate(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, sanity-webhook-signature');
+    res.setHeader('Access-Control-Allow-Headers', TRANSLATE_CORS_ALLOW_HEADERS);
     res.setHeader('Access-Control-Max-Age', '86400');
+    res.setHeader('Vary', 'Origin');
   }
 }
 

@@ -45,7 +45,9 @@ export default function TranslateWebhookDocumentAction(props) {
     label: '同步翻译多语言',
     tone: 'positive',
     title:
-      '根据中文主字段调用翻译服务，写入 EN/ES/PT/AR/RU 等只读字段（需 webhook 已配置 DEEPSEEK_API_KEY 与 Sanity 写 Token）',
+      '手动触发：把当前文档 POST 到你部署的翻译 Webhook，由服务端调用 DeepSeek 写入各语言只读字段。' +
+      ' 发布时也会自动触发一次；此按钮用于「只改了草稿未发布」「发布后想立刻重译」「Webhook 当时失败」等场景。' +
+      ' 需本机或线上已启动 webhook（DEEPSEEK_API_KEY + Sanity 写 Token）。',
     onHandle: async () => {
       if (typeof getClient !== 'function') {
         window.alert('无法获取 Sanity 客户端（getClient）。请确认 sanity.config.js 已从 document.actions 的 context 注入 getClient。');
