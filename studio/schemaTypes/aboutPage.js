@@ -37,6 +37,7 @@ export default defineType({
       name: 'labImage',
       title: '实验室横幅图（上传到 Sanity CDN）',
       type: 'image',
+      description: '推荐 2000×1125 px 或更大，横向构图，便于全宽展示。',
       options: { hotspot: true },
       group: 'lab',
     }),
@@ -110,6 +111,7 @@ export default defineType({
               name: 'image',
               title: '卡片图',
               type: 'image',
+              description: '推荐 800×600 px（4:3）或更大，单卡主体居中。',
               options: { hotspot: true },
             }),
             defineField({

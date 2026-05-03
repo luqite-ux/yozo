@@ -6,6 +6,7 @@ import { deskStructure } from './deskStructure.js';
 import { StudioBrandLogo } from './components/StudioBrandLogo.jsx';
 import { STUDIO_PROJECT_ID_FALLBACK } from './sanity.project.constants.js';
 import { proDashboardTool } from './plugins/proDashboardTool.js';
+import TranslateContactDocumentAction from './actions/translateContactDocumentAction.jsx';
 
 /** 与 Vercel / .env 导入一致：去掉 BOM、首尾空白与成对引号（避免批量导入把引号写进值里） */
 function studioEnv(name, fallback = '') {
@@ -33,6 +34,14 @@ export default defineConfig({
   title,
   projectId,
   dataset,
+  document: {
+    actions: (prev, context) => {
+      if (context.schemaType !== 'simplePage') return prev;
+      const baseId = String(context.documentId || '').replace(/^drafts\./, '');
+      if (baseId !== 'contact') return prev;
+      return [TranslateContactDocumentAction, ...prev];
+    },
+  },
   studio: {
     components: {
       logo: StudioBrandLogo,

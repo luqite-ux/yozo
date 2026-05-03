@@ -21,7 +21,7 @@ export function WelcomeWidget() {
           {greeting}，今天继续推进内容增长与询盘转化。
         </div>
         <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.72)', lineHeight: 1.7, maxWidth: 780 }}>
-          你可以在左侧分组中维护产品、文章、案例和线索；下方卡片会实时展示关键数据、待处理询盘和最近编辑记录。
+          请在 Desk「前端页面内容」维护首页与各页面文案，在「站点设置」维护全站品牌与导航；下方卡片展示统计数据与最近动态。
         </div>
         <div style={{
           display: 'flex',

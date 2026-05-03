@@ -14,12 +14,12 @@ const STAT_QUERY = `{
 }`;
 
 const cards = [
-  { key: 'products', label: '产品总数', icon: '📦', color: '#2563eb', structureId: 'itemProducts' },
-  { key: 'posts', label: '文章发布', icon: '📝', color: '#7c3aed', structureId: 'itemPosts' },
+  { key: 'products', label: '产品总数', icon: '📦', color: '#2563eb', structureId: 'itemProductCenter' },
+  { key: 'posts', label: '资讯文章', icon: '📝', color: '#7c3aed', structureId: 'itemNewsPosts' },
   { key: 'cases', label: '案例展示', icon: '💼', color: '#f59e0b', structureId: 'itemCaseStudies' },
   { key: 'inquiriesTotal', label: 'CRM 询盘', icon: '📬', color: '#0f766e', structureId: 'itemInquiries' },
-  { key: 'categories', label: '产品分类', icon: '🏷️', color: '#4f46e5', structureId: 'itemProductCategories' },
-  { key: 'faqs', label: 'FAQ 条目', icon: '❓', color: '#0891b2', structureId: 'itemFaqs' },
+  { key: 'categories', label: '产品系列', icon: '🏷️', color: '#4f46e5', structureId: 'itemProductSeries' },
+  { key: 'faqs', label: '合作指引', icon: '❓', color: '#0891b2', structureId: 'itemFaqs' },
   { key: 'simplePages', label: '通用页面', icon: '📄', color: '#475569', structureId: 'itemSimplePages' },
   { key: 'inquiriesNew', label: '待处理询盘', icon: '🔔', color: '#dc2626', highlight: true, structureId: 'itemInquiries' },
 ];

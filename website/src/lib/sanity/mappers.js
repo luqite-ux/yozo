@@ -144,6 +144,9 @@ export function mapSanityProduct(raw) {
     category: categoryTitle,
     categoryTitleEn: coalescePlain(catObj?.titleEn),
     categoryTitleEs: coalescePlain(catObj?.titleEs),
+    categoryTitlePt: coalescePlain(catObj?.titlePt),
+    categoryTitleAr: coalescePlain(catObj?.titleAr),
+    categoryTitleRu: coalescePlain(catObj?.titleRu),
     name: coalescePlain(raw.name, raw.title),
     name_en: coalescePlain(raw.name_en),
     name_es: coalescePlain(raw.name_es),
@@ -315,13 +318,39 @@ export function mapSanitySimplePage(raw) {
     content = [{ type: 'p', text: String(raw.excerpt) }];
   }
   const b = raw.banner && typeof raw.banner === 'object' ? raw.banner : null;
+  const contactLayout =
+    raw.contactLayout && typeof raw.contactLayout === 'object'
+      ? {
+          ...raw.contactLayout,
+          mapBackgroundImageUrl: coalescePlain(
+            raw.contactLayout.mapBackgroundImageUrlResolved,
+            raw.contactLayout.mapBackgroundImage?.asset?.url,
+            raw.contactLayout.mapBackgroundImageUrl,
+          ),
+        }
+      : null;
   return {
     id: sanityRefToLegacyId(String(raw._id)),
     sanityId: raw._id,
     slug: raw.slug || null,
     title: coalescePlain(raw.title),
+    title_en: coalescePlain(raw.title_en),
+    title_es: coalescePlain(raw.title_es),
+    title_pt: coalescePlain(raw.title_pt),
+    title_ar: coalescePlain(raw.title_ar),
+    title_ru: coalescePlain(raw.title_ru),
     excerpt: coalescePlain(raw.excerpt),
+    excerpt_en: coalescePlain(raw.excerpt_en),
+    excerpt_es: coalescePlain(raw.excerpt_es),
+    excerpt_pt: coalescePlain(raw.excerpt_pt),
+    excerpt_ar: coalescePlain(raw.excerpt_ar),
+    excerpt_ru: coalescePlain(raw.excerpt_ru),
     content,
+    content_en: legacyContentFromPlain(coalescePlain(raw.bodyPlain_en)),
+    content_es: legacyContentFromPlain(coalescePlain(raw.bodyPlain_es)),
+    content_pt: legacyContentFromPlain(coalescePlain(raw.bodyPlain_pt)),
+    content_ar: legacyContentFromPlain(coalescePlain(raw.bodyPlain_ar)),
+    content_ru: legacyContentFromPlain(coalescePlain(raw.bodyPlain_ru)),
     banner: b
       ? {
           title: coalescePlain(b.title),
@@ -329,6 +358,7 @@ export function mapSanitySimplePage(raw) {
           bgUrl: coalescePlain(raw.bannerBgUrl, b.backgroundImage?.asset?.url),
         }
       : null,
+    contactLayout,
     seoTitle: coalescePlain(raw.seo?.seoTitle, raw.seoTitle),
     seoDescription: coalescePlain(raw.seo?.seoDescription, raw.seoDescription),
   };
@@ -416,7 +446,7 @@ const TAB_ALL = '全部';
  * titleEn / titleEs 来自 productCategory 文档；站点设置里手写的字符串列表无多语言字段时各语种显示同一条文案。
  * @param {Record<string, unknown>|null} settings
  * @param {Record<string, unknown>[]|null} rawPcatDocs
- * @returns {{ canonical: string, titleEn?: string, titleEs?: string }[]}
+ * @returns {{ canonical: string, titleEn?: string, titleEs?: string, titlePt?: string, titleAr?: string, titleRu?: string }[]}
  */
 export function buildProductCategoryTabs(settings, rawPcatDocs) {
   const fromSettings = settings?.productCategories ?? settings?.productCategoriesLabels;
@@ -436,6 +466,9 @@ export function buildProductCategoryTabs(settings, rawPcatDocs) {
         canonical,
         titleEn: coalescePlain(d.titleEn),
         titleEs: coalescePlain(d.titleEs),
+        titlePt: coalescePlain(d.titlePt),
+        titleAr: coalescePlain(d.titleAr),
+        titleRu: coalescePlain(d.titleRu),
       };
     })
     .filter(Boolean);
@@ -563,6 +596,17 @@ export function mergeHomePageIntoSiteSettings(mappedBase, homeRaw) {
   m.homeFeaturedFaqs = homeFeaturedFaqs;
   m.faqSectionTitle = homeRaw.faqSectionTitle || null;
   m.homeCtaSection = homeRaw.ctaSection || null;
+
+  const hc =
+    homeRaw.content && typeof homeRaw.content === 'object' ? homeRaw.content : {};
+  /** 首页文档优先：研发/GMPC 配图与卡片文案（避免与站点设置重复维护） */
+  m.coreCompetenceLabImageUrl = coalescePlain(hc.coreLabFallbackImageUrl, m.coreCompetenceLabImageUrl);
+  m.coreCompetenceGmpcImageUrl = coalescePlain(hc.coreGmpcFallbackImageUrl, m.coreCompetenceGmpcImageUrl);
+  m.coreCompetenceLabTitle = coalescePlain(hc.coreCompetenceLabTitle, m.coreCompetenceLabTitle);
+  m.coreCompetenceLabBody = coalescePlain(hc.coreCompetenceLabBody, m.coreCompetenceLabBody);
+  m.coreCompetenceGmpcTitle = coalescePlain(hc.coreCompetenceGmpcTitle, m.coreCompetenceGmpcTitle);
+  m.coreCompetenceGmpcBody = coalescePlain(hc.coreCompetenceGmpcBody, m.coreCompetenceGmpcBody);
+
   m.homeContent = homeRaw.content && typeof homeRaw.content === 'object' ? homeRaw.content : null;
   m.homeSeoOgImageUrl = coalescePlain(homeRaw.seoOgImageUrl, homeRaw.seo?.ogImage?.asset?.url);
 

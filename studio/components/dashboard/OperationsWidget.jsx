@@ -1,8 +1,8 @@
 import { DashboardWidgetContainer } from '@sanity/dashboard';
 
 const quickActions = [
-  { label: '新建产品', href: '/structure/itemProducts;create', tone: '#1d4ed8' },
-  { label: '发布文章', href: '/structure/itemPosts;create', tone: '#7c3aed' },
+  { label: '新建产品', href: '/structure/itemProductCenter;create', tone: '#1d4ed8' },
+  { label: '发布资讯', href: '/structure/itemNewsPosts;create', tone: '#7c3aed' },
   { label: '新增案例', href: '/structure/itemCaseStudies;create', tone: '#f59e0b' },
   { label: '处理询盘', href: '/structure/itemInquiries', tone: '#dc2626' },
 ];

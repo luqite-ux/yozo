@@ -227,7 +227,7 @@ export default {
     lead: 'Start your cross-border beauty manufacturing partnership.',
     mapH: 'Worldwide footprint',
     mapP:
-      'Made-in-China excellence, shipped to 50+ countries and regions with compliant customs support.',
+      'Built on Made-in-China manufacturing, our OEM cosmetics ship to 50+ markets across North America, Europe, the Middle East, and Asia-Pacific, with robust customs clearance and compliant delivery.',
     hubNA: 'Americas hub',
     hubEU: 'Europe hub',
     hubME: 'Middle East hub',

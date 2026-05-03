@@ -60,6 +60,9 @@ const productProjection = `
     title,
     titleEn,
     titleEs,
+    titlePt,
+    titleAr,
+    titleRu,
     "slug": slug.current
   },
   "ingredientsList": ingredients[]{
@@ -138,6 +141,10 @@ export const homePageQuery = `*[_type == "homePage"][0]{
   ctaSection,
   "content": content{
     ...,
+    "heroFallbackImageUrl": coalesce(heroFallbackImage.asset->url, heroFallbackImageUrl),
+    "coreLabFallbackImageUrl": coalesce(coreLabFallbackImage.asset->url, coreLabFallbackImageUrl),
+    "coreGmpcFallbackImageUrl": coalesce(coreGmpcFallbackImage.asset->url, coreGmpcFallbackImageUrl),
+    "worldFallbackImageUrl": coalesce(worldFallbackImage.asset->url, worldFallbackImageUrl),
     "worldBackgroundImageUrl": worldBackgroundImage.asset->url
   },
   sections,
@@ -146,7 +153,10 @@ export const homePageQuery = `*[_type == "homePage"][0]{
 }`;
 
 /** @type {string} */
-export const aboutPageQuery = `*[_type == "aboutPage" && _id == "aboutPage"][0]{
+export const aboutPageQuery = `coalesce(
+  *[_type == "aboutPage" && _id == "aboutPage"][0],
+  *[_type == "aboutPage"] | order(_updatedAt desc)[0]
+){
   ...,
   "labImageResolved": coalesce(labImageUrl, labImage.asset->url),
   portfolioBrands[]{
@@ -163,6 +173,14 @@ export const aboutPageQuery = `*[_type == "aboutPage" && _id == "aboutPage"][0]{
     subtitle,
     icon
   }
+}`;
+
+/** @type {string} */
+export const servicePageQuery = `coalesce(
+  *[_type == "servicePage" && _id == "servicePage"][0],
+  *[_type == "servicePage"] | order(_updatedAt desc)[0]
+){
+  ...
 }`;
 
 /** @type {string} */
@@ -275,12 +293,21 @@ export const caseStudiesQuery = `*[_type == "caseStudy" && ${published}] | order
 /** @type {string} */
 export const simplePagesQuery = `*[_type == "simplePage" && ${published}] | order(title asc) {
   _id,
-  title,
-  excerpt,
+  title, title_en, title_es, title_pt, title_ar, title_ru,
+  excerpt, excerpt_en, excerpt_es, excerpt_pt, excerpt_ar, excerpt_ru,
   body,
+  bodyPlain_en,
+  bodyPlain_es,
+  bodyPlain_pt,
+  bodyPlain_ar,
+  bodyPlain_ru,
   banner,
   "slug": slug.current,
   "bannerBgUrl": banner.backgroundImage.asset->url,
+  contactLayout{
+    ...,
+    "mapBackgroundImageUrlResolved": coalesce(mapBackgroundImage.asset->url, mapBackgroundImageUrl)
+  },
   seo,
   "seoOgImageUrl": seo.ogImage.asset->url,
   seoTitle,

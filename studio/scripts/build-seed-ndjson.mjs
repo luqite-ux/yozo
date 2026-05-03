@@ -9,11 +9,13 @@ import { getSeedDocuments } from '../seed/content.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const outPath = join(__dirname, '..', 'seed', 'initial-content.ndjson');
-const { siteSettingsDoc, homePageDoc, aboutPageDoc } = getSeedDocuments();
+const { siteSettingsDoc, homePageDoc, aboutPageDoc, servicePageDoc, contactPageDoc } = getSeedDocuments();
 const lines = [
   JSON.stringify(siteSettingsDoc),
   JSON.stringify(homePageDoc),
   JSON.stringify(aboutPageDoc),
+  JSON.stringify(servicePageDoc),
+  JSON.stringify(contactPageDoc),
 ];
 writeFileSync(outPath, `${lines.join('\n')}\n`, 'utf8');
 console.log(`[build-seed-ndjson] wrote ${outPath}`);

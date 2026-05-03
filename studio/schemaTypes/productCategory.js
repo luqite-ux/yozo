@@ -81,6 +81,7 @@ export default defineType({
       name: 'coverImage',
       title: '封面图',
       type: 'image',
+      description: '建议 1200×630 px，用于分类卡片展示。',
       options: { hotspot: true },
       group: 'main',
     }),
@@ -118,6 +119,7 @@ export default defineType({
       title: '语言（预留）',
       type: 'string',
       group: 'main',
+      hidden: true,
     }),
     defineField({
       name: 'seo',

@@ -30,6 +30,7 @@ export default defineType({
       name: 'coverImage',
       title: '封面图',
       type: 'image',
+      description: '建议 1200×630 px 或 1600×900 px。',
       options: { hotspot: true },
       group: 'main',
     }),
@@ -37,6 +38,7 @@ export default defineType({
       name: 'cover',
       title: '封面（旧字段，优先使用封面图）',
       type: 'image',
+      description: '历史兼容字段，推荐优先使用「封面图」。',
       options: { hotspot: true },
       group: 'main',
     }),
@@ -45,6 +47,7 @@ export default defineType({
       title: '图库',
       type: 'array',
       group: 'main',
+      description: '建议单张不低于 1200 px 宽。',
       of: [{ type: 'image', options: { hotspot: true } }],
     }),
     defineField({
@@ -87,7 +90,7 @@ export default defineType({
       initialValue: true,
       group: 'meta',
     }),
-    defineField({ name: 'locale', title: '语言（预留）', type: 'string', group: 'meta' }),
+    defineField({ name: 'locale', title: '语言（预留）', type: 'string', group: 'meta', hidden: true }),
 
     // ── 自动翻译字段（由翻译 Webhook 自动填充）───────────────────────────────
     defineField({

@@ -12,6 +12,44 @@ function trimStr(v) {
   return String(v).trim();
 }
 
+/**
+ * 扁平 CMS 字段：`key` + `key_en` / `key_es` … 按 locale 取值（与 Studio simplePage.contactLayout 等对齐）。
+ * 非中文界面：不在此处用中文 `key` 顶替；若无任何外语字段则返回 `''`，便于调用方用 `t()` 等字典兜底。
+ * @param {Record<string, unknown>|null|undefined} obj
+ * @param {string} key
+ * @param {string} locale
+ */
+export function pickCmsLocaleField(obj, key, locale) {
+  if (!obj || typeof obj !== 'object') return '';
+  const zh = trimStr(obj[key]);
+  const en = trimStr(obj[`${key}_en`]);
+  const es = trimStr(obj[`${key}_es`]);
+  const pt = trimStr(obj[`${key}_pt`]);
+  const ar = trimStr(obj[`${key}_ar`]);
+  const ru = trimStr(obj[`${key}_ru`]);
+  const loc = locale || 'zh';
+  if (loc === 'zh') return zh || en || es || pt || ar || ru;
+  if (loc === 'en') return en || es || pt || ar || ru;
+  if (loc === 'es') return es || en || pt || ar || ru;
+  if (loc === 'pt') return pt || en || es || ar || ru;
+  if (loc === 'ar') return ar || en || es || pt || ru;
+  if (loc === 'ru') return ru || en || es || pt || ar;
+  return en || es || pt || ar || ru;
+}
+
+/**
+ * 与 {@link pickCmsLocaleField} 相同，但若尚无机器翻译，则回退到同一字段的中文主文案（来自 CMS，非前端写死）。
+ * @param {Record<string, unknown>|null|undefined} obj
+ * @param {string} key
+ * @param {string} locale
+ */
+export function pickCmsLocaleFieldOrZh(obj, key, locale) {
+  const v = pickCmsLocaleField(obj, key, locale);
+  if (v) return v;
+  if (!obj || typeof obj !== 'object') return '';
+  return trimStr(obj[key]);
+}
+
 /** 粗略检测汉字；避免非中文界面落回 Sanity 仅存中文的主文案字段 */
 function hasHanScript(s) {
   const str = String(s || '');
@@ -371,7 +409,10 @@ export function labelProductCategoryTab(tab, locale, t) {
   if (!tab?.canonical || tab.canonical === CATEGORY_ALL) return t('common.all');
   if (locale === 'en' && tab.titleEn?.trim()) return tab.titleEn.trim();
   if (locale === 'es' && tab.titleEs?.trim()) return tab.titleEs.trim();
-  if (locale !== 'zh' && locale !== 'en' && locale !== 'es') {
+  if (locale === 'pt' && tab.titlePt?.trim()) return tab.titlePt.trim();
+  if (locale === 'ar' && tab.titleAr?.trim()) return tab.titleAr.trim();
+  if (locale === 'ru' && tab.titleRu?.trim()) return tab.titleRu.trim();
+  if (locale !== 'zh' && locale !== 'en' && locale !== 'es' && locale !== 'pt' && locale !== 'ar' && locale !== 'ru') {
     if (tab.titleEn?.trim()) return tab.titleEn.trim();
     if (tab.titleEs?.trim()) return tab.titleEs.trim();
   }
@@ -383,7 +424,10 @@ export function labelProductCategory(product, locale) {
   if (!product) return '';
   if (locale === 'en' && product.categoryTitleEn?.trim()) return product.categoryTitleEn.trim();
   if (locale === 'es' && product.categoryTitleEs?.trim()) return product.categoryTitleEs.trim();
-  if (locale !== 'zh' && locale !== 'en' && locale !== 'es') {
+  if (locale === 'pt' && product.categoryTitlePt?.trim()) return product.categoryTitlePt.trim();
+  if (locale === 'ar' && product.categoryTitleAr?.trim()) return product.categoryTitleAr.trim();
+  if (locale === 'ru' && product.categoryTitleRu?.trim()) return product.categoryTitleRu.trim();
+  if (locale !== 'zh' && locale !== 'en' && locale !== 'es' && locale !== 'pt' && locale !== 'ar' && locale !== 'ru') {
     if (product.categoryTitleEn?.trim()) return product.categoryTitleEn.trim();
     if (product.categoryTitleEs?.trim()) return product.categoryTitleEs.trim();
   }

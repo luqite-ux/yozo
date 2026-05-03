@@ -1,6 +1,8 @@
+import { getContactPageSeedDoc } from './contactPageSeed.js';
+
 /**
  * 与 website/src/App.jsx 中「无 CMS 时」的兜底文案一致；供 seed 脚本与 NDJSON 导入共用。
- * @returns {{ siteSettingsDoc: object, homePageDoc: object, aboutPageDoc: object }}
+ * @returns {{ siteSettingsDoc: object, homePageDoc: object, aboutPageDoc: object, servicePageDoc: object, contactPageDoc: object }}
  */
 export function getSeedDocuments() {
   const dimg = (w, h, t) =>
@@ -83,6 +85,12 @@ export function getSeedDocuments() {
       coreEyebrow: 'Core Competence',
       coreTitle: '从实验室到产线的闭环能力',
       coreLead: '以研发、合规和制造协同，提升品牌的长期确定性。',
+      coreCompetenceLabTitle: '联合生物研发中心',
+      coreCompetenceLabBody:
+        '汇聚国内外顶尖皮肤学配方专家。自建 3D 皮肤模型与精密的临床功效测试平台。从靶向促渗技术到全球臻稀原料复配，确保每一款配方兼具卓效与安全。',
+      coreCompetenceGmpcTitle: '10万级 GMPC 智造中心',
+      coreCompetenceGmpcBody:
+        '对标制药级空气净化标准。引进 18 条进口全自动化无接触灌装流水线，深度集成 MES 系统，实现从原料投递到成品赋码的 100% 数据溯源。',
       coreLabFallbackImageUrl: 'https://dummyimage.com/1600x900/e5e7eb/374151.png&text=Lab',
       coreGmpcFallbackImageUrl: 'https://dummyimage.com/1600x900/111827/e5e7eb.png&text=GMPC',
       whyEyebrow: 'Why Choose YOZO',
@@ -206,5 +214,57 @@ export function getSeedDocuments() {
     ],
   };
 
-  return { siteSettingsDoc, homePageDoc, aboutPageDoc };
+  const servicePageDoc = {
+    _id: 'servicePage',
+    _type: 'servicePage',
+    eyebrow: 'Global Cosmetic Manufacturing',
+    h1l1: '从卓越概念，',
+    h1l2: '到全球热销单品。',
+    lead:
+      '依托符合国际 GMPC 及 ISO 22716 标准的智慧工厂，\nYOZO 提供贯穿产品生命周期的端到端制造解决方案。赋能品牌高效出海，构筑核心产品护城河。',
+    cta: '获取专属代工方案',
+    modelsTitle: '适应多维商业周期的全链路智造引擎',
+    modelsLead: '无论您是寻求产能突破的国际大牌，还是从 0 孵化的新锐国货，我们均提供高匹配度的柔性制造模块。',
+    oemTagline: 'Original Equipment Mfg',
+    oemH: 'OEM 敏捷代工',
+    oemP: '您提供核心配方或品牌标准，我们依托 10 万级无尘自动化产线进行高标准复刻，保障大批量品质一致性与极致的成本控制。',
+    oemL1: '严苛的原料溯源与来料质检 (IQC)',
+    oemL2: '日均超百万支的柔性灌装产能',
+    oemL3: '符合 FDA/CPNP 的出厂检测标准',
+    odmTagline: 'Original Design Mfg',
+    odmH: 'ODM 深度定制研发',
+    odmP: '整合全球顶级原料供应链与临床测试数据。从前瞻性的市场趋势企划、专属独家配方研发，到特殊包材结构开模，构筑绝对技术壁垒。',
+    odmL1: '诺奖级核心成分/植物提取复配研发',
+    odmL2: '3D皮肤模型及人体功效实证测试',
+    odmL3: '配方知识产权 (IP) 排他性买断支持',
+    obmTagline: 'Private Label / OBM',
+    obmH: '品牌贴牌全案孵化',
+    obmP: '专为电商达人及跨界品牌打造。精选 10,000+ 经过市场验证的成熟爆款配方库，支持极低门槛启动 (Low MOQ) 与保姆级落地方案。',
+    obmL1: '3-5天极速打样确认，抢占风口',
+    obmL2: '免费品牌视觉设计与包材选型',
+    obmL3: '药监局非特备案及特证代办服务',
+    flowTitle: '标准化与透明化的高端代工流程',
+    flowLead: '全链路数据驱动，拒绝“制造黑盒”，保障您的新品以最高效的速度推向全球市场。',
+    flow1t: '需求企划与对接',
+    flow1d: '专属业务总监 1对1 沟通。确立核心受众、功效宣称诉求、包材材质偏好及成本核算。',
+    flow2t: '联合实验室打样',
+    flow2d: '资深配方师介入，调取数据库或重构配方体系。常规需求最快 3 天输出首版实物样品供评测。',
+    flow3t: '评测与合规备案',
+    flow3d: '进行高低温稳定性挑战测试及理化防腐测试。同时法务团队平行推进药监系统产品备案核准。',
+    flow4t: 'GMPC量产与交付',
+    flow4d: '大货包材消毒入库，MES系统排单投料生产。全检合格后提供检测报告，并无缝对接跨境物流。',
+    capEyebrow: 'Core Capacities',
+    capTitle: '驱动创新的核心工艺配置',
+    capLead: '不仅局限于传统的膏霜水乳，我们斥资引进国际尖端设备，全面覆盖高难度剂型及医药级无菌包装生产线。',
+    cap1t: 'BFS 无菌次抛与冻干线',
+    cap1d:
+      '百级净化核心产区。配备吹灌封 (Blow-Fill-Seal) 一体机及真空冷冻干燥机，专攻高活性维C、蓝铜胜肽及冻干粉产品，确保无防腐剂添加条件下的绝佳鲜活度。',
+    cap2t: '多相微乳化与微囊包裹工艺',
+    cap2d:
+      '引进德国 IKA 高剪切均质乳化系统。突破传统水油相融限制，实现纳米级粒径乳液。通过微脂囊技术实现核心活性成分的定向靶向缓释。',
+  };
+
+  const contactPageDoc = getContactPageSeedDoc();
+
+  return { siteSettingsDoc, homePageDoc, aboutPageDoc, servicePageDoc, contactPageDoc };
 }

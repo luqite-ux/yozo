@@ -1,12 +1,39 @@
 import { defineField, defineType } from 'sanity';
 
+const LOCALES = [
+  { suffix: '_en', label: 'EN' },
+  { suffix: '_es', label: 'ES' },
+  { suffix: '_pt', label: 'PT' },
+  { suffix: '_ar', label: 'AR' },
+  { suffix: '_ru', label: 'RU' },
+];
+
+function localizedTextFields(name, title, type = 'string', extra = {}) {
+  return LOCALES.map((loc) =>
+    defineField({
+      name: `${name}${loc.suffix}`,
+      title: `${title}（${loc.label}，自动）`,
+      type,
+      readOnly: true,
+      description: '保存发布后由翻译 Webhook 根据中文主字段自动写入，请勿手改。',
+      ...extra,
+    }),
+  );
+}
+
 export default defineType({
   name: 'simplePage',
   title: '通用页面',
   type: 'document',
   groups: [
     { name: 'main', title: '内容' },
+    { name: 'contact', title: '全球联络结构化模块' },
     { name: 'seo', title: 'SEO' },
+    {
+      name: 'translations',
+      title: '翻译（自动）',
+      subtitle: '保存发布后由翻译 Webhook 根据中文标题/摘要等自动覆盖，勿手改',
+    },
   ],
   fields: [
     defineField({
@@ -36,12 +63,109 @@ export default defineType({
       title: '页头 Banner',
       type: 'heroBanner',
       group: 'main',
+      description: '可直接上传 Banner 背景图并填写文案。',
     }),
     defineField({
       name: 'body',
       title: '正文',
       type: 'blockContent',
       group: 'main',
+      description: '通用富文本页使用；「全球联络」页由下方结构化模块承载，无需填写正文。',
+      hidden: ({ document }) => document?.slug?.current === 'contact',
+    }),
+    defineField({
+      name: 'contactLayout',
+      title: '全球联络结构化配置',
+      type: 'object',
+      group: 'contact',
+      hidden: ({ document }) => document?.slug?.current !== 'contact',
+      description:
+        '只改无语言后缀的中文主字段。保存发布后，Sanity 云端 Webhook 或本地翻译服务会按当前中文自动覆盖各「（EN，自动）」等只读字段；也可在文档菜单点「同步翻译多语言」（需本地起 webhook 并配置 DEEPSEEK 等，见 webhook/server.js）。请勿手改译文。',
+      fields: [
+        defineField({ name: 'eyebrow', title: '页眉标签', type: 'string' }),
+        ...localizedTextFields('eyebrow', '页眉标签'),
+        defineField({ name: 'title', title: '主标题（结构化区，可选）', type: 'string' }),
+        ...localizedTextFields('title', '主标题（结构化）'),
+        defineField({ name: 'lead', title: '导语（结构化区，可选）', type: 'text', rows: 2 }),
+        ...localizedTextFields('lead', '导语（结构化）', 'text', { rows: 2 }),
+        defineField({ name: 'mapTitle', title: '地图区标题', type: 'string' }),
+        ...localizedTextFields('mapTitle', '地图区标题'),
+        defineField({ name: 'mapLead', title: '地图区说明', type: 'text', rows: 3 }),
+        ...localizedTextFields('mapLead', '地图区说明', 'text', { rows: 3 }),
+        defineField({
+          name: 'mapBackgroundImage',
+          title: '地图区背景图（上传）',
+          type: 'image',
+          description: '建议 2000×1125 px 或更大。',
+          options: { hotspot: true },
+        }),
+        defineField({
+          name: 'mapBackgroundImageUrl',
+          title: '地图区背景图 URL（可选外链）',
+          type: 'url',
+        }),
+        defineField({ name: 'legendHq', title: '图例：总部', type: 'string' }),
+        ...localizedTextFields('legendHq', '图例：总部'),
+        defineField({ name: 'legendHub', title: '图例：枢纽', type: 'string' }),
+        ...localizedTextFields('legendHub', '图例：枢纽'),
+        defineField({
+          name: 'hubs',
+          title: '地图点位',
+          type: 'array',
+          of: [
+            {
+              type: 'object',
+              fields: [
+                defineField({ name: 'top', title: '纵向位置（%）', type: 'string' }),
+                defineField({ name: 'left', title: '横向位置（%）', type: 'string' }),
+                defineField({ name: 'label', title: '点位名称', type: 'string' }),
+                defineField({ name: 'sub', title: '城市副标题', type: 'string' }),
+                defineField({ name: 'isHeadquarters', title: '是否总部', type: 'boolean', initialValue: false }),
+                ...localizedTextFields('label', '点位名称'),
+                ...localizedTextFields('sub', '城市副标题'),
+              ],
+            },
+          ],
+        }),
+        defineField({
+          name: 'stats',
+          title: '统计卡片',
+          type: 'array',
+          of: [
+            {
+              type: 'object',
+              fields: [
+                defineField({ name: 'value', title: '数值主体', type: 'string' }),
+                defineField({ name: 'unit', title: '数值单位（如 + / % / d）', type: 'string' }),
+                defineField({ name: 'label', title: '说明', type: 'string' }),
+                ...localizedTextFields('label', '说明'),
+              ],
+            },
+          ],
+        }),
+        defineField({ name: 'hqTitle', title: '卡片1：全球制造与研发总部-标题', type: 'string' }),
+        defineField({ name: 'hqSubtitle', title: '卡片1：副标题', type: 'string' }),
+        defineField({ name: 'hqBody', title: '卡片1：正文', type: 'text', rows: 3 }),
+        ...localizedTextFields('hqTitle', '卡片1标题'),
+        ...localizedTextFields('hqSubtitle', '卡片1副标题'),
+        ...localizedTextFields('hqBody', '卡片1正文', 'text', { rows: 3 }),
+        defineField({ name: 'hotlineTitle', title: '卡片2：业务与出海咨询专线-标题', type: 'string' }),
+        defineField({ name: 'hotlineSubtitle', title: '卡片2：副标题', type: 'string' }),
+        defineField({ name: 'hotlineLine1', title: '卡片2：联系方式第一行', type: 'string' }),
+        defineField({ name: 'hotlineLine2', title: '卡片2：联系方式第二行', type: 'string' }),
+        ...localizedTextFields('hotlineTitle', '卡片2标题'),
+        ...localizedTextFields('hotlineSubtitle', '卡片2副标题'),
+        ...localizedTextFields('hotlineLine1', '卡片2第一行'),
+        ...localizedTextFields('hotlineLine2', '卡片2第二行'),
+        defineField({ name: 'bizTitle', title: '卡片3：企业邮箱与商务合作-标题', type: 'string' }),
+        defineField({ name: 'bizSubtitle', title: '卡片3：副标题', type: 'string' }),
+        defineField({ name: 'bizBody', title: '卡片3：正文', type: 'text', rows: 3 }),
+        defineField({ name: 'bizEmail', title: '卡片3：邮箱', type: 'string' }),
+        ...localizedTextFields('bizTitle', '卡片3标题'),
+        ...localizedTextFields('bizSubtitle', '卡片3副标题'),
+        ...localizedTextFields('bizBody', '卡片3正文', 'text', { rows: 3 }),
+        ...localizedTextFields('bizEmail', '卡片3邮箱'),
+      ],
     }),
     defineField({
       name: 'isPublished',
@@ -55,6 +179,7 @@ export default defineType({
       title: '语言（预留）',
       type: 'string',
       group: 'main',
+      hidden: true,
     }),
     defineField({
       name: 'seo',
@@ -74,6 +199,49 @@ export default defineType({
       type: 'text',
       rows: 2,
       group: 'seo',
+    }),
+    defineField({
+      name: 'title_en',
+      title: '标题（EN，自动）',
+      type: 'string',
+      group: 'translations',
+      readOnly: true,
+    }),
+    defineField({ name: 'title_es', title: '标题（ES，自动）', type: 'string', group: 'translations', readOnly: true }),
+    defineField({ name: 'title_pt', title: '标题（PT，自动）', type: 'string', group: 'translations', readOnly: true }),
+    defineField({ name: 'title_ar', title: '标题（AR，自动）', type: 'string', group: 'translations', readOnly: true }),
+    defineField({ name: 'title_ru', title: '标题（RU，自动）', type: 'string', group: 'translations', readOnly: true }),
+    defineField({
+      name: 'excerpt_en',
+      title: '摘要（EN，自动）',
+      type: 'text',
+      rows: 2,
+      group: 'translations',
+      readOnly: true,
+    }),
+    defineField({ name: 'excerpt_es', title: '摘要（ES，自动）', type: 'text', rows: 2, group: 'translations', readOnly: true }),
+    defineField({ name: 'excerpt_pt', title: '摘要（PT，自动）', type: 'text', rows: 2, group: 'translations', readOnly: true }),
+    defineField({ name: 'excerpt_ar', title: '摘要（AR，自动）', type: 'text', rows: 2, group: 'translations', readOnly: true }),
+    defineField({ name: 'excerpt_ru', title: '摘要（RU，自动）', type: 'text', rows: 2, group: 'translations', readOnly: true }),
+    defineField({
+      name: 'bodyPlain_en',
+      title: '正文纯文本（EN，自动）',
+      type: 'text',
+      rows: 6,
+      group: 'translations',
+      readOnly: true,
+    }),
+    defineField({ name: 'bodyPlain_es', title: '正文纯文本（ES，自动）', type: 'text', rows: 6, group: 'translations', readOnly: true }),
+    defineField({ name: 'bodyPlain_pt', title: '正文纯文本（PT，自动）', type: 'text', rows: 6, group: 'translations', readOnly: true }),
+    defineField({ name: 'bodyPlain_ar', title: '正文纯文本（AR，自动）', type: 'text', rows: 6, group: 'translations', readOnly: true }),
+    defineField({ name: 'bodyPlain_ru', title: '正文纯文本（RU，自动）', type: 'text', rows: 6, group: 'translations', readOnly: true }),
+    defineField({
+      name: 'translationSourceHash',
+      title: '翻译源哈希',
+      type: 'string',
+      group: 'translations',
+      readOnly: true,
+      hidden: true,
     }),
   ],
   preview: {

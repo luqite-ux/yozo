@@ -2,6 +2,8 @@
  * 将 website/src/App.jsx 中与「无 CMS 数据」时一致的展示默认值，写入 Sanity：
  * - siteSettings（单例 _id siteSettings）
  * - homePage（单例 _id homePage）
+ * - servicePage（单例 _id servicePage）
+ * - simplePage#contact（全球联络，含 EN/ES/PT/AR/RU 预翻译）
  *
  * 需具备写权限 Token（与 website 询盘 API 相同）：
  *   SANITY_API_WRITE_TOKEN（推荐，见 website/.env.example）
@@ -96,7 +98,7 @@ if (!token) {
 
 const client = createClient({ projectId, dataset, apiVersion: '2024-01-01', token, useCdn: false });
 
-const { siteSettingsDoc, homePageDoc, aboutPageDoc } = getSeedDocuments();
+const { siteSettingsDoc, homePageDoc, aboutPageDoc, servicePageDoc, contactPageDoc } = getSeedDocuments();
 
 async function main() {
   console.log(`[seed] project=${projectId} dataset=${dataset}`);
@@ -104,9 +106,11 @@ async function main() {
   tx.createOrReplace(siteSettingsDoc);
   tx.createOrReplace(homePageDoc);
   tx.createOrReplace(aboutPageDoc);
+  tx.createOrReplace(servicePageDoc);
+  tx.createOrReplace(contactPageDoc);
   const res = await tx.commit();
-  console.log('[seed] 已写入（或覆盖）siteSettings、homePage、aboutPage 的已发布文档。');
-  console.log('[seed] 含：品牌探索四屏文案/图、页脚、导航、首页 Hero 等。请在 Studio 中刷新；无需再点 Publish。');
+  console.log('[seed] 已写入（或覆盖）siteSettings、homePage、aboutPage、servicePage、simplePage#contact 的已发布文档。');
+  console.log('[seed] 含：品牌探索四屏文案/图、页脚、导航、首页 Hero、全球联络多语预填等。请在 Studio 中刷新；无需再点 Publish。');
   if (res?.transactionId) console.log(`[seed] transactionId=${res.transactionId}`);
 }
 

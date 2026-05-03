@@ -10,6 +10,8 @@
     "deploy": "sanity deploy",
     "validate": "sanity schema validate",
     "seed:defaults": "node ./scripts/seed-from-frontend-defaults.mjs",
+    "seed:contact": "node ./scripts/prefill-contact-page.mjs",
+    "pretranslate:contact": "node ./scripts/pretranslate-contact.mjs",
     "seed:build-ndjson": "node ./scripts/build-seed-ndjson.mjs"
   },
   "devDependencies": {

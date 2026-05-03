@@ -1,9 +1,9 @@
-前台默认文案写入 Sanity 的两种方式（内容相同：站点设置 + 首页）
+前台默认文案写入 Sanity 的两种方式（内容相同：站点设置 + 首页 + 品牌探索 + 代工方案页 + 全球联络仅中文主字段；多语由翻译 Webhook 在发布后自动写入）
 
 【方式 A】API 写入（推荐，一次到位）
   1. 在 website/.env.local 填写 SANITY_API_WRITE_TOKEN=（与询盘 API 相同，须具备写文档权限）
   2. 在 studio 目录：npm run seed:defaults
-  3. 回到 Studio 刷新「站点设置」「首页」——页脚/导航等应已有字。
+  3. 回到 Studio 刷新「站点设置」「首页」「全球联络」——页脚/导航与联络页多语字段应已有字。
 
 【方式 B】不配置 Token：用 Sanity CLI 导入本目录 initial-content.ndjson
   1. cd studio

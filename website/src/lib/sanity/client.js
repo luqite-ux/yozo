@@ -35,11 +35,12 @@ export function getSanityClient() {
   if (typeof window === 'undefined') {
     const token = import.meta.env.VITE_SANITY_READ_TOKEN?.trim() || undefined;
     const apiVersion = import.meta.env.VITE_SANITY_API_VERSION?.trim() || '2024-01-01';
+    const isDev = import.meta.env.DEV === true;
     return createClient({
       projectId,
       dataset: import.meta.env.VITE_SANITY_DATASET?.trim() || 'production',
       apiVersion,
-      useCdn: import.meta.env.VITE_SANITY_USE_CDN !== 'false',
+      useCdn: isDev ? false : import.meta.env.VITE_SANITY_USE_CDN !== 'false',
       token,
     });
   }
@@ -59,7 +60,8 @@ export function getSanityClient() {
       projectId,
       dataset: import.meta.env.VITE_SANITY_DATASET?.trim() || 'production',
       apiVersion,
-      useCdn: import.meta.env.VITE_SANITY_USE_CDN !== 'false',
+      // 本地联调优先读到最新发布内容，避免 CDN 延迟导致「后台已更新、前台未刷新」。
+      useCdn: viaLocalProxy ? false : import.meta.env.VITE_SANITY_USE_CDN !== 'false',
       token,
     };
     if (viaLocalProxy) {

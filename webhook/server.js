@@ -1,8 +1,8 @@
 /**
- * Sanity Webhook Handler — 产品 / 产品分类 自动翻译（ZH → EN / ES）
+ * Sanity Webhook Handler — 产品 / 产品分类 自动翻译（ZH → 多语）
  *
  * Sanity Webhook GROQ Filter（文档类型名为 productCategory，不是 category）：
- *   _type == "product" || _type == "productCategory" || _type == "post" || _type == "faq"
+ *   _type == "product" || _type == "productCategory" || _type == "post" || _type == "faq" || _type == "servicePage" || _type == "simplePage"
  *
  * 使用 DeepSeek Chat API 进行翻译（需配置 DEEPSEEK_API_KEY）。
  * 通过内容哈希防止翻译循环触发：
@@ -91,6 +91,7 @@ const TEXT_FIELDS  = ['name', 'excerpt', 'description', 'applicationScenarios',
                       'packaging', 'skinType', 'oemDesc'];
 const ARRAY_FIELDS = ['efficacy', 'tags'];
 const PRODUCT_LOCALES = ['en', 'es', 'pt', 'ar', 'ru'];
+const LOCALE_SUFFIX_RE = /_(en|es|pt|ar|ru)$/;
 
 function serializeSpecs(specs) {
   if (!Array.isArray(specs) || specs.length === 0) return '';
@@ -151,6 +152,36 @@ function serializeRelatedFaqsForHash(list) {
 
 function computeProductCategoryTitleHash(doc) {
   return crypto.createHash('md5').update(String(doc.title || '').trim()).digest('hex');
+}
+
+function getServicePageBaseTextEntries(doc) {
+  if (!doc || typeof doc !== 'object') return [];
+  const entries = [];
+  for (const [key, value] of Object.entries(doc)) {
+    if (!key || key.startsWith('_')) continue;
+    if (key === 'translationSourceHash') continue;
+    if (LOCALE_SUFFIX_RE.test(key)) continue;
+    if (typeof value !== 'string') continue;
+    const text = value.trim();
+    if (!text) continue;
+    entries.push([key, text]);
+  }
+  return entries.sort(([a], [b]) => a.localeCompare(b));
+}
+
+function computeServicePageHash(doc) {
+  const parts = getServicePageBaseTextEntries(doc)
+    .map(([k, v]) => `${k}:${v}`)
+    .join('|');
+  return crypto.createHash('md5').update(parts).digest('hex');
+}
+
+function serializeSimplePageForHash(doc) {
+  const title = String(doc?.title || '').trim();
+  const excerpt = String(doc?.excerpt || '').trim();
+  const bodyPlain = portableBlocksToPlain(doc?.body);
+  const contactLayout = doc?.contactLayout ? JSON.stringify(doc.contactLayout) : '';
+  return crypto.createHash('md5').update([title, excerpt, bodyPlain, contactLayout].join('|')).digest('hex');
 }
 
 // ── DeepSeek 翻译 ─────────────────────────────────────────────────────────────
@@ -435,22 +466,25 @@ async function processProductCategory(doc) {
   }
 
   const currentHash = computeProductCategoryTitleHash(doc);
-  if (doc.translationSourceHash && doc.translationSourceHash === currentHash) {
+  const hasMissingLocales = ['titleEn', 'titleEs', 'titlePt', 'titleAr', 'titleRu'].some(
+    (k) => !String(doc[k] || '').trim(),
+  );
+  if (doc.translationSourceHash && doc.translationSourceHash === currentHash && !hasMissingLocales) {
     console.log(`[${_id}] Skipped (productCategory) — already translated`);
     return { skipped: true, reason: 'already translated' };
   }
 
   console.log(`[${_id}] Translating productCategory title…`);
-  const [titleEn, titleEs] = await Promise.all([
-    translateText(title, 'zh-CN', 'en'),
-    translateText(title, 'zh-CN', 'es'),
-  ]);
+  const byLocale = await translateForLocales(title, 'zh-CN', PRODUCT_LOCALES);
 
   await client
     .patch(_id)
     .set({
-      titleEn,
-      titleEs,
+      titleEn: byLocale.en,
+      titleEs: byLocale.es,
+      titlePt: byLocale.pt,
+      titleAr: byLocale.ar,
+      titleRu: byLocale.ru,
       translationSourceHash: currentHash,
     })
     .commit();
@@ -591,13 +625,158 @@ async function processPost(doc) {
   return { success: true, _id, type: 'post' };
 }
 
+async function processServicePage(doc) {
+  const { _id, _type } = doc;
+  if (_type !== 'servicePage') return { skipped: true, reason: 'not a servicePage' };
+
+  const sourceEntries = getServicePageBaseTextEntries(doc);
+  if (!sourceEntries.length) return { skipped: true, reason: 'empty content' };
+
+  const currentHash = computeServicePageHash(doc);
+  if (doc.translationSourceHash && doc.translationSourceHash === currentHash) {
+    console.log(`[${_id}] Skipped (servicePage) — already translated`);
+    return { skipped: true, reason: 'already translated' };
+  }
+
+  console.log(`[${_id}] Translating servicePage…`);
+  const patch = { translationSourceHash: currentHash };
+
+  for (const [field, value] of sourceEntries) {
+    const byLocale = await translateForLocales(value, 'zh-CN', PRODUCT_LOCALES);
+    for (const loc of PRODUCT_LOCALES) {
+      patch[`${field}_${loc}`] = byLocale[loc];
+    }
+  }
+
+  await client.patch(_id).set(patch).commit();
+  console.log(`[${_id}] Done (servicePage)`);
+  return { success: true, _id, type: 'servicePage' };
+}
+
+async function processSimplePage(doc) {
+  const { _id, _type } = doc;
+  if (_type !== 'simplePage') return { skipped: true, reason: 'not a simplePage' };
+
+  const title = String(doc.title || '').trim();
+  const excerpt = String(doc.excerpt || '').trim();
+  const bodyPlain = portableBlocksToPlain(doc.body);
+  const hasCore = Boolean(title || excerpt || bodyPlain);
+  const hasContactLayout = Boolean(doc.slug?.current === 'contact' && doc.contactLayout);
+  if (!hasCore && !hasContactLayout) return { skipped: true, reason: 'empty content' };
+
+  const currentHash = serializeSimplePageForHash(doc);
+  if (doc.translationSourceHash && doc.translationSourceHash === currentHash) {
+    console.log(`[${_id}] Skipped (simplePage) — already translated`);
+    return { skipped: true, reason: 'already translated' };
+  }
+
+  console.log(`[${_id}] Translating simplePage…`);
+  const patch = { translationSourceHash: currentHash };
+
+  if (title) {
+    const byLocale = await translateForLocales(title, 'zh-CN', PRODUCT_LOCALES);
+    for (const loc of PRODUCT_LOCALES) patch[`title_${loc}`] = byLocale[loc];
+  }
+  if (excerpt) {
+    const byLocale = await translateForLocales(excerpt, 'zh-CN', PRODUCT_LOCALES);
+    for (const loc of PRODUCT_LOCALES) patch[`excerpt_${loc}`] = byLocale[loc];
+  }
+  if (bodyPlain) {
+    const byLocale = await translateForLocales(bodyPlain, 'zh-CN', PRODUCT_LOCALES);
+    for (const loc of PRODUCT_LOCALES) patch[`bodyPlain_${loc}`] = byLocale[loc];
+  }
+
+  if (hasContactLayout) {
+    const src = doc.contactLayout || {};
+    const dst = JSON.parse(JSON.stringify(src));
+    const textFields = [
+      'eyebrow',
+      'title',
+      'lead',
+      'mapTitle',
+      'mapLead',
+      'legendHq',
+      'legendHub',
+      'hqTitle',
+      'hqSubtitle',
+      'hqBody',
+      'hotlineTitle',
+      'hotlineSubtitle',
+      'hotlineLine1',
+      'hotlineLine2',
+      'bizTitle',
+      'bizSubtitle',
+      'bizBody',
+      'bizEmail',
+    ];
+    for (const f of textFields) {
+      const val = String(src[f] || '').trim();
+      if (!val) continue;
+      const byLocale = await translateForLocales(val, 'zh-CN', PRODUCT_LOCALES);
+      for (const loc of PRODUCT_LOCALES) dst[`${f}_${loc}`] = byLocale[loc];
+    }
+    if (Array.isArray(src.hubs)) {
+      dst.hubs = [];
+      for (const row of src.hubs) {
+        const n = { ...row };
+        const label = String(row?.label || '').trim();
+        const sub = String(row?.sub || '').trim();
+        if (label) {
+          const byLocale = await translateForLocales(label, 'zh-CN', PRODUCT_LOCALES);
+          for (const loc of PRODUCT_LOCALES) n[`label_${loc}`] = byLocale[loc];
+        }
+        if (sub) {
+          const byLocale = await translateForLocales(sub, 'zh-CN', PRODUCT_LOCALES);
+          for (const loc of PRODUCT_LOCALES) n[`sub_${loc}`] = byLocale[loc];
+        }
+        dst.hubs.push(n);
+      }
+    }
+    if (Array.isArray(src.stats)) {
+      dst.stats = [];
+      for (const row of src.stats) {
+        const n = { ...row };
+        const label = String(row?.label || '').trim();
+        if (label) {
+          const byLocale = await translateForLocales(label, 'zh-CN', PRODUCT_LOCALES);
+          for (const loc of PRODUCT_LOCALES) n[`label_${loc}`] = byLocale[loc];
+        }
+        dst.stats.push(n);
+      }
+    }
+    patch.contactLayout = dst;
+  }
+
+  await client.patch(_id).set(patch).commit();
+  console.log(`[${_id}] Done (simplePage)`);
+  return { success: true, _id, type: 'simplePage' };
+}
+
 async function routeTranslation(doc) {
   if (doc._type === 'product') return processProduct(doc);
   if (doc._type === 'productCategory') return processProductCategory(doc);
   if (doc._type === 'faq') return processFaq(doc);
   if (doc._type === 'post') return processPost(doc);
   if (doc._type === 'caseStudy') return processCaseStudy(doc);
+  if (doc._type === 'servicePage') return processServicePage(doc);
+  if (doc._type === 'simplePage') return processSimplePage(doc);
   return { skipped: true, reason: `unsupported _type: ${doc._type}` };
+}
+
+function setTranslateCors(req, res) {
+  const origin = req.headers.origin;
+  const allowed = new Set([
+    'http://localhost:3333',
+    'http://127.0.0.1:3333',
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+  ]);
+  if (origin && allowed.has(String(origin))) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, sanity-webhook-signature');
+    res.setHeader('Access-Control-Max-Age', '86400');
+  }
 }
 
 // ── HTTP 服务器 ───────────────────────────────────────────────────────────────
@@ -607,10 +786,18 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  if (req.url === '/webhook/translate' && req.method === 'OPTIONS') {
+    setTranslateCors(req, res);
+    res.writeHead(204).end();
+    return;
+  }
+
   if (req.method !== 'POST' || req.url !== '/webhook/translate') {
     res.writeHead(404).end('Not found');
     return;
   }
+
+  setTranslateCors(req, res);
 
   const chunks = [];
   req.on('data', chunk => chunks.push(chunk));

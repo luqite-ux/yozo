@@ -27,6 +27,7 @@ import {
   pickFaqLocale,
   pickHomeStatLabel,
   localizeStatValueDisplay,
+  pickCmsLocaleFieldOrZh,
 } from './i18n/helpers.js';
 import { alternatePathsForBare, bareToLocalized } from './i18n/routing.js';
 import { getDefaultAboutPage } from './lib/sanity/index.js';
@@ -1011,25 +1012,45 @@ const AboutPage = () => {
 };
 
 // --- OEM/ODM Services ---
+function pickServiceField(servicePage, key, locale, t) {
+  const row = servicePage && typeof servicePage === 'object' ? servicePage : null;
+  if (!row) return t(`services.${key}`);
+  const zh = row[key];
+  const en = row[`${key}_en`];
+  const es = row[`${key}_es`];
+  const pt = row[`${key}_pt`];
+  const ar = row[`${key}_ar`];
+  const ru = row[`${key}_ru`];
+  if (locale === 'zh') return (String(zh || '').trim() || String(en || '').trim() || String(es || '').trim() || t(`services.${key}`));
+  if (locale === 'en') return (String(en || '').trim() || String(es || '').trim() || String(zh || '').trim() || t(`services.${key}`));
+  if (locale === 'es') return (String(es || '').trim() || String(en || '').trim() || String(zh || '').trim() || t(`services.${key}`));
+  if (locale === 'pt') return (String(pt || '').trim() || String(en || '').trim() || String(es || '').trim() || String(zh || '').trim() || t(`services.${key}`));
+  if (locale === 'ar') return (String(ar || '').trim() || String(en || '').trim() || String(es || '').trim() || String(zh || '').trim() || t(`services.${key}`));
+  if (locale === 'ru') return (String(ru || '').trim() || String(en || '').trim() || String(es || '').trim() || String(zh || '').trim() || t(`services.${key}`));
+  return String(en || '').trim() || String(es || '').trim() || String(zh || '').trim() || t(`services.${key}`);
+}
+
 const ServicesPage = () => {
   const navigate = useLocalizedNavigate();
-  const { t } = useLocale();
+  const { locale, t } = useLocale();
+  const { servicePage } = useCms();
+  const sv = (key) => pickServiceField(servicePage, key, locale, t);
   return (
     <div className="yozo-animate-page-in pt-28 md:pt-36 lg:pt-40 bg-white min-h-screen">
       {/* Hero Section */}
       <div className="container mx-auto px-6 md:px-12 text-center mb-24 md:mb-32">
         <div className="inline-flex items-center gap-3 mb-6">
           <span className="h-px w-8 bg-gray-200"></span>
-          <span className="text-[11px] font-bold tracking-[0.2em] text-gray-400 uppercase">{t('services.eyebrow')}</span>
+          <span className="text-[11px] font-bold tracking-[0.2em] text-gray-400 uppercase">{sv('eyebrow')}</span>
           <span className="h-px w-8 bg-gray-200"></span>
         </div>
         <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-light tracking-tight mb-6 sm:mb-8 leading-[1.1] px-1">
-          {t('services.h1l1')}
+          {sv('h1l1')}
           <br className="hidden sm:block" />
-          {t('services.h1l2')}
+          {sv('h1l2')}
         </h1>
         <p className="text-gray-500 font-light max-w-2xl mx-auto text-[15px] sm:text-lg leading-relaxed mb-8 sm:mb-10 px-1">
-          {t('services.lead').split('\n').map((line, i, arr) => (
+          {sv('lead').split('\n').map((line, i, arr) => (
             <span key={i}>
               {line}
               {i < arr.length - 1 ? <br className="hidden md:block" /> : null}
@@ -1037,7 +1058,7 @@ const ServicesPage = () => {
           ))}
         </p>
         <button onClick={() => navigate('/contact')} className="inline-flex items-center gap-2 bg-[#1A1A1A] text-white px-8 py-3.5 text-[14px] font-medium tracking-wide transition-all duration-300 rounded-full hover:bg-black hover:shadow-lg">
-          {t('services.cta')} <ArrowRight size={16} />
+          {sv('cta')} <ArrowRight size={16} />
         </button>
       </div>
       
@@ -1045,47 +1066,47 @@ const ServicesPage = () => {
       <section className="bg-[#FAFAFA] py-24 border-y border-gray-100">
         <div className="container mx-auto px-6 md:px-12">
           <div className="text-center mb-20">
-            <h2 className="text-3xl md:text-4xl font-light tracking-tight mb-4 text-[#111111]">{t('services.modelsTitle')}</h2>
-            <p className="text-gray-500 text-[15px] font-light max-w-2xl mx-auto">{t('services.modelsLead')}</p>
+            <h2 className="text-3xl md:text-4xl font-light tracking-tight mb-4 text-[#111111]">{sv('modelsTitle')}</h2>
+            <p className="text-gray-500 text-[15px] font-light max-w-2xl mx-auto">{sv('modelsLead')}</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {/* OEM */}
             <article className="bg-white border border-gray-100/50 p-10 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-500 flex flex-col h-full rounded-[24px]">
               <Settings size={32} className="mb-8 text-gray-300" strokeWidth={1} />
-              <div className="text-[11px] font-bold tracking-widest text-[#111111] mb-3 uppercase">Original Equipment Mfg</div>
-              <h3 className="text-2xl font-light mb-4">{t('services.oemH')}</h3>
-              <p className="text-[14px] text-gray-500 font-light leading-relaxed mb-6">{t('services.oemP')}</p>
+              <div className="text-[11px] font-bold tracking-widest text-[#111111] mb-3 uppercase">{sv('oemTagline')}</div>
+              <h3 className="text-2xl font-light mb-4">{sv('oemH')}</h3>
+              <p className="text-[14px] text-gray-500 font-light leading-relaxed mb-6">{sv('oemP')}</p>
               <ul className="text-[13px] text-gray-400 font-light space-y-3 mt-auto border-t border-gray-100 pt-6">
-                <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-[#111111]"/>{t('services.oemL1')}</li>
-                <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-[#111111]"/>{t('services.oemL2')}</li>
-                <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-[#111111]"/>{t('services.oemL3')}</li>
+                <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-[#111111]"/>{sv('oemL1')}</li>
+                <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-[#111111]"/>{sv('oemL2')}</li>
+                <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-[#111111]"/>{sv('oemL3')}</li>
               </ul>
             </article>
             
             {/* ODM */}
             <article className="bg-[#1A1A1A] text-white p-10 shadow-[0_10px_40px_rgb(0,0,0,0.1)] transform md:-translate-y-4 flex flex-col h-full rounded-[24px]">
               <Beaker size={32} className="mb-8 text-gray-400" strokeWidth={1} />
-              <div className="text-[11px] font-bold tracking-widest text-gray-400 mb-3 uppercase">Original Design Mfg</div>
-              <h3 className="text-2xl font-light mb-4">{t('services.odmH')}</h3>
-              <p className="text-[14px] text-gray-400 font-light leading-relaxed mb-6">{t('services.odmP')}</p>
+              <div className="text-[11px] font-bold tracking-widest text-gray-400 mb-3 uppercase">{sv('odmTagline')}</div>
+              <h3 className="text-2xl font-light mb-4">{sv('odmH')}</h3>
+              <p className="text-[14px] text-gray-400 font-light leading-relaxed mb-6">{sv('odmP')}</p>
               <ul className="text-[13px] text-gray-400 font-light space-y-3 mt-auto border-t border-white/10 pt-6">
-                <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-white"/>{t('services.odmL1')}</li>
-                <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-white"/>{t('services.odmL2')}</li>
-                <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-white"/>{t('services.odmL3')}</li>
+                <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-white"/>{sv('odmL1')}</li>
+                <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-white"/>{sv('odmL2')}</li>
+                <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-white"/>{sv('odmL3')}</li>
               </ul>
             </article>
             
             {/* OBM */}
             <article className="bg-white border border-gray-100/50 p-10 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-500 flex flex-col h-full rounded-[24px]">
               <Box size={32} className="mb-8 text-gray-300" strokeWidth={1} />
-              <div className="text-[11px] font-bold tracking-widest text-[#111111] mb-3 uppercase">Private Label / OBM</div>
-              <h3 className="text-2xl font-light mb-4">{t('services.obmH')}</h3>
-              <p className="text-[14px] text-gray-500 font-light leading-relaxed mb-6">{t('services.obmP')}</p>
+              <div className="text-[11px] font-bold tracking-widest text-[#111111] mb-3 uppercase">{sv('obmTagline')}</div>
+              <h3 className="text-2xl font-light mb-4">{sv('obmH')}</h3>
+              <p className="text-[14px] text-gray-500 font-light leading-relaxed mb-6">{sv('obmP')}</p>
               <ul className="text-[13px] text-gray-400 font-light space-y-3 mt-auto border-t border-gray-100 pt-6">
-                <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-[#111111]"/>{t('services.obmL1')}</li>
-                <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-[#111111]"/>{t('services.obmL2')}</li>
-                <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-[#111111]"/>{t('services.obmL3')}</li>
+                <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-[#111111]"/>{sv('obmL1')}</li>
+                <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-[#111111]"/>{sv('obmL2')}</li>
+                <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-[#111111]"/>{sv('obmL3')}</li>
               </ul>
             </article>
           </div>
@@ -1096,17 +1117,17 @@ const ServicesPage = () => {
       <section className="py-24 bg-white">
         <div className="container mx-auto px-6 md:px-12 max-w-6xl">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-light tracking-tight mb-4 text-[#111111]">{t('services.flowTitle')}</h2>
-            <p className="text-gray-500 text-[15px] font-light">{t('services.flowLead')}</p>
+            <h2 className="text-3xl font-light tracking-tight mb-4 text-[#111111]">{sv('flowTitle')}</h2>
+            <p className="text-gray-500 text-[15px] font-light">{sv('flowLead')}</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative">
              <div className="hidden lg:block absolute top-[40px] left-[10%] right-[10%] h-[1px] bg-gray-100 -z-10"></div>
              {[
-               { step: '01', title: t('services.flow1t'), desc: t('services.flow1d') },
-               { step: '02', title: t('services.flow2t'), desc: t('services.flow2d') },
-               { step: '03', title: t('services.flow3t'), desc: t('services.flow3d') },
-               { step: '04', title: t('services.flow4t'), desc: t('services.flow4d') },
+               { step: '01', title: sv('flow1t'), desc: sv('flow1d') },
+               { step: '02', title: sv('flow2t'), desc: sv('flow2d') },
+               { step: '03', title: sv('flow3t'), desc: sv('flow3d') },
+               { step: '04', title: sv('flow4t'), desc: sv('flow4d') },
              ].map((item, idx) => (
                <div key={idx} className="bg-white border border-gray-100 rounded-[20px] p-8 relative hover:-translate-y-2 transition-transform duration-500 shadow-sm">
                  <div className="w-12 h-12 rounded-full bg-[#FAFAFA] text-[#111111] flex items-center justify-center font-bold text-lg mb-6 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]">
@@ -1125,27 +1146,27 @@ const ServicesPage = () => {
         <div className="container mx-auto px-6 md:px-12 max-w-6xl">
           <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
             <div>
-              <div className="text-[11px] font-bold tracking-widest text-gray-400 uppercase mb-4">{t('services.capEyebrow')}</div>
-              <h2 className="text-3xl font-light tracking-tight text-white">{t('services.capTitle')}</h2>
+              <div className="text-[11px] font-bold tracking-widest text-gray-400 uppercase mb-4">{sv('capEyebrow')}</div>
+              <h2 className="text-3xl font-light tracking-tight text-white">{sv('capTitle')}</h2>
             </div>
             <p className="text-gray-400 font-light max-w-lg text-[14px]">
-              {t('services.capLead')}
+              {sv('capLead')}
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="border border-white/10 p-8 rounded-[20px] bg-white/5 backdrop-blur-sm">
               <Droplets className="text-gray-300 mb-6" size={28} strokeWidth={1.5} />
-              <h4 className="text-xl font-medium mb-3">{t('services.cap1t')}</h4>
+              <h4 className="text-xl font-medium mb-3">{sv('cap1t')}</h4>
               <p className="text-[13px] text-gray-400 font-light leading-relaxed mb-4">
-                {t('services.cap1d')}
+                {sv('cap1d')}
               </p>
             </div>
             <div className="border border-white/10 p-8 rounded-[20px] bg-white/5 backdrop-blur-sm">
               <Layers className="text-gray-300 mb-6" size={28} strokeWidth={1.5} />
-              <h4 className="text-xl font-medium mb-3">{t('services.cap2t')}</h4>
+              <h4 className="text-xl font-medium mb-3">{sv('cap2t')}</h4>
               <p className="text-[13px] text-gray-400 font-light leading-relaxed mb-4">
-                {t('services.cap2d')}
+                {sv('cap2d')}
               </p>
             </div>
           </div>
@@ -1614,26 +1635,89 @@ const FaqPage = () => {
 
 // --- 联系我们 ---
 const ContactPage = () => {
-  const { t } = useLocale();
-  const hubDots = useMemo(
-    () => [
-      { top: '35%', left: '20%', label: t('contact.hubNA'), sub: 'New York' },
-      { top: '40%', left: '48%', label: t('contact.hubEU'), sub: 'Paris' },
-      { top: '55%', left: '60%', label: t('contact.hubME'), sub: 'Dubai' },
-      { top: '48%', left: '75%', label: t('contact.hubHQ'), sub: 'Shantou, CN', isHQ: true },
-      { top: '42%', left: '85%', label: t('contact.hubAP'), sub: 'Tokyo' },
-      { top: '70%', left: '82%', label: t('contact.hubOC'), sub: 'Sydney' },
-    ],
-    [t],
-  );
+  const { t, locale } = useLocale();
+  const { simplePages } = useCms();
+  const contactPage = resolveSimplePageBySlug(simplePages, 'contact');
+  const contactLayout = contactPage?.contactLayout || null;
+
+  const plZh = (obj, key) => pickCmsLocaleFieldOrZh(obj, key, locale);
+
+  const pageTitle = plZh(contactPage, 'title') || t('contact.title');
+  const pageLead = plZh(contactPage, 'excerpt') || t('contact.lead');
+  const heroEyebrow = plZh(contactLayout, 'eyebrow') || t('contact.eyebrow');
+  const mapTitle = plZh(contactLayout, 'mapTitle') || t('contact.mapH');
+  const mapLead = plZh(contactLayout, 'mapLead') || t('contact.mapP');
+  const mapBackgroundImage =
+    contactLayout?.mapBackgroundImageUrlResolved ||
+    contactLayout?.mapBackgroundImageUrl ||
+    'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=2000';
+
+  const layoutHubs = Array.isArray(contactLayout?.hubs)
+    ? contactLayout.hubs.map((dot) => ({
+        ...dot,
+        isHQ: Boolean(dot.isHQ || dot.isHeadquarters),
+        label: plZh(dot, 'label') || dot.label || '',
+        sub: plZh(dot, 'sub') || dot.sub || '',
+      }))
+    : [];
+  const hubDots = layoutHubs.length
+    ? layoutHubs
+    : [
+        { top: '35%', left: '20%', label: t('contact.hubNA'), sub: 'New York' },
+        { top: '40%', left: '48%', label: t('contact.hubEU'), sub: 'Paris' },
+        { top: '55%', left: '60%', label: t('contact.hubME'), sub: 'Dubai' },
+        { top: '48%', left: '75%', label: t('contact.hubHQ'), sub: 'Shantou, CN', isHQ: true },
+        { top: '42%', left: '85%', label: t('contact.hubAP'), sub: 'Tokyo' },
+        { top: '70%', left: '82%', label: t('contact.hubOC'), sub: 'Sydney' },
+      ];
+
+  const defaultStats = [
+    { value: '50', unit: '+', label: t('contact.statCountries') },
+    { value: '100', unit: '%', label: t('contact.statFda') },
+    { value: '15', unit: 'd', label: t('contact.statDelivery') },
+    { value: '7x24', unit: '', label: t('contact.statSupport') },
+  ];
+  const stats = Array.isArray(contactLayout?.stats) && contactLayout.stats.length
+    ? contactLayout.stats.map((s) => ({
+        value: s.value || '',
+        unit: s.unit || '',
+        label: plZh(s, 'label') || s.label || '',
+      }))
+    : defaultStats;
+
+  const hqTitle = plZh(contactLayout, 'hqTitle') || t('contact.card1h');
+  const hqSub = plZh(contactLayout, 'hqSubtitle') || 'Shantou, China';
+  const hqBody = plZh(contactLayout, 'hqBody') || t('contact.card1p');
+  const hotlineTitle = plZh(contactLayout, 'hotlineTitle') || t('contact.card2h');
+  const hotlineSub = plZh(contactLayout, 'hotlineSubtitle') || '24/7 Global Support';
+  const hotlineFromLines = [
+    plZh(contactLayout, 'hotlineLine1') || String(contactLayout?.hotlineLine1 || '').trim(),
+    plZh(contactLayout, 'hotlineLine2') || String(contactLayout?.hotlineLine2 || '').trim(),
+  ]
+    .filter(Boolean)
+    .join('\n');
+  const hotlineBody =
+    plZh(contactLayout, 'hotlineBody').trim() ||
+    hotlineFromLines ||
+    `${t('contact.card2l1')}\n${t('contact.card2l2')}`;
+  const bizTitle = plZh(contactLayout, 'bizTitle') || t('contact.card3h');
+  const bizSub = plZh(contactLayout, 'bizSubtitle') || 'Business Inquiry';
+  const bizBody = plZh(contactLayout, 'bizBody') || t('contact.card3p');
+  const bizEmail = plZh(contactLayout, 'bizEmail') || contactLayout?.bizEmail || 'yozobeauty@outlook.com';
+
+  const hotlineLines = hotlineBody
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+
   return (
   <div className="yozo-animate-page-in pt-28 md:pt-36 lg:pt-40 bg-[#FAFAFA] min-h-screen">
     <div className="container mx-auto px-6 md:px-12 text-center mb-16">
       <div className="inline-flex items-center gap-3 mb-6">
-        <span className="h-px w-8 bg-gray-300"></span><span className="text-[11px] font-bold tracking-[0.3em] uppercase text-gray-400">{t('contact.eyebrow')}</span><span className="h-px w-8 bg-gray-300"></span>
+        <span className="h-px w-8 bg-gray-300"></span><span className="text-[11px] font-bold tracking-[0.3em] uppercase text-gray-400">{heroEyebrow}</span><span className="h-px w-8 bg-gray-300"></span>
       </div>
-      <h1 className="text-3xl sm:text-4xl md:text-5xl font-light tracking-tight mb-6 text-[#111111]">{t('contact.title')}</h1>
-      <p className="text-gray-500 font-light text-base sm:text-lg">{t('contact.lead')}</p>
+      <h1 className="text-3xl sm:text-4xl md:text-5xl font-light tracking-tight mb-6 text-[#111111]">{pageTitle}</h1>
+      <p className="text-gray-500 font-light text-base sm:text-lg">{pageLead}</p>
     </div>
 
     {/* Global Network Map Section */}
@@ -1641,15 +1725,15 @@ const ContactPage = () => {
       <div className="relative w-full rounded-[32px] overflow-hidden bg-[#111111] shadow-[0_20px_40px_-15px_rgba(0,0,0,0.2)]">
         {/* Earth/Network Background */}
         <div className="absolute inset-0 z-0">
-           <img src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=2000" alt="Global Network" className="w-full h-full object-cover opacity-[0.35] mix-blend-screen" />
+           <img src={mapBackgroundImage} alt="Global Network" className="w-full h-full object-cover opacity-[0.35] mix-blend-screen" />
            <div className="absolute inset-0 bg-gradient-to-b from-[#111111]/30 via-transparent to-[#111111]/90"></div>
         </div>
 
         <div className="relative z-10 p-6 sm:p-10 md:p-16 lg:p-20">
            <div className="text-center mb-16">
-             <h2 className="text-3xl md:text-4xl font-light text-white mb-6 tracking-tight">{t('contact.mapH')}</h2>
+             <h2 className="text-3xl md:text-4xl font-light text-white mb-6 tracking-tight">{mapTitle}</h2>
              <p className="text-white/60 font-light text-[15px] max-w-2xl mx-auto leading-relaxed">
-               {t('contact.mapP')}
+               {mapLead}
              </p>
            </div>
 
@@ -1673,29 +1757,22 @@ const ContactPage = () => {
              ))}
 
              <div className="absolute bottom-6 right-6 flex items-center gap-4 text-[10px] text-white/40 tracking-widest uppercase font-bold">
-                <span className="flex items-center gap-2"><span className="w-2 h-2 bg-white rounded-full shadow-[0_0_10px_#fff]"></span> {t('contact.legHQ')}</span>
-                <span className="flex items-center gap-2"><span className="w-2 h-2 bg-gray-400 rounded-full"></span> {t('contact.legHub')}</span>
+                <span className="flex items-center gap-2"><span className="w-2 h-2 bg-white rounded-full shadow-[0_0_10px_#fff]"></span> {plZh(contactLayout, 'legendHq') || t('contact.legHQ')}</span>
+                <span className="flex items-center gap-2"><span className="w-2 h-2 bg-gray-400 rounded-full"></span> {plZh(contactLayout, 'legendHub') || t('contact.legHub')}</span>
              </div>
            </div>
 
            {/* Key Stats */}
-           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 md:gap-4 text-center divide-x-0 md:divide-x divide-white/10">
-              <div>
-                 <div className="text-4xl font-light text-white mb-2">50<span className="text-2xl text-white/50">+</span></div>
-                 <div className="text-[11px] tracking-[0.2em] text-white/50 uppercase font-bold">{t('contact.statCountries')}</div>
-              </div>
-              <div>
-                 <div className="text-4xl font-light text-white mb-2">100<span className="text-2xl text-white/50">%</span></div>
-                 <div className="text-[11px] tracking-[0.2em] text-white/50 uppercase font-bold">{t('contact.statFda')}</div>
-              </div>
-              <div>
-                 <div className="text-4xl font-light text-white mb-2">15<span className="text-2xl text-white/50">d</span></div>
-                 <div className="text-[11px] tracking-[0.2em] text-white/50 uppercase font-bold">{t('contact.statDelivery')}</div>
-              </div>
-              <div>
-                 <div className="text-4xl font-light text-white mb-2">7<span className="text-xl text-white/50">x</span>24</div>
-                 <div className="text-[11px] tracking-[0.2em] text-white/50 uppercase font-bold">{t('contact.statSupport')}</div>
-              </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 md:gap-4 text-center divide-x-0 md:divide-x divide-white/10">
+             {stats.map((s, idx) => (
+               <div key={`${s.value}-${s.label}-${idx}`}>
+                  <div className="text-4xl font-light text-white mb-2">
+                    {s.value}
+                    {s.unit ? <span className="text-2xl text-white/50">{s.unit}</span> : null}
+                  </div>
+                  <div className="text-[11px] tracking-[0.2em] text-white/50 uppercase font-bold">{s.label}</div>
+               </div>
+             ))}
            </div>
         </div>
       </div>
@@ -1708,30 +1785,31 @@ const ContactPage = () => {
              <div className="w-10 h-10 rounded-full bg-[#FAFAFA] flex items-center justify-center mb-6 text-[#111111]">
                <MapPin size={18} strokeWidth={1.5}/>
              </div>
-             <h4 className="text-[16px] font-medium text-[#111111] mb-2">{t('contact.card1h')}</h4>
-             <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-4">Shantou, China</div>
-             <p className="text-[13px] text-gray-500 font-light leading-relaxed">{t('contact.card1p')}</p>
+            <h4 className="text-[16px] font-medium text-[#111111] mb-2">{hqTitle}</h4>
+            <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-4">{hqSub}</div>
+            <p className="text-[13px] text-gray-500 font-light leading-relaxed">{hqBody}</p>
           </div>
           <div className="bg-white p-6 sm:p-8 rounded-[20px] border border-gray-100 shadow-[0_4px_20px_rgb(0,0,0,0.02)] hover:-translate-y-1 transition-transform">
              <div className="w-10 h-10 rounded-full bg-[#FAFAFA] flex items-center justify-center mb-6 text-[#111111]">
                <Phone size={18} strokeWidth={1.5}/>
              </div>
-             <h4 className="text-[16px] font-medium text-[#111111] mb-2">{t('contact.card2h')}</h4>
-             <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-4">24/7 Global Support</div>
-             <p className="text-[13px] text-gray-500 font-light leading-relaxed space-y-2 flex flex-col">
-               <span>{t('contact.card2l1')}</span>
-               <span>{t('contact.card2l2')}</span>
+            <h4 className="text-[16px] font-medium text-[#111111] mb-2">{hotlineTitle}</h4>
+            <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-4">{hotlineSub}</div>
+            <p className="text-[13px] text-gray-500 font-light leading-relaxed space-y-2 flex flex-col">
+              {hotlineLines.map((line, idx) => (
+                <span key={`${line}-${idx}`}>{line}</span>
+              ))}
              </p>
           </div>
           <div className="bg-white p-6 sm:p-8 rounded-[20px] border border-gray-100 shadow-[0_4px_20px_rgb(0,0,0,0.02)] hover:-translate-y-1 transition-transform">
              <div className="w-10 h-10 rounded-full bg-[#FAFAFA] flex items-center justify-center mb-6 text-[#111111]">
                <Mail size={18} strokeWidth={1.5}/>
              </div>
-             <h4 className="text-[16px] font-medium text-[#111111] mb-2">{t('contact.card3h')}</h4>
-             <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-4">Business Inquiry</div>
+            <h4 className="text-[16px] font-medium text-[#111111] mb-2">{bizTitle}</h4>
+            <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-4">{bizSub}</div>
              <p className="text-[13px] text-gray-500 font-light leading-relaxed">
-               {t('contact.card3p')}
-               <br/><span className="text-[#111111] font-medium mt-2 block">yozobeauty@outlook.com</span>
+              {bizBody}
+              <br/><span className="text-[#111111] font-medium mt-2 block">{bizEmail}</span>
              </p>
           </div>
        </div>
@@ -2115,12 +2193,39 @@ const CaseStudyDetailPage = () => {
 };
 
 // --- 通用页面（路由 /p/:slug，与 Studio simplePage 对齐）---
-const SimplePageView = () => {
+const SimplePageView = ({ forcedSlug }) => {
   const { slug } = useParams();
   const navigate = useLocalizedNavigate();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { simplePages, loading, error, reload } = useCms();
-  const page = slug ? resolveSimplePageBySlug(simplePages, slug) : null;
+  const effectiveSlug = forcedSlug || slug;
+  const page = effectiveSlug ? resolveSimplePageBySlug(simplePages, effectiveSlug) : null;
+
+  const plZh = (obj, key) => pickCmsLocaleFieldOrZh(obj, key, locale);
+
+  const pageTitle = page ? plZh(page, 'title') || page.title : '';
+  const pageExcerpt = page ? plZh(page, 'excerpt') || page.excerpt : '';
+  const pageContent =
+    page && page[`content_${locale}`]?.length
+      ? page[`content_${locale}`]
+      : page && locale !== 'zh' && page.content_en?.length
+        ? page.content_en
+        : page?.content || [];
+
+  const contactLayout = page?.slug === 'contact' && page?.contactLayout ? page.contactLayout : null;
+  const localizedHubs = Array.isArray(contactLayout?.hubs)
+    ? contactLayout.hubs.map((dot) => ({
+        ...dot,
+        label: plZh(dot, 'label') || dot.label || '',
+        sub: plZh(dot, 'sub') || dot.sub || '',
+      }))
+    : [];
+  const localizedStats = Array.isArray(contactLayout?.stats)
+    ? contactLayout.stats.map((s) => ({
+        ...s,
+        label: plZh(s, 'label') || s.label || '',
+      }))
+    : [];
 
   if (loading) return <CmsLoadingScreen />;
   if (error) {
@@ -2163,14 +2268,102 @@ const SimplePageView = () => {
       ) : null}
       <div className="container mx-auto px-6 md:px-12 max-w-4xl bg-white rounded-2xl border border-gray-100 p-10 md:p-14 shadow-sm">
         {!page.banner?.bgUrl ? (
-          <h1 className="text-3xl md:text-4xl font-light text-[#111111] mb-6">{page.title}</h1>
+          <h1 className="text-3xl md:text-4xl font-light text-[#111111] mb-6">{pageTitle}</h1>
         ) : null}
-        {page.excerpt ? <p className="text-gray-500 font-light mb-8">{page.excerpt}</p> : null}
-        <div className="space-y-4 text-[15px] text-gray-600 font-light leading-relaxed">
-          {(page.content?.length ? page.content : [{ type: 'p', text: '' }]).map((block, i) => (
-            <p key={i}>{block.text}</p>
-          ))}
-        </div>
+        {pageExcerpt ? <p className="text-gray-500 font-light mb-8">{pageExcerpt}</p> : null}
+        {contactLayout ? (
+          <div className="space-y-10">
+            <section className="relative overflow-hidden rounded-2xl bg-[#111111] p-6 md:p-10 text-white">
+              <div
+                className="absolute inset-0 bg-cover bg-center opacity-35 mix-blend-screen"
+                style={{
+                  backgroundImage: contactLayout.mapBackgroundImageUrl
+                    ? `url(${contactLayout.mapBackgroundImageUrl})`
+                    : undefined,
+                }}
+              />
+              <div className="relative z-10">
+                <h2 className="text-2xl md:text-3xl font-light mb-4">
+                  {plZh(contactLayout, 'mapTitle') || t('contact.mapH')}
+                </h2>
+                <p className="text-white/70 text-sm md:text-base mb-6">
+                  {plZh(contactLayout, 'mapLead') || t('contact.mapP')}
+                </p>
+                {localizedHubs.length ? (
+                  <div className="grid sm:grid-cols-2 gap-3 mb-6">
+                    {localizedHubs.map((h, idx) => (
+                      <div key={h._key || idx} className="rounded-lg border border-white/15 px-3 py-2 bg-white/5">
+                        <div className="text-[12px] font-semibold tracking-wide">{h.label}</div>
+                        <div className="text-[11px] text-white/70">{h.sub}</div>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+                {localizedStats.length ? (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {localizedStats.map((s, idx) => (
+                      <div key={s._key || idx} className="text-center">
+                        <div className="text-2xl font-light">
+                          {s.value}
+                          {s.unit ? <span className="text-sm text-white/70">{s.unit}</span> : null}
+                        </div>
+                        <div className="text-[11px] text-white/60 uppercase tracking-wider">{s.label}</div>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            </section>
+
+            <section className="grid md:grid-cols-3 gap-4">
+              <div className="rounded-xl border border-gray-100 p-5 bg-gray-50">
+                <h3 className="text-[16px] font-medium text-[#111111] mb-1">
+                  {plZh(contactLayout, 'hqTitle')}
+                </h3>
+                <div className="text-[10px] uppercase tracking-widest text-gray-400 mb-3">
+                  {plZh(contactLayout, 'hqSubtitle')}
+                </div>
+                <p className="text-[13px] text-gray-600 whitespace-pre-line">
+                  {plZh(contactLayout, 'hqBody')}
+                </p>
+              </div>
+              <div className="rounded-xl border border-gray-100 p-5 bg-gray-50">
+                <h3 className="text-[16px] font-medium text-[#111111] mb-1">
+                  {plZh(contactLayout, 'hotlineTitle')}
+                </h3>
+                <div className="text-[10px] uppercase tracking-widest text-gray-400 mb-3">
+                  {plZh(contactLayout, 'hotlineSubtitle')}
+                </div>
+                <p className="text-[13px] text-gray-600 whitespace-pre-line">
+                  {plZh(contactLayout, 'hotlineLine1')}
+                  {'\n'}
+                  {plZh(contactLayout, 'hotlineLine2')}
+                </p>
+              </div>
+              <div className="rounded-xl border border-gray-100 p-5 bg-gray-50">
+                <h3 className="text-[16px] font-medium text-[#111111] mb-1">
+                  {plZh(contactLayout, 'bizTitle')}
+                </h3>
+                <div className="text-[10px] uppercase tracking-widest text-gray-400 mb-3">
+                  {plZh(contactLayout, 'bizSubtitle')}
+                </div>
+                <p className="text-[13px] text-gray-600 whitespace-pre-line">
+                  {plZh(contactLayout, 'bizBody')}
+                  {'\n'}
+                  <span className="font-medium text-[#111111]">
+                    {plZh(contactLayout, 'bizEmail')}
+                  </span>
+                </p>
+              </div>
+            </section>
+          </div>
+        ) : (
+          <div className="space-y-4 text-[15px] text-gray-600 font-light leading-relaxed">
+            {(pageContent.length ? pageContent : [{ type: 'p', text: '' }]).map((block, i) => (
+              <p key={i}>{block.text}</p>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -2210,8 +2403,8 @@ function LocaleFlagImg({ flagCode, className = '' }) {
   );
 }
 
-/** @param {{ navOnLight: boolean, menuAlign?: 'end' | 'center' | 'start' }} props */
-function LanguageSwitcher({ navOnLight, menuAlign = 'end' }) {
+/** @param {{ navOnLight: boolean, menuAlign?: 'end' | 'center' | 'start', onSelectLocale?: () => void, inlineList?: boolean }} props */
+function LanguageSwitcher({ navOnLight, menuAlign = 'end', onSelectLocale, inlineList = false }) {
   const { locale, t } = useLocale();
   const location = useLocation();
   const switchLocale = useLocaleSwitcherNavigate();
@@ -2225,11 +2418,47 @@ function LanguageSwitcher({ navOnLight, menuAlign = 'end' }) {
         : 'end-0 start-auto';
 
   useEffect(() => {
+    if (inlineList) return;
     if (!open) return;
     const close = () => setOpen(false);
     document.addEventListener('click', close);
     return () => document.removeEventListener('click', close);
-  }, [open]);
+  }, [open, inlineList]);
+
+  if (inlineList) {
+    return (
+      <div className="w-full max-w-xs" role="group" aria-label={t('shell.ariaLang')}>
+        <div className="rounded-2xl border border-gray-200 bg-white p-2 shadow-sm">
+          <div className="px-2 pb-1 text-[11px] uppercase tracking-[0.12em] text-gray-400">
+            {t('shell.ariaLang')}
+          </div>
+          <div className="grid grid-cols-2 gap-1.5">
+            {LANG_OPTIONS.map((o) => {
+              const active = locale === o.id;
+              return (
+                <button
+                  key={o.id}
+                  type="button"
+                  onClick={() => {
+                    switchLocale(location.pathname, location.search, o.id);
+                    onSelectLocale?.();
+                  }}
+                  className={`flex items-center gap-2 rounded-xl border px-2.5 py-2 text-[12px] transition-colors ${
+                    active
+                      ? 'border-[#111] bg-gray-50 text-[#111] font-medium'
+                      : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  <LocaleFlagImg flagCode={o.flagCode} className="h-3.5 w-[22px]" />
+                  <span className="truncate">{o.short}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative shrink-0" role="group" aria-label={t('shell.ariaLang')}>
@@ -2261,6 +2490,7 @@ function LanguageSwitcher({ navOnLight, menuAlign = 'end' }) {
                 onClick={() => {
                   switchLocale(location.pathname, location.search, o.id);
                   setOpen(false);
+                  onSelectLocale?.();
                 }}
                 className={`w-full flex items-center gap-3 px-4 py-2.5 text-[13px] transition-colors ${
                   active
@@ -2339,7 +2569,7 @@ function SiteShell() {
     <div className="min-h-screen min-w-0 bg-[#FDFDFD] font-sans text-[#222222] selection:bg-gray-200 relative overflow-x-clip">
       <SeoAlternateLinks />
       {/* 现代化高端导航栏 */}
-      <nav className={`fixed inset-x-0 top-0 z-50 transition-all duration-700 pt-[env(safe-area-inset-top,0px)] ${
+      <nav className={`fixed inset-x-0 top-0 z-50 transition-all duration-700 pt-[calc(env(safe-area-inset-top,0px)+27px)] ${
         navOnLight
           ? 'bg-white/75 backdrop-blur-2xl border-b border-gray-200/50 shadow-[0_4px_30px_rgba(0,0,0,0.03)] py-4' 
           : 'bg-transparent border-b border-white/10 py-8'
@@ -2417,6 +2647,14 @@ function SiteShell() {
             id="site-mobile-nav"
             className="xl:hidden absolute top-full inset-x-0 w-full max-h-[min(85dvh,calc(100dvh-5rem))] overflow-y-auto overscroll-contain bg-white shadow-2xl border-t border-gray-100 py-4 flex flex-col pb-[max(1.5rem,env(safe-area-inset-bottom,0px))]"
           >
+             <div className="px-5 pb-4 flex flex-col items-center gap-4 border-b border-gray-100 mb-2">
+               <LanguageSwitcher
+                 navOnLight={true}
+                 menuAlign="center"
+                 inlineList
+                 onSelectLocale={() => setMobileMenuOpen(false)}
+               />
+             </div>
              {navItems.map((item) => (
                <button
                  key={`${item.path}-${item.label}`}
@@ -2431,7 +2669,6 @@ function SiteShell() {
                </button>
              ))}
              <div className="px-5 pt-4 flex flex-col items-center gap-4 border-t border-gray-100 mt-2">
-               <LanguageSwitcher navOnLight={true} menuAlign="center" />
                <button
                  type="button"
                  onClick={() => {

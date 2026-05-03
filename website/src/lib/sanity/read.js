@@ -3,6 +3,7 @@ import {
   siteSettingsQuery,
   homePageQuery,
   aboutPageQuery,
+  servicePageQuery,
   productCategoriesQuery,
   productsQuery,
   faqsQuery,
@@ -56,11 +57,12 @@ export function readSimplePages() {
  */
 export async function readCmsPayloadFromSanity() {
   const client = getSanityClient();
-  const [rawSettings, rawHome, rawAbout, rawPcat, rawProducts, rawFaqs, rawPosts, rawCases, rawPages] =
+  const [rawSettings, rawHome, rawAbout, rawService, rawPcat, rawProducts, rawFaqs, rawPosts, rawCases, rawPages] =
     await Promise.all([
       client.fetch(siteSettingsQuery),
       client.fetch(homePageQuery),
       client.fetch(aboutPageQuery),
+      client.fetch(servicePageQuery),
       client.fetch(productCategoriesQuery),
       client.fetch(productsQuery),
       client.fetch(faqsQuery),
@@ -82,6 +84,7 @@ export async function readCmsPayloadFromSanity() {
   return {
     siteSettings,
     aboutPage: mapAboutPageFromSanity(rawAbout),
+    servicePage: rawService || null,
     products,
     faqs,
     articles,

@@ -5,6 +5,7 @@ import heroBanner from './objects/heroBanner.js';
 import siteSettings from './siteSettings.js';
 import homePage from './homePage.js';
 import aboutPage from './aboutPage.js';
+import servicePage from './servicePage.js';
 import productCategory from './productCategory.js';
 import product from './product.js';
 import post from './post.js';
@@ -23,6 +24,7 @@ export const schemaTypes = [
   siteSettings,
   homePage,
   aboutPage,
+  servicePage,
   productCategory,
   product,
   caseStudy,

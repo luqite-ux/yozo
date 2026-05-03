@@ -34,14 +34,14 @@ function ago(dateStr) {
 const sidebarItems = [
   { key: 'overview', label: '概览中心', target: null },
   { key: 'crm', label: 'CRM 客户', target: 'itemInquiries' },
-  { key: 'traffic', label: '流量分析', target: 'itemPosts' },
+  { key: 'traffic', label: '资讯内容', target: 'itemNewsPosts' },
   { key: 'inquiries', label: '客户询盘', target: 'itemInquiries' },
-  { key: 'products', label: '产品库', target: 'itemProducts' },
-  { key: 'posts', label: '文章管理', target: 'itemPosts' },
+  { key: 'products', label: '产品中心', target: 'itemProductCenter' },
+  { key: 'posts', label: '资讯文章', target: 'itemNewsPosts' },
   { key: 'cases', label: '案例管理', target: 'itemCaseStudies' },
-  { key: 'media', label: '多媒体', target: 'itemVideos' },
-  { key: 'translate', label: '智能翻译', target: 'itemDocPages' },
-  { key: 'seo', label: 'SEO 矩阵', target: 'itemSiteSettings' },
+  { key: 'home', label: '首页编辑', target: 'itemHomePage' },
+  { key: 'translate', label: '页面内容', target: 'deskFrontendFlow' },
+  { key: 'seo', label: '站点与 SEO', target: 'itemSiteSettings' },
 ];
 
 export function ProDashboardTool() {
@@ -55,10 +55,10 @@ export function ProDashboardTool() {
 
   const stats = useMemo(
     () => [
-      { label: '产品总数', value: data?.products ?? '-', tone: '#2563eb', change: '+12%' },
-      { label: '文章发布', value: data?.posts ?? '-', tone: '#7c3aed', change: '+6%' },
-      { label: 'CRM 线索', value: data?.inquiries ?? '-', tone: '#0f766e', change: '+18%' },
-      { label: '案例展示', value: data?.cases ?? '-', tone: '#d97706', change: '+3%' },
+      { label: '产品总数', value: data?.products ?? '-', tone: '#2563eb' },
+      { label: '资讯文章', value: data?.posts ?? '-', tone: '#7c3aed' },
+      { label: 'CRM 线索', value: data?.inquiries ?? '-', tone: '#0f766e' },
+      { label: '案例展示', value: data?.cases ?? '-', tone: '#d97706' },
     ],
     [data],
   );
@@ -67,24 +67,20 @@ export function ProDashboardTool() {
     window.location.href = `/structure/${id}`;
   };
 
-  const topCustomers = [
-    { name: 'Global Trade Inc.', value: '¥12.5k', level: 'VIP' },
-    { name: '艾妆连锁采购部', value: '¥45.0k', level: '核心' },
-    { name: '欧洲渠道经理 Leon', value: '¥8.2k', level: '潜在' },
-  ];
+  const topCustomers = [];
 
   const trafficBars = [34, 46, 40, 62, 55, 77, 64, 82, 70, 88, 73, 60];
 
   const pendingItems = [
-    { title: '复核欧洲站重点页翻译', action: 'itemDocPages' },
-    { title: 'CRM 核心客户回访', action: 'itemInquiries' },
-    { title: '导出本周流量分析周报', action: 'itemPosts' },
+    { title: '更新首页 Banner 与精选模块', action: 'itemHomePage' },
+    { title: '处理待跟进询盘', action: 'itemInquiries' },
+    { title: '发布或更新资讯文章', action: 'itemNewsPosts' },
   ];
 
   const nextFeatureCards = [
-    { title: '翻译任务中心', desc: '批量翻译、审校和回滚', action: 'itemDocPages' },
-    { title: 'SEO 任务矩阵', desc: '关键词优先级和落地页映射', action: 'itemPosts' },
-    { title: 'CRM 客户分层', desc: '线索标签、评分和跟进节奏', action: 'itemInquiries' },
+    { title: '代工方案页', desc: '编辑服务与流程文案', action: 'itemServicePage' },
+    { title: '品牌探索页', desc: '关于我们与品牌矩阵', action: 'itemAboutPage' },
+    { title: '全球联络页', desc: '联络模块与地图文案', action: 'itemGlobalContact' },
   ];
 
   return (
@@ -148,20 +144,12 @@ export function ProDashboardTool() {
               <div style={{ position: 'absolute', right: -60, top: -80, width: 240, height: 240, borderRadius: '50%', background: 'radial-gradient(circle, rgba(56,189,248,0.32), rgba(56,189,248,0))' }} />
             </div>
             <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 20, padding: 18 }}>
-              <div style={{ fontSize: 12, fontWeight: 800, color: '#94a3b8', letterSpacing: '0.08em', textTransform: 'uppercase' }}>CRM 重点客户</div>
-              <div style={{ marginTop: 10, display: 'grid', gap: 12 }}>
-                {topCustomers.map((n) => (
-                  <div key={n.name} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-                    <div>
-                      <span style={{ color: '#0f172a', fontWeight: 700 }}>{n.name}</span>
-                      <div style={{ fontSize: 10, color: '#64748b' }}>{n.level}</div>
-                    </div>
-                    <span style={{ color: '#334155', fontWeight: 700 }}>{n.value}</span>
-                  </div>
-                ))}
+              <div style={{ fontSize: 12, fontWeight: 800, color: '#94a3b8', letterSpacing: '0.08em', textTransform: 'uppercase' }}> CRM 快捷入口 </div>
+              <div style={{ marginTop: 10, fontSize: 12, color: '#64748b', lineHeight: 1.5 }}>
+                重点客户分层等功能可在后续对接 CRM 扩展；当前请在询盘列表中查看客户与留言。
               </div>
               <button type="button" onClick={() => openStructure('itemInquiries')} style={{ marginTop: 12, width: '100%', borderRadius: 12, border: '1px solid #e2e8f0', background: '#f8fafc', padding: '9px 0', cursor: 'pointer', fontWeight: 700 }}>
-                进入 CRM 系统
+                进入询盘列表
               </button>
             </div>
           </div>
@@ -169,10 +157,7 @@ export function ProDashboardTool() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12 }}>
             {stats.map((s) => (
               <div key={s.label} style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 18, padding: 16 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>{s.label}</div>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#16a34a' }}>{s.change}</div>
-                </div>
+                <div style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>{s.label}</div>
                 <div style={{ marginTop: 8, fontSize: 34, fontWeight: 800, color: s.tone }}>{s.value}</div>
               </div>
             ))}
@@ -216,15 +201,12 @@ export function ProDashboardTool() {
             <div style={{ display: 'grid', gap: 14 }}>
               <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 20, padding: 16 }}>
                 <div style={{ fontSize: 18, fontWeight: 800 }}>AI 智能分析</div>
-                <div style={{ marginTop: 12, padding: 12, borderRadius: 14, background: '#ecfdf5', color: '#166534', fontSize: 12, lineHeight: 1.6 }}>
-                  监测到关键词“Vegan Lip Gloss”搜索热度上升，建议本周增加 2 篇关联内容并补齐 5 语种摘要。
-                </div>
-                <div style={{ marginTop: 10, padding: 12, borderRadius: 14, background: '#eff6ff', color: '#1e40af', fontSize: 12, lineHeight: 1.6 }}>
-                  翻译引擎状态正常，建议今晚同步产品词库并触发一轮批量校验。
+                <div style={{ marginTop: 12, padding: 12, borderRadius: 14, background: '#f8fafc', color: '#475569', fontSize: 12, lineHeight: 1.6 }}>
+                  提示：产品多语言字段可在各产品文档中维护；全站翻译流水线可通过部署的 Webhook（DeepSeek 等）在保存时自动回填。
                 </div>
                 <div style={{ marginTop: 10, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                  <button type="button" onClick={() => openStructure('itemPosts')} style={{ border: 'none', background: '#0f172a', color: '#fff', borderRadius: 10, padding: '10px 0', cursor: 'pointer' }}>SEO 审计</button>
-                  <button type="button" onClick={() => openStructure('itemDocPages')} style={{ border: 'none', background: '#4f46e5', color: '#fff', borderRadius: 10, padding: '10px 0', cursor: 'pointer' }}>一键翻译</button>
+                  <button type="button" onClick={() => openStructure('itemSiteSettings')} style={{ border: 'none', background: '#0f172a', color: '#fff', borderRadius: 10, padding: '10px 0', cursor: 'pointer' }}>站点 SEO</button>
+                  <button type="button" onClick={() => openStructure('itemNewsPosts')} style={{ border: 'none', background: '#4f46e5', color: '#fff', borderRadius: 10, padding: '10px 0', cursor: 'pointer' }}>资讯列表</button>
                 </div>
               </div>
 

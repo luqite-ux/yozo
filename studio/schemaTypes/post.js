@@ -46,6 +46,7 @@ export default defineType({
       name: 'mainImage',
       title: '封面图',
       type: 'image',
+      description: '建议 1200×630 px（新闻卡片 + OG 兼容）。',
       options: { hotspot: true },
       group: 'main',
     }),
@@ -151,7 +152,7 @@ export default defineType({
       initialValue: true,
       group: 'meta',
     }),
-    defineField({ name: 'locale', title: '语言（预留）', type: 'string', group: 'meta' }),
+    defineField({ name: 'locale', title: '语言（预留）', type: 'string', group: 'meta', hidden: true }),
 
     // ── 自动翻译字段 ──────────────────────────────────────────────────────────
     defineField({ name: 'title_en', title: 'Title (EN)', type: 'string', readOnly: true,

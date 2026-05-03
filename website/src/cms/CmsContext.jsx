@@ -33,9 +33,25 @@ export function CmsProvider({ children, initialPayload }) {
   const [aboutPage, setAboutPage] = useState(() =>
     hasServerPayload ? initialPayload.aboutPage : null,
   );
+  const [servicePage, setServicePage] = useState(() =>
+    hasServerPayload ? initialPayload.servicePage : null,
+  );
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const applyPayload = useCallback((payload) => {
+    setProducts(payload.products);
+    setArticles(payload.articles);
+    setFaqs(payload.faqs);
+    setCaseStudies(payload.caseStudies);
+    setSimplePages(payload.simplePages);
+    setProductCategories(payload.productCategories);
+    setArticleCategories(payload.articleCategories);
+    setSiteSettings(payload.siteSettings);
+    setAboutPage(payload.aboutPage);
+    setServicePage(payload.servicePage);
+  }, []);
+
+  const load = useCallback(async ({ showLoading = true } = {}) => {
+    if (showLoading) setLoading(true);
     setError(null);
     try {
       if (!isSanityConfigured()) {
@@ -44,25 +60,21 @@ export function CmsProvider({ children, initialPayload }) {
         );
       }
       const payload = await readCmsPayloadFromSanity();
-      setProducts(payload.products);
-      setArticles(payload.articles);
-      setFaqs(payload.faqs);
-      setCaseStudies(payload.caseStudies);
-      setSimplePages(payload.simplePages);
-      setProductCategories(payload.productCategories);
-      setArticleCategories(payload.articleCategories);
-      setSiteSettings(payload.siteSettings);
-      setAboutPage(payload.aboutPage);
+      applyPayload(payload);
     } catch (e) {
       setError(e.message || String(e));
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
-  }, []);
+  }, [applyPayload]);
 
   useEffect(() => {
     if (hasServerPayload) {
       setLoading(false);
+      // 避免 SSR/hydration 种子数据过期：客户端静默拉取一次最新 CMS 数据。
+      if (typeof window !== 'undefined' && isSanityConfigured()) {
+        load({ showLoading: false });
+      }
       return;
     }
     load();
@@ -81,6 +93,7 @@ export function CmsProvider({ children, initialPayload }) {
       articleCategories,
       siteSettings,
       aboutPage,
+      servicePage,
       reload: load,
     }),
     [
@@ -95,6 +108,7 @@ export function CmsProvider({ children, initialPayload }) {
       articleCategories,
       siteSettings,
       aboutPage,
+      servicePage,
       load,
     ],
   );

@@ -3,6 +3,7 @@ export {
   siteSettingsQuery,
   homePageQuery,
   aboutPageQuery,
+  servicePageQuery,
   productCategoriesQuery,
   productsQuery,
   faqsQuery,

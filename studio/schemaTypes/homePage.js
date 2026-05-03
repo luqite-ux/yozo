@@ -97,10 +97,18 @@ export default defineType({
       fields: [
         defineField({ name: 'trustLine', title: '信任背书行文案', type: 'string' }),
         defineField({
+          name: 'heroFallbackImage',
+          title: '首屏兜底背景图（上传）',
+          type: 'image',
+          description:
+            '推荐 2400×1350 px（16:9）或更大。用于 Hero 未配置图片/视频时兜底显示。',
+          options: { hotspot: true },
+        }),
+        defineField({
           name: 'heroFallbackImageUrl',
-          title: '首屏兜底背景图 URL',
+          title: '首屏兜底背景图 URL（可选外链）',
           type: 'string',
-          description: '当 hero 图片/视频未配置时使用',
+          description: '如已上传上方图片，可留空；仅在需要外链图床时填写。',
         }),
         defineField({
           name: 'trustBrands',
@@ -182,8 +190,53 @@ export default defineType({
         defineField({ name: 'coreEyebrow', title: '核心实力模块眉题', type: 'string' }),
         defineField({ name: 'coreTitle', title: '核心实力模块标题', type: 'string' }),
         defineField({ name: 'coreLead', title: '核心实力模块导语', type: 'text', rows: 2 }),
-        defineField({ name: 'coreLabFallbackImageUrl', title: '实验室卡片兜底图 URL', type: 'string' }),
-        defineField({ name: 'coreGmpcFallbackImageUrl', title: 'GMPC 卡片兜底图 URL', type: 'string' }),
+        defineField({
+          name: 'coreCompetenceLabTitle',
+          title: '研发卡片标题（中文前台）',
+          type: 'string',
+          description: '留空则前台用翻译包默认文案；填写后覆盖。',
+        }),
+        defineField({
+          name: 'coreCompetenceLabBody',
+          title: '研发卡片正文（中文前台）',
+          type: 'text',
+          rows: 4,
+        }),
+        defineField({
+          name: 'coreCompetenceGmpcTitle',
+          title: 'GMPC 卡片标题（中文前台）',
+          type: 'string',
+        }),
+        defineField({
+          name: 'coreCompetenceGmpcBody',
+          title: 'GMPC 卡片正文（中文前台）',
+          type: 'text',
+          rows: 4,
+        }),
+        defineField({
+          name: 'coreLabFallbackImage',
+          title: '实验室卡片配图（上传）',
+          type: 'image',
+          description: '前台优先于此图；与站点设置无关。',
+          options: { hotspot: true },
+        }),
+        defineField({
+          name: 'coreLabFallbackImageUrl',
+          title: '实验室卡片配图 URL（可选外链）',
+          type: 'string',
+        }),
+        defineField({
+          name: 'coreGmpcFallbackImage',
+          title: 'GMPC 卡片配图（上传）',
+          type: 'image',
+          description: '推荐 1600×900 px（16:9）；前台优先于此图。',
+          options: { hotspot: true },
+        }),
+        defineField({
+          name: 'coreGmpcFallbackImageUrl',
+          title: 'GMPC 卡片配图 URL（可选外链）',
+          type: 'string',
+        }),
         defineField({ name: 'whyEyebrow', title: '优势模块眉题', type: 'string' }),
         defineField({ name: 'whyTitle', title: '优势模块标题', type: 'string' }),
         defineField({ name: 'whyLead', title: '优势模块导语', type: 'text', rows: 2 }),
@@ -199,11 +252,19 @@ export default defineType({
         defineField({ name: 'worldTitle1', title: '全球模块标题第一行', type: 'string' }),
         defineField({ name: 'worldTitle2', title: '全球模块标题第二行', type: 'string' }),
         defineField({ name: 'worldLead', title: '全球模块导语', type: 'text', rows: 2 }),
-        defineField({ name: 'worldFallbackImageUrl', title: '全球模块兜底背景图 URL', type: 'string' }),
+        defineField({
+          name: 'worldFallbackImage',
+          title: '全球模块兜底背景图（上传）',
+          type: 'image',
+          description: '推荐 2000×1125 px 或更大，横向构图。',
+          options: { hotspot: true },
+        }),
+        defineField({ name: 'worldFallbackImageUrl', title: '全球模块兜底背景图 URL（可选外链）', type: 'string' }),
         defineField({
           name: 'worldBackgroundImage',
           title: '全球模块背景图',
           type: 'image',
+          description: '推荐 2000×1125 px 或更大；如上传该图，优先于兜底图显示。',
           options: { hotspot: true },
         }),
         defineField({ name: 'worldLawT', title: '全球模块卡片1标题', type: 'string' }),
@@ -227,6 +288,7 @@ export default defineType({
       type: 'array',
       group: 'content',
       description: '后续可接入更多自定义区块类型',
+      hidden: true,
       of: [
         {
           type: 'object',
@@ -244,6 +306,7 @@ export default defineType({
       title: '语言标记（预留）',
       type: 'string',
       description: '与 siteSettings.localeDefault 对齐时可区分多语言首页',
+      hidden: true,
     }),
     defineField({
       name: 'seo',
