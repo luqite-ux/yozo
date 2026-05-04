@@ -949,18 +949,30 @@ function setTranslateCors(req, res) {
   }
 }
 
+/** 去掉 query，避免 `/webhook/translate?x=1` 被误判为 404 */
+function requestPath(req) {
+  const u = req.url || '/';
+  const i = u.indexOf('?');
+  return i === -1 ? u : u.slice(0, i);
+}
+
 // ── HTTP 服务器 ───────────────────────────────────────────────────────────────
+const LISTEN_HOST = process.env.WEBHOOK_LISTEN_HOST || '0.0.0.0';
+
 const server = http.createServer((req, res) => {
-  if (req.method === 'GET' && req.url === '/health') {
+  const path = requestPath(req);
+
+  if (req.method === 'GET' && path === '/health') {
     res.writeHead(200).end('OK');
     return;
   }
 
   /** 诊断：确认进程已起；与 sanity.io/manage 里「API Webhook」无关，Studio 文档按钮直连本服务 */
-  if (req.method === 'GET' && (req.url === '/health/ready' || req.url.startsWith('/health/ready?'))) {
+  if (req.method === 'GET' && path === '/health/ready') {
     const body = JSON.stringify({
       ok: true,
       service: 'sanity-translate-webhook',
+      listenHost: LISTEN_HOST,
       port: Number(PORT),
       postTranslatePath: '/webhook/translate',
       deepseekBaseUrl: DEEPSEEK_BASE_URL,
@@ -978,13 +990,13 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  if (req.url === '/webhook/translate' && req.method === 'OPTIONS') {
+  if (path === '/webhook/translate' && req.method === 'OPTIONS') {
     setTranslateCors(req, res);
     res.writeHead(204).end();
     return;
   }
 
-  if (req.method !== 'POST' || req.url !== '/webhook/translate') {
+  if (req.method !== 'POST' || path !== '/webhook/translate') {
     res.writeHead(404).end('Not found');
     return;
   }
@@ -1023,10 +1035,10 @@ const server = http.createServer((req, res) => {
   });
 });
 
-server.listen(PORT, () => {
-  console.log(`Translation webhook server listening on port ${PORT}`);
+server.listen(PORT, LISTEN_HOST, () => {
+  console.log(`Translation webhook listening on http://${LISTEN_HOST === '0.0.0.0' ? '127.0.0.1' : LISTEN_HOST}:${PORT} (bind ${LISTEN_HOST}:${PORT})`);
   console.log(`Endpoint: POST /webhook/translate`);
-  console.log(`Health: GET /health  |  Ready JSON: GET http://127.0.0.1:${PORT}/health/ready`);
+  console.log(`Health: GET /health  |  Ready: GET http://127.0.0.1:${PORT}/health/ready`);
   if (!WEBHOOK_SECRET) console.warn('WARN: No SANITY_WEBHOOK_SECRET set — running without signature verification');
   else if (TRANSLATE_BYPASS_KEY) {
     console.log('Studio document menu may POST with header X-Studio-Translate-Bypass (SANITY_STUDIO_TRANSLATE_BYPASS_KEY)');
