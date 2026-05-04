@@ -12,15 +12,26 @@ function isLocalStudioHostname(hostname) {
   return h === 'localhost' || h === '127.0.0.1' || h === '[::1]' || h === '::1';
 }
 
-/** 与 webhook/server.js 默认 PORT=3000 对齐；生产须用公网 HTTPS，勿提交含 localhost 的 Vercel 配置 */
-const LOCAL_DEFAULT_TRANSLATE_URL = 'http://127.0.0.1:3000/webhook/translate';
+/**
+ * 本地默认与 webhook/server.js 的 `PORT`（默认 3000）一致。
+ * 若 webhook 使用其它端口（如 .env 中 PORT=3001），请设 SANITY_STUDIO_TRANSLATION_WEBHOOK_URL
+ * 或仅设 SANITY_STUDIO_TRANSLATION_WEBHOOK_PORT=3001。
+ */
+function localDefaultTranslateUrl() {
+  let port = '3000';
+  if (typeof process !== 'undefined') {
+    const p = String(process.env?.SANITY_STUDIO_TRANSLATION_WEBHOOK_PORT || '').trim();
+    if (/^\d+$/.test(p)) port = p;
+  }
+  return `http://127.0.0.1:${port}/webhook/translate`;
+}
 
 export function translationWebhookUrl() {
   const fromEnv =
     (typeof process !== 'undefined' && process.env?.SANITY_STUDIO_TRANSLATION_WEBHOOK_URL) || '';
   if (fromEnv.trim()) return fromEnv.trim();
   if (typeof window !== 'undefined' && isLocalStudioHostname(window.location?.hostname)) {
-    return LOCAL_DEFAULT_TRANSLATE_URL;
+    return localDefaultTranslateUrl();
   }
   return '';
 }

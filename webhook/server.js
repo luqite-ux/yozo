@@ -923,6 +923,10 @@ function isOriginAllowedForTranslate(originStr) {
     'http://127.0.0.1:3333',
     'http://localhost:5173',
     'http://127.0.0.1:5173',
+    'http://localhost:5174',
+    'http://127.0.0.1:5174',
+    'http://localhost:5175',
+    'http://127.0.0.1:5175',
     ...parseTranslateCorsExtraOrigins(),
   ]);
   if (allowed.has(origin)) return true;
@@ -1024,6 +1028,8 @@ const server = http.createServer((req, res) => {
       res.writeHead(400).end('Invalid JSON');
       return;
     }
+
+    console.log(`[translate] received ${doc?._type || '?'} ${doc?._id || '(no _id)'}`);
 
     // 立即返回 200，翻译在后台执行（Sanity webhook 超时约 10s）
     res.writeHead(200, { 'Content-Type': 'application/json' });

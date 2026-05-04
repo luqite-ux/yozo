@@ -44,7 +44,7 @@ export default function TranslateWebhookDocumentAction(props) {
       title:
         `${hostHint}` +
         '未检测到翻译服务 URL：请在 studio/.env 或 studio/.env.local 设置 SANITY_STUDIO_TRANSLATION_WEBHOOK_URL（Vercel 须在项目环境变量中配置并重新部署 Studio）。' +
-        ' 本地请先运行 npm run dev --prefix webhook（默认 http://127.0.0.1:3000/webhook/translate），再用 curl 打开 GET /health/ready 确认服务已起。' +
+        ' 本地请先运行 npm run dev --prefix webhook（默认端口 3000；若 webhook 用其它端口请设 SANITY_STUDIO_TRANSLATION_WEBHOOK_URL 或 SANITY_STUDIO_TRANSLATION_WEBHOOK_PORT），GET /health/ready 确认服务已起。' +
         ' 说明：此流程不依赖 sanity.io/manage 里的「API Webhook」；那是可选的云端触发同一 POST 的方式。DeepSeek 仅在 webhook 服务端调用。',
     };
   }
