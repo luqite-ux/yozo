@@ -21,6 +21,44 @@ import { createClient } from '@sanity/client';
 // 禁用 Vercel 自动解析 body，保留原始字节用于签名验证
 export const config = { api: { bodyParser: false } };
 
+// ── CORS（允许 Studio 浏览器直接 POST）────────────────────────────────────────
+
+const TRANSLATE_BYPASS_KEY = String(process.env.SANITY_STUDIO_TRANSLATE_BYPASS_KEY || '').trim();
+
+function parseExtraOrigins() {
+  const raw = String(process.env.SANITY_STUDIO_TRANSLATE_CORS_ORIGINS || '').trim();
+  if (!raw) return [];
+  return raw.split(/[\s,]+/).filter(Boolean);
+}
+
+function isOriginAllowed(origin) {
+  if (!origin) return false;
+  const allowed = new Set([
+    'http://localhost:3333',
+    'http://127.0.0.1:3333',
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    ...parseExtraOrigins(),
+  ]);
+  if (allowed.has(origin)) return true;
+  try {
+    const u = new URL(origin);
+    if (u.protocol === 'https:' && u.hostname.endsWith('.vercel.app')) return true;
+  } catch { /* ignore */ }
+  return false;
+}
+
+function setCors(req, res) {
+  const origin = req.headers.origin;
+  if (origin && isOriginAllowed(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, sanity-webhook-signature, X-Studio-Translate-Bypass');
+    res.setHeader('Access-Control-Max-Age', '86400');
+    res.setHeader('Vary', 'Origin');
+  }
+}
+
 // ── 工具函数 ──────────────────────────────────────────────────────────────────
 
 function verifySignature(rawBody, signatureHeader, secret) {
@@ -577,14 +615,23 @@ function routeTranslation(doc) {
 // ── Vercel Handler ────────────────────────────────────────────────────────────
 
 export default async function handler(req, res) {
+  setCors(req, res);
+
+  // CORS 预检
+  if (req.method === 'OPTIONS') {
+    return res.status(204).end();
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).end('Method Not Allowed');
   }
 
   const rawBody = await readRawBody(req);
   const sigHeader = req.headers['sanity-webhook-signature'] || '';
+  const bypassHdr = String(req.headers['x-studio-translate-bypass'] || '').trim();
+  const bypassOk = TRANSLATE_BYPASS_KEY && bypassHdr === TRANSLATE_BYPASS_KEY;
 
-  if (!verifySignature(rawBody, sigHeader, process.env.SANITY_WEBHOOK_SECRET)) {
+  if (!bypassOk && !verifySignature(rawBody, sigHeader, process.env.SANITY_WEBHOOK_SECRET)) {
     return res.status(401).end('Unauthorized');
   }
 
