@@ -17,7 +17,7 @@ export function translationWebhookUrl() {
     (typeof process !== 'undefined' && process.env?.SANITY_STUDIO_TRANSLATION_WEBHOOK_URL) || '';
   if (fromEnv.trim()) return fromEnv.trim();
   if (typeof window !== 'undefined' && isLocalStudioHostname(window.location?.hostname)) {
-    return 'http://127.0.0.1:3001/webhook/translate';
+    return 'http://127.0.0.1:3000/webhook/translate';
   }
   return '';
 }

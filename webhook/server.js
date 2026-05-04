@@ -81,7 +81,7 @@ if (process.env.DEBUG_WEBHOOK_ENV === '1') {
 }
 
 // ── 环境变量 ────────────────────────────────────────────────────────────────
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 const WEBHOOK_SECRET  = process.env.SANITY_WEBHOOK_SECRET;   // Sanity 后台配置时生成
 /** 与 Studio 同名的共享密钥：Studio「同步翻译」POST 可带请求头绕过 HMAC（本地/内网用） */
 const TRANSLATE_BYPASS_KEY = String(
@@ -309,7 +309,17 @@ async function translateChunk(text, from, to) {
 
     if (res.ok) {
       const data = await res.json();
-      const translated = data?.choices?.[0]?.message?.content?.trim();
+      const msg = data?.choices?.[0]?.message;
+      let translated = '';
+      const raw = msg?.content;
+      if (typeof raw === 'string') {
+        translated = raw.trim();
+      } else if (Array.isArray(raw)) {
+        translated = raw
+          .map((part) => (typeof part === 'string' ? part : part?.text || ''))
+          .join('')
+          .trim();
+      }
       if (!translated) throw new Error('DeepSeek empty translation result');
       return translated;
     }

@@ -2,7 +2,7 @@
  * 将当前文档 POST 到翻译 Webhook（与 webhook/server.js routeTranslation 对齐）。
  * 支持：product、productCategory、post、faq、caseStudy、servicePage、simplePage。
  *
- * 本地默认 http://127.0.0.1:3001/webhook/translate；生产在 studio/.env 设置 SANITY_STUDIO_TRANSLATION_WEBHOOK_URL。
+ * 本地默认 http://127.0.0.1:3000/webhook/translate；生产/Vercel 必须设置公网 HTTPS（浏览器无法访问你电脑上的 localhost）。
  * 若 webhook 启用了 SANITY_WEBHOOK_SECRET：在 webhook 与 studio 的 .env 中配置相同的 SANITY_STUDIO_TRANSLATE_BYPASS_KEY，
  * 本操作会带请求头 X-Studio-Translate-Bypass；或本地留空 SANITY_WEBHOOK_SECRET。
  */
@@ -30,14 +30,15 @@ export default function TranslateWebhookDocumentAction(props) {
 
   if (!SUPPORTED_SCHEMA_TYPES.has(type)) return null;
 
-  const doc = published || draft;
+  /** 须优先草稿：已上架产品再编辑时，最新中文在 draft；用 published 会拉到旧稿导致译文字段与编辑不同步 */
+  const docRef = draft || published;
   const url = translationWebhookUrl();
   if (!url) {
     return {
       label: '同步翻译（未配置 Webhook）',
       disabled: true,
       title:
-        '请在 studio/.env 设置 SANITY_STUDIO_TRANSLATION_WEBHOOK_URL，或在本地启动 webhook（npm run dev --prefix webhook，默认 3001）',
+        '请在 studio/.env 设置 SANITY_STUDIO_TRANSLATION_WEBHOOK_URL，或在本地启动 webhook（npm run dev --prefix webhook，默认端口 3000）',
     };
   }
 
@@ -54,7 +55,7 @@ export default function TranslateWebhookDocumentAction(props) {
         return;
       }
       const client = getClient({ apiVersion: '2024-01-01' });
-      const id = doc?._id;
+      const id = docRef?._id;
       if (!id) {
         window.alert('无法读取文档 ID');
         return;
