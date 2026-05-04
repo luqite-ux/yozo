@@ -1,6 +1,9 @@
 /**
  * Sanity Webhook Handler — 产品 / 产品分类 自动翻译（ZH → 多语）
  *
+ * Studio「同步翻译」与发布后自动翻译：由 Studio 浏览器 POST 完整文档到本服务（见 SANITY_STUDIO_TRANSLATION_WEBHOOK_URL），
+ * 不依赖在 sanity.io/manage 中启用 GROQ Webhook；后者为可选，用于云端在发布时向同一 URL 投递。
+ *
  * Sanity Webhook GROQ Filter（文档类型名为 productCategory，不是 category）：
  *   _type == "product" || _type == "productCategory" || _type == "post" || _type == "faq" || _type == "servicePage" || _type == "simplePage"
  *
@@ -953,6 +956,28 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  /** 诊断：确认进程已起；与 sanity.io/manage 里「API Webhook」无关，Studio 文档按钮直连本服务 */
+  if (req.method === 'GET' && (req.url === '/health/ready' || req.url.startsWith('/health/ready?'))) {
+    const body = JSON.stringify({
+      ok: true,
+      service: 'sanity-translate-webhook',
+      port: Number(PORT),
+      postTranslatePath: '/webhook/translate',
+      deepseekBaseUrl: DEEPSEEK_BASE_URL,
+      deepseekModel: DEEPSEEK_MODEL,
+      sanityProjectId: SANITY_PROJECT_ID ? 'set' : 'missing',
+      sanityWriteToken: SANITY_TOKEN ? 'set' : 'missing',
+      sanityWebhookSecretSet: Boolean(WEBHOOK_SECRET),
+      studioBypassKeyConfigured: Boolean(TRANSLATE_BYPASS_KEY),
+      note:
+        'Studio「同步翻译」与发布后自动翻译：浏览器 POST JSON 到此 URL（需 SANITY_STUDIO_TRANSLATION_WEBHOOK_URL）。' +
+        ' DeepSeek 在本进程内调用，不在浏览器。Sanity 控制台 GROQ Webhook 为可选项，用于云端触发同一 POST。',
+    });
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+    res.end(body);
+    return;
+  }
+
   if (req.url === '/webhook/translate' && req.method === 'OPTIONS') {
     setTranslateCors(req, res);
     res.writeHead(204).end();
@@ -1001,6 +1026,7 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, () => {
   console.log(`Translation webhook server listening on port ${PORT}`);
   console.log(`Endpoint: POST /webhook/translate`);
+  console.log(`Health: GET /health  |  Ready JSON: GET http://127.0.0.1:${PORT}/health/ready`);
   if (!WEBHOOK_SECRET) console.warn('WARN: No SANITY_WEBHOOK_SECRET set — running without signature verification');
   else if (TRANSLATE_BYPASS_KEY) {
     console.log('Studio document menu may POST with header X-Studio-Translate-Bypass (SANITY_STUDIO_TRANSLATE_BYPASS_KEY)');
