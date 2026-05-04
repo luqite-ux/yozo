@@ -4,6 +4,8 @@
  */
 
 const published = `(!defined(isPublished) || isPublished == true)`;
+/** 仅已发布层文档（避免带读 Token 时草稿与正式各一条、或误展示草稿） */
+const publishedLayer = '!(_id in path("drafts.**"))';
 const categoryVisible = `(!defined(isVisible) || isVisible == true) && ${published}`;
 
 /** @type {string} */
@@ -214,7 +216,7 @@ export const servicePageQuery = `coalesce(
 }`;
 
 /** @type {string} */
-export const productCategoriesQuery = `*[_type == "productCategory" && ${categoryVisible}] | order(coalesce(sortOrder, 0) asc, title asc) {
+export const productCategoriesQuery = `*[_type == "productCategory" && ${categoryVisible} && ${publishedLayer}] | order(coalesce(sortOrder, 0) asc, title asc) {
   ...,
   "slug": slug.current,
   "parentId": parent._ref,
@@ -222,12 +224,12 @@ export const productCategoriesQuery = `*[_type == "productCategory" && ${categor
 }`;
 
 /** @type {string} */
-export const productsQuery = `*[_type == "product" && ${published}] | order(coalesce(sortOrder, 0) asc, _updatedAt desc) {
+export const productsQuery = `*[_type == "product" && ${published} && ${publishedLayer}] | order(coalesce(sortOrder, 0) asc, _updatedAt desc) {
   ${productProjection}
 }`;
 
 /** @type {string} */
-export const faqsQuery = `*[_type == "faq" && ${published}] | order(coalesce(sortOrder, 0) asc, _createdAt asc) {
+export const faqsQuery = `*[_type == "faq" && ${published} && ${publishedLayer}] | order(coalesce(sortOrder, 0) asc, _createdAt asc) {
   _id,
   "slug": slug.current,
   question,
@@ -248,7 +250,7 @@ export const faqsQuery = `*[_type == "faq" && ${published}] | order(coalesce(sor
 }`;
 
 /** @type {string} */
-export const postsQuery = `*[_type == "post" && ${published}] | order(coalesce(publishedAt, _createdAt) desc) {
+export const postsQuery = `*[_type == "post" && ${published} && ${publishedLayer}] | order(coalesce(publishedAt, _createdAt) desc) {
   _id,
   title, title_en, title_es, title_pt, title_ar, title_ru,
   slug,
@@ -298,7 +300,7 @@ export const postsQuery = `*[_type == "post" && ${published}] | order(coalesce(p
 }`;
 
 /** @type {string} */
-export const caseStudiesQuery = `*[_type == "caseStudy" && ${published}] | order(coalesce(sortOrder, 0) asc, _updatedAt desc) {
+export const caseStudiesQuery = `*[_type == "caseStudy" && ${published} && ${publishedLayer}] | order(coalesce(sortOrder, 0) asc, _updatedAt desc) {
   _id,
   title,
   title_en,
@@ -321,7 +323,7 @@ export const caseStudiesQuery = `*[_type == "caseStudy" && ${published}] | order
 }`;
 
 /** @type {string} */
-export const simplePagesQuery = `*[_type == "simplePage" && ${published}] | order(title asc) {
+export const simplePagesQuery = `*[_type == "simplePage" && ${published} && ${publishedLayer}] | order(title asc) {
   _id,
   title, title_en, title_es, title_pt, title_ar, title_ru,
   excerpt, excerpt_en, excerpt_es, excerpt_pt, excerpt_ar, excerpt_ru,

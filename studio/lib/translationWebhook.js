@@ -12,12 +12,15 @@ function isLocalStudioHostname(hostname) {
   return h === 'localhost' || h === '127.0.0.1' || h === '[::1]' || h === '::1';
 }
 
+/** 与 webhook/server.js 默认 PORT=3000 对齐；生产须用公网 HTTPS，勿提交含 localhost 的 Vercel 配置 */
+const LOCAL_DEFAULT_TRANSLATE_URL = 'http://127.0.0.1:3000/webhook/translate';
+
 export function translationWebhookUrl() {
   const fromEnv =
     (typeof process !== 'undefined' && process.env?.SANITY_STUDIO_TRANSLATION_WEBHOOK_URL) || '';
   if (fromEnv.trim()) return fromEnv.trim();
   if (typeof window !== 'undefined' && isLocalStudioHostname(window.location?.hostname)) {
-    return 'http://127.0.0.1:3000/webhook/translate';
+    return LOCAL_DEFAULT_TRANSLATE_URL;
   }
   return '';
 }
