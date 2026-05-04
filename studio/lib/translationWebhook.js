@@ -6,11 +6,17 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/** 用 127.0.0.1 打开 Studio（如 http://127.0.0.1:3333）时 hostname 不是 localhost，须同样视为本地默认 webhook */
+function isLocalStudioHostname(hostname) {
+  const h = String(hostname || '').toLowerCase();
+  return h === 'localhost' || h === '127.0.0.1' || h === '[::1]' || h === '::1';
+}
+
 export function translationWebhookUrl() {
   const fromEnv =
     (typeof process !== 'undefined' && process.env?.SANITY_STUDIO_TRANSLATION_WEBHOOK_URL) || '';
   if (fromEnv.trim()) return fromEnv.trim();
-  if (typeof window !== 'undefined' && window.location?.hostname === 'localhost') {
+  if (typeof window !== 'undefined' && isLocalStudioHostname(window.location?.hostname)) {
     return 'http://127.0.0.1:3001/webhook/translate';
   }
   return '';
