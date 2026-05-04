@@ -19,7 +19,8 @@ import crypto from 'crypto';
 import { createClient } from '@sanity/client';
 
 // 禁用 Vercel 自动解析 body，保留原始字节用于签名验证
-export const config = { api: { bodyParser: false } };
+// maxDuration: Hobby 计划最大 60s，Pro 计划最大 300s
+export const config = { api: { bodyParser: false }, maxDuration: 60 };
 
 // ── CORS（允许 Studio 浏览器直接 POST）────────────────────────────────────────
 
@@ -643,10 +644,13 @@ export default async function handler(req, res) {
     return res.status(400).end('Invalid JSON');
   }
 
-  // 立即返回 200（Sanity webhook 超时约 10s），翻译异步执行
-  res.status(200).json({ received: true, _id: doc._id });
-
-  routeTranslation(doc).catch(err => {
+  // Vercel 函数在 res.end() 后立即终止，异步任务无法保证执行完毕。
+  // 改为同步等待翻译完成再响应：Studio 手动按钮可等待；Sanity 自动 webhook 若超时会重试。
+  try {
+    const result = await routeTranslation(doc);
+    res.status(200).json({ ok: true, _id: doc._id, result });
+  } catch (err) {
     console.error(`[translate] error for ${doc._id}:`, err.message);
-  });
+    res.status(500).json({ ok: false, _id: doc._id, error: err.message });
+  }
 }
