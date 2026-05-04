@@ -19,16 +19,24 @@ function isLocalStudioHostname(hostname) {
  */
 function localDefaultTranslateUrl() {
   let port = '3000';
-  if (typeof process !== 'undefined') {
-    const p = String(process.env?.SANITY_STUDIO_TRANSLATION_WEBHOOK_PORT || '').trim();
-    if (/^\d+$/.test(p)) port = p;
-  }
+  const p = String(
+    (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.SANITY_STUDIO_TRANSLATION_WEBHOOK_PORT) ||
+    (typeof process !== 'undefined' && process.env && process.env.SANITY_STUDIO_TRANSLATION_WEBHOOK_PORT) ||
+    ''
+  ).trim();
+  if (/^\d+$/.test(p)) port = p;
   return `http://127.0.0.1:${port}/webhook/translate`;
 }
 
 export function translationWebhookUrl() {
-  const fromEnv =
-    (typeof process !== 'undefined' && process.env?.SANITY_STUDIO_TRANSLATION_WEBHOOK_URL) || '';
+  // Vite 构建时只替换 process.env.VAR 标准写法，不替换可选链 process.env?.VAR
+  // 同时兼容 import.meta.env（Vite 原生方式）与 process.env（Node 脚本环境）
+  const fromEnv = (
+    // eslint-disable-next-line no-undef
+    (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.SANITY_STUDIO_TRANSLATION_WEBHOOK_URL) ||
+    (typeof process !== 'undefined' && process.env && process.env.SANITY_STUDIO_TRANSLATION_WEBHOOK_URL) ||
+    ''
+  );
   if (fromEnv.trim()) return fromEnv.trim();
   if (typeof window !== 'undefined' && isLocalStudioHostname(window.location?.hostname)) {
     return localDefaultTranslateUrl();
@@ -37,8 +45,11 @@ export function translationWebhookUrl() {
 }
 
 export function translateBypassHeaders() {
-  const bypassKey =
-    (typeof process !== 'undefined' && process.env?.SANITY_STUDIO_TRANSLATE_BYPASS_KEY) || '';
+  const bypassKey = (
+    (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.SANITY_STUDIO_TRANSLATE_BYPASS_KEY) ||
+    (typeof process !== 'undefined' && process.env && process.env.SANITY_STUDIO_TRANSLATE_BYPASS_KEY) ||
+    ''
+  );
   const headers = { 'Content-Type': 'application/json' };
   if (String(bypassKey).trim()) {
     headers['X-Studio-Translate-Bypass'] = String(bypassKey).trim();
