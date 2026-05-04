@@ -38,6 +38,7 @@ function isOriginAllowed(origin) {
     'http://127.0.0.1:3333',
     'http://localhost:5173',
     'http://127.0.0.1:5173',
+    'https://studio.yozobeauty.com',
     ...parseExtraOrigins(),
   ]);
   if (allowed.has(origin)) return true;
